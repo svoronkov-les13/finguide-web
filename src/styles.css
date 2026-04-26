@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap&subset=cyrillic");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-background: #f4f1eb;
+  --color-foreground: #24202a;
+  --color-card: #fbfaf6;
+  --color-surface: #f1eee8;
+  --color-surface-hover: #e9e4dc;
+  --color-muted: #e5ded4;
+  --color-muted-foreground: #756f67;
+  --color-label: #746b61;
+  --color-border: rgba(36, 32, 42, 0.14);
+  --color-primary: #bd962c;
+  --color-primary-foreground: #fff7dc;
+  --color-sidebar: #080712;
+  --color-sidebar-soft: #15101b;
+  --color-sidebar-text: #f3ecdc;
+  --color-cyan: #2aa18d;
+  --shadow-card: 0 10px 28px rgba(34, 29, 22, 0.07), 0 1px 1px rgba(34, 29, 22, 0.05);
+  --shadow-soft: 0 2px 8px rgba(34, 29, 22, 0.06);
+  --shadow-elevated: 0 18px 48px rgba(34, 29, 22, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.42) inset;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-background);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-foreground);
+  background: var(--color-background);
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(189, 150, 44, 0.22);
+}
+
+.mesh-bg::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background: transparent;
+}
+
+.section-title {
+  position: relative;
+  padding-left: 12px;
+  font-weight: 700;
+}
+
+.section-title::before {
+  position: absolute;
+  top: 0.3em;
+  bottom: 0.3em;
+  left: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.scrollbar-thin {
+  scrollbar-color: rgba(31, 28, 37, 0.24) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(31, 28, 37, 0.22);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.recharts-cartesian-axis-tick-value,
+.recharts-legend-item-text {
+  fill: #756f67;
+  color: #756f67 !important;
+  font-size: 12px;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(26, 20, 30, 0.08);
+  stroke-dasharray: 4 7;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+@media (max-width: 760px) {
+  body {
+    overflow: auto;
+  }
+}
