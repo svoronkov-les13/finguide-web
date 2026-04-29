@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = "/finguide-mock/api/v1";
+const DEFAULT_API_BASE_URL = "/finguide-api/api/v1";
 
 function trimTrailingSlash(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
@@ -6,4 +6,4 @@ function trimTrailingSlash(value: string) {
 
 export const apiBaseUrl = trimTrailingSlash(import.meta.env.VITE_FINGUIDE_API_BASE_URL || DEFAULT_API_BASE_URL);
 
-export const demoBearerToken = import.meta.env.VITE_FINGUIDE_BEARER_TOKEN || "mock-access-token-java21";
+export const demoBearerToken = import.meta.env.VITE_FINGUIDE_BEARER_TOKEN?.trim() || undefined;
