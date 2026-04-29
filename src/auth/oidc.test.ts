@@ -82,6 +82,37 @@ describe("OIDC session helpers", () => {
     expect(url.searchParams.get("redirect_uri")).toBe("http://66.42.121.18/fg/auth/callback");
   });
 
+  it("builds PKCE S256 challenge when crypto.subtle is unavailable on HTTP", async () => {
+    vi.stubEnv("VITE_FINGUIDE_BASE_PATH", "/fg/");
+    vi.stubEnv("VITE_FINGUIDE_OIDC_ISSUER_URL", "http://66.42.121.18/auth/realms/finguide");
+    const originalCrypto = globalThis.crypto;
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { origin: "http://66.42.121.18", pathname: "/fg/dashboard", search: "", hash: "", assign },
+    });
+    Object.defineProperty(globalThis, "crypto", {
+      configurable: true,
+      value: {
+        getRandomValues: (array: ArrayBufferView) => {
+          (array as Uint8Array).fill(7);
+          return array;
+        },
+        randomUUID: () => "22222222-2222-4222-8222-222222222222",
+      } as unknown as Crypto,
+    });
+
+    try {
+      const { beginOidcLogin } = await loadOidc();
+      await beginOidcLogin("/dashboard");
+      const url = new URL(assign.mock.calls[0][0]);
+      expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+      expect(url.searchParams.get("code_challenge")).toBe("ZQyqvCUGJmKcOzNuGh9KsmfjcXKW0uMJyNHxmr30O5k");
+    } finally {
+      Object.defineProperty(globalThis, "crypto", { configurable: true, value: originalCrypto });
+    }
+  });
+
   it("exchanges callback code and stores returned tokens", async () => {
     vi.stubEnv("VITE_FINGUIDE_BASE_PATH", "/fg/");
     vi.stubEnv("VITE_FINGUIDE_OIDC_ISSUER_URL", "http://66.42.121.18/auth/realms/finguide");
