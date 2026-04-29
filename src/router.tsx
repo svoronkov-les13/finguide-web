@@ -1,21 +1,26 @@
 import { createRootRoute, createRoute, createRouter, Navigate, Outlet } from "@tanstack/react-router";
-import { AppShell } from "@/components/layout/AppShell";
+import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { CashflowPage } from "@/pages/CashflowPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { FaqPage } from "@/pages/FaqPage";
+import { AuthCallbackPage } from "@/pages/AuthCallbackPage";
+import { AuthErrorPage } from "@/pages/AuthErrorPage";
 import { GeneralDataPage } from "@/pages/GeneralDataPage";
 import { GoalsPage } from "@/pages/GoalsPage";
+import { LoginPage } from "@/pages/LoginPage";
 import { PensionPage } from "@/pages/PensionPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SummaryPage } from "@/pages/SummaryPage";
 import { TrackingPage } from "@/pages/TrackingPage";
 
 const rootRoute = createRootRoute({
-  component: () => (
-    <AppShell>
-      <Outlet />
-    </AppShell>
-  ),
+  component: Outlet,
+});
+
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "app",
+  component: ProtectedRoute,
 });
 
 const indexRoute = createRoute({
@@ -25,77 +30,100 @@ const indexRoute = createRoute({
 });
 
 const dashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/dashboard",
   component: DashboardPage,
 });
 
 const generalRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/general",
   component: GeneralDataPage,
 });
 
 const incomeRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/income",
   component: () => <CashflowPage type="income" />,
 });
 
 const expensesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/expenses",
   component: () => <CashflowPage type="expense" />,
 });
 
 const goalsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/goals",
   component: GoalsPage,
 });
 
 const trackingRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/tracking",
   component: TrackingPage,
 });
 
 const pensionRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/pension",
   component: PensionPage,
 });
 
 const summaryRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/summary",
   component: SummaryPage,
 });
 
 const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/settings",
   component: SettingsPage,
 });
 
 const faqRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appRoute,
   path: "/faq",
   component: FaqPage,
 });
 
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: LoginPage,
+});
+
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/auth/callback",
+  component: AuthCallbackPage,
+});
+
+const authErrorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/auth/error",
+  component: AuthErrorPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  dashboardRoute,
-  generalRoute,
-  incomeRoute,
-  expensesRoute,
-  goalsRoute,
-  trackingRoute,
-  pensionRoute,
-  summaryRoute,
-  settingsRoute,
-  faqRoute,
+  loginRoute,
+  authCallbackRoute,
+  authErrorRoute,
+  appRoute.addChildren([
+    dashboardRoute,
+    generalRoute,
+    incomeRoute,
+    expensesRoute,
+    goalsRoute,
+    trackingRoute,
+    pensionRoute,
+    summaryRoute,
+    settingsRoute,
+    faqRoute,
+  ]),
 ]);
 
 const routerBasepath = import.meta.env.VITE_FINGUIDE_BASE_PATH?.replace(/\/$/, "") || "/";
