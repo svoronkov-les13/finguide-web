@@ -3,11 +3,13 @@ import {
 } from '../baseUrl';
 
 import type {
+  ApiIndexEnvelope,
   BadRequestResponse,
   BudgetSettings,
   Contribution,
   DeleteMeAvatar200,
-  ExpenseItem,
+  ExpenseItemCreateRequest,
+  ExpenseItemPatchRequest,
   GetExportJobId200,
   GetMe200,
   GetNotificationsParams,
@@ -34,10 +36,12 @@ import type {
   GetPlansPlanIdPensionProjection200,
   GetScenarios200,
   GetScenariosScenarioId200,
-  Goal,
+  GoalCreateRequest,
+  GoalPatchRequest,
+  GoalReorderRequest,
   ImportRequest,
-  IncomeSource,
-  LoginRequest,
+  IncomeSourceCreateRequest,
+  IncomeSourcePatchRequest,
   ModelAssumptions,
   NotFoundResponse,
   PatchMe200,
@@ -51,12 +55,6 @@ import type {
   PatchScenariosScenarioId200,
   PensionSettings,
   PlanState,
-  PostAuthLogin200,
-  PostAuthPasswordForgotBody,
-  PostAuthPasswordResetBody,
-  PostAuthRefresh200,
-  PostAuthRefreshBody,
-  PostAuthRegister201,
   PostExport201,
   PostExportBody,
   PostImport200,
@@ -69,7 +67,6 @@ import type {
   PostPlansPlanIdExpenses201,
   PostPlansPlanIdGoals201,
   PostPlansPlanIdGoalsReorder200,
-  PostPlansPlanIdGoalsReorderBody,
   PostPlansPlanIdIncomes201,
   PostScenarios201,
   PostScenariosCompareBody,
@@ -77,324 +74,10 @@ import type {
   PutMeAvatarBody,
   PutMePasswordBody,
   PutPlansCurrent200,
-  RegisterRequest,
   Scenario,
   UnauthorizedResponse,
   UserProfile
 } from './model';
-
-
-/**
- * @summary Create account
- */
-export type postAuthRegisterResponse201 = {
-  data: PostAuthRegister201
-  status: 201
-}
-
-export type postAuthRegisterResponse400 = {
-  data: BadRequestResponse
-  status: 400
-}
-
-export type postAuthRegisterResponse401 = {
-  data: UnauthorizedResponse
-  status: 401
-}
-
-export type postAuthRegisterResponseSuccess = (postAuthRegisterResponse201) & {
-  headers: Headers;
-};
-export type postAuthRegisterResponseError = (postAuthRegisterResponse400 | postAuthRegisterResponse401) & {
-  headers: Headers;
-};
-
-export type postAuthRegisterResponse = (postAuthRegisterResponseSuccess | postAuthRegisterResponseError)
-
-export const getPostAuthRegisterUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/register`
-}
-
-export const postAuthRegister = async (registerRequest: RegisterRequest, options?: RequestInit): Promise<postAuthRegisterResponse> => {
-
-  const res = await fetch(getPostAuthRegisterUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      registerRequest,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthRegisterResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postAuthRegisterResponse
-}
-
-
-
-/**
- * @summary Login by email or phone
- */
-export type postAuthLoginResponse200 = {
-  data: PostAuthLogin200
-  status: 200
-}
-
-export type postAuthLoginResponse400 = {
-  data: BadRequestResponse
-  status: 400
-}
-
-export type postAuthLoginResponse401 = {
-  data: UnauthorizedResponse
-  status: 401
-}
-
-export type postAuthLoginResponseSuccess = (postAuthLoginResponse200) & {
-  headers: Headers;
-};
-export type postAuthLoginResponseError = (postAuthLoginResponse400 | postAuthLoginResponse401) & {
-  headers: Headers;
-};
-
-export type postAuthLoginResponse = (postAuthLoginResponseSuccess | postAuthLoginResponseError)
-
-export const getPostAuthLoginUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/login`
-}
-
-export const postAuthLogin = async (loginRequest: LoginRequest, options?: RequestInit): Promise<postAuthLoginResponse> => {
-
-  const res = await fetch(getPostAuthLoginUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      loginRequest,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthLoginResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postAuthLoginResponse
-}
-
-
-
-/**
- * @summary Refresh access token
- */
-export type postAuthRefreshResponse200 = {
-  data: PostAuthRefresh200
-  status: 200
-}
-
-export type postAuthRefreshResponse400 = {
-  data: BadRequestResponse
-  status: 400
-}
-
-export type postAuthRefreshResponse401 = {
-  data: UnauthorizedResponse
-  status: 401
-}
-
-export type postAuthRefreshResponseSuccess = (postAuthRefreshResponse200) & {
-  headers: Headers;
-};
-export type postAuthRefreshResponseError = (postAuthRefreshResponse400 | postAuthRefreshResponse401) & {
-  headers: Headers;
-};
-
-export type postAuthRefreshResponse = (postAuthRefreshResponseSuccess | postAuthRefreshResponseError)
-
-export const getPostAuthRefreshUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/refresh`
-}
-
-export const postAuthRefresh = async (postAuthRefreshBody: PostAuthRefreshBody, options?: RequestInit): Promise<postAuthRefreshResponse> => {
-
-  const res = await fetch(getPostAuthRefreshUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      postAuthRefreshBody,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthRefreshResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as postAuthRefreshResponse
-}
-
-
-
-/**
- * @summary Revoke current refresh token
- */
-export type postAuthLogoutResponse204 = {
-  data: void
-  status: 204
-}
-
-export type postAuthLogoutResponse401 = {
-  data: UnauthorizedResponse
-  status: 401
-}
-
-export type postAuthLogoutResponseSuccess = (postAuthLogoutResponse204) & {
-  headers: Headers;
-};
-export type postAuthLogoutResponseError = (postAuthLogoutResponse401) & {
-  headers: Headers;
-};
-
-export type postAuthLogoutResponse = (postAuthLogoutResponseSuccess | postAuthLogoutResponseError)
-
-export const getPostAuthLogoutUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/logout`
-}
-
-export const postAuthLogout = async ( options?: RequestInit): Promise<postAuthLogoutResponse> => {
-
-  const res = await fetch(getPostAuthLogoutUrl(),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthLogoutResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postAuthLogoutResponse
-}
-
-
-
-/**
- * @summary Send password reset link
- */
-export type postAuthPasswordForgotResponse202 = {
-  data: void
-  status: 202
-}
-
-export type postAuthPasswordForgotResponseSuccess = (postAuthPasswordForgotResponse202) & {
-  headers: Headers;
-};
-;
-
-export type postAuthPasswordForgotResponse = (postAuthPasswordForgotResponseSuccess)
-
-export const getPostAuthPasswordForgotUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/password/forgot`
-}
-
-export const postAuthPasswordForgot = async (postAuthPasswordForgotBody: PostAuthPasswordForgotBody, options?: RequestInit): Promise<postAuthPasswordForgotResponse> => {
-
-  const res = await fetch(getPostAuthPasswordForgotUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      postAuthPasswordForgotBody,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthPasswordForgotResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postAuthPasswordForgotResponse
-}
-
-
-
-/**
- * @summary Reset password by token
- */
-export type postAuthPasswordResetResponse204 = {
-  data: void
-  status: 204
-}
-
-export type postAuthPasswordResetResponse400 = {
-  data: BadRequestResponse
-  status: 400
-}
-
-export type postAuthPasswordResetResponseSuccess = (postAuthPasswordResetResponse204) & {
-  headers: Headers;
-};
-export type postAuthPasswordResetResponseError = (postAuthPasswordResetResponse400) & {
-  headers: Headers;
-};
-
-export type postAuthPasswordResetResponse = (postAuthPasswordResetResponseSuccess | postAuthPasswordResetResponseError)
-
-export const getPostAuthPasswordResetUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/auth/password/reset`
-}
-
-export const postAuthPasswordReset = async (postAuthPasswordResetBody: PostAuthPasswordResetBody, options?: RequestInit): Promise<postAuthPasswordResetResponse> => {
-
-  const res = await fetch(getPostAuthPasswordResetUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      postAuthPasswordResetBody,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: postAuthPasswordResetResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as postAuthPasswordResetResponse
-}
-
 
 
 /**
@@ -798,10 +481,15 @@ export type getPlansPlanIdIncomesResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdIncomesResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdIncomesResponseSuccess = (getPlansPlanIdIncomesResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdIncomesResponseError = (getPlansPlanIdIncomesResponse401) & {
+export type getPlansPlanIdIncomesResponseError = (getPlansPlanIdIncomesResponse401 | getPlansPlanIdIncomesResponse404) & {
   headers: Headers;
 };
 
@@ -853,10 +541,15 @@ export type postPlansPlanIdIncomesResponse401 = {
   status: 401
 }
 
+export type postPlansPlanIdIncomesResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type postPlansPlanIdIncomesResponseSuccess = (postPlansPlanIdIncomesResponse201) & {
   headers: Headers;
 };
-export type postPlansPlanIdIncomesResponseError = (postPlansPlanIdIncomesResponse400 | postPlansPlanIdIncomesResponse401) & {
+export type postPlansPlanIdIncomesResponseError = (postPlansPlanIdIncomesResponse400 | postPlansPlanIdIncomesResponse401 | postPlansPlanIdIncomesResponse404) & {
   headers: Headers;
 };
 
@@ -871,7 +564,7 @@ export const getPostPlansPlanIdIncomesUrl = (planId: string,) => {
 }
 
 export const postPlansPlanIdIncomes = async (planId: string,
-    incomeSource: IncomeSource, options?: RequestInit): Promise<postPlansPlanIdIncomesResponse> => {
+    incomeSourceCreateRequest: IncomeSourceCreateRequest, options?: RequestInit): Promise<postPlansPlanIdIncomesResponse> => {
 
   const res = await fetch(getPostPlansPlanIdIncomesUrl(planId),
   {
@@ -879,7 +572,7 @@ export const postPlansPlanIdIncomes = async (planId: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      incomeSource,)
+      incomeSourceCreateRequest,)
   }
 )
 
@@ -910,10 +603,15 @@ export type getPlansPlanIdIncomesIdResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdIncomesIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdIncomesIdResponseSuccess = (getPlansPlanIdIncomesIdResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdIncomesIdResponseError = (getPlansPlanIdIncomesIdResponse400 | getPlansPlanIdIncomesIdResponse401) & {
+export type getPlansPlanIdIncomesIdResponseError = (getPlansPlanIdIncomesIdResponse400 | getPlansPlanIdIncomesIdResponse401 | getPlansPlanIdIncomesIdResponse404) & {
   headers: Headers;
 };
 
@@ -967,10 +665,15 @@ export type patchPlansPlanIdIncomesIdResponse401 = {
   status: 401
 }
 
+export type patchPlansPlanIdIncomesIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type patchPlansPlanIdIncomesIdResponseSuccess = (patchPlansPlanIdIncomesIdResponse200) & {
   headers: Headers;
 };
-export type patchPlansPlanIdIncomesIdResponseError = (patchPlansPlanIdIncomesIdResponse400 | patchPlansPlanIdIncomesIdResponse401) & {
+export type patchPlansPlanIdIncomesIdResponseError = (patchPlansPlanIdIncomesIdResponse400 | patchPlansPlanIdIncomesIdResponse401 | patchPlansPlanIdIncomesIdResponse404) & {
   headers: Headers;
 };
 
@@ -987,7 +690,7 @@ export const getPatchPlansPlanIdIncomesIdUrl = (planId: string,
 
 export const patchPlansPlanIdIncomesId = async (planId: string,
     id: string,
-    incomeSource: IncomeSource, options?: RequestInit): Promise<patchPlansPlanIdIncomesIdResponse> => {
+    incomeSourcePatchRequest: IncomeSourcePatchRequest, options?: RequestInit): Promise<patchPlansPlanIdIncomesIdResponse> => {
 
   const res = await fetch(getPatchPlansPlanIdIncomesIdUrl(planId,id),
   {
@@ -995,7 +698,7 @@ export const patchPlansPlanIdIncomesId = async (planId: string,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      incomeSource,)
+      incomeSourcePatchRequest,)
   }
 )
 
@@ -1078,10 +781,15 @@ export type getPlansPlanIdExpensesResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdExpensesResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdExpensesResponseSuccess = (getPlansPlanIdExpensesResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdExpensesResponseError = (getPlansPlanIdExpensesResponse401) & {
+export type getPlansPlanIdExpensesResponseError = (getPlansPlanIdExpensesResponse401 | getPlansPlanIdExpensesResponse404) & {
   headers: Headers;
 };
 
@@ -1133,10 +841,15 @@ export type postPlansPlanIdExpensesResponse401 = {
   status: 401
 }
 
+export type postPlansPlanIdExpensesResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type postPlansPlanIdExpensesResponseSuccess = (postPlansPlanIdExpensesResponse201) & {
   headers: Headers;
 };
-export type postPlansPlanIdExpensesResponseError = (postPlansPlanIdExpensesResponse400 | postPlansPlanIdExpensesResponse401) & {
+export type postPlansPlanIdExpensesResponseError = (postPlansPlanIdExpensesResponse400 | postPlansPlanIdExpensesResponse401 | postPlansPlanIdExpensesResponse404) & {
   headers: Headers;
 };
 
@@ -1151,7 +864,7 @@ export const getPostPlansPlanIdExpensesUrl = (planId: string,) => {
 }
 
 export const postPlansPlanIdExpenses = async (planId: string,
-    expenseItem: ExpenseItem, options?: RequestInit): Promise<postPlansPlanIdExpensesResponse> => {
+    expenseItemCreateRequest: ExpenseItemCreateRequest, options?: RequestInit): Promise<postPlansPlanIdExpensesResponse> => {
 
   const res = await fetch(getPostPlansPlanIdExpensesUrl(planId),
   {
@@ -1159,7 +872,7 @@ export const postPlansPlanIdExpenses = async (planId: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      expenseItem,)
+      expenseItemCreateRequest,)
   }
 )
 
@@ -1190,10 +903,15 @@ export type getPlansPlanIdExpensesIdResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdExpensesIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdExpensesIdResponseSuccess = (getPlansPlanIdExpensesIdResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdExpensesIdResponseError = (getPlansPlanIdExpensesIdResponse400 | getPlansPlanIdExpensesIdResponse401) & {
+export type getPlansPlanIdExpensesIdResponseError = (getPlansPlanIdExpensesIdResponse400 | getPlansPlanIdExpensesIdResponse401 | getPlansPlanIdExpensesIdResponse404) & {
   headers: Headers;
 };
 
@@ -1247,10 +965,15 @@ export type patchPlansPlanIdExpensesIdResponse401 = {
   status: 401
 }
 
+export type patchPlansPlanIdExpensesIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type patchPlansPlanIdExpensesIdResponseSuccess = (patchPlansPlanIdExpensesIdResponse200) & {
   headers: Headers;
 };
-export type patchPlansPlanIdExpensesIdResponseError = (patchPlansPlanIdExpensesIdResponse400 | patchPlansPlanIdExpensesIdResponse401) & {
+export type patchPlansPlanIdExpensesIdResponseError = (patchPlansPlanIdExpensesIdResponse400 | patchPlansPlanIdExpensesIdResponse401 | patchPlansPlanIdExpensesIdResponse404) & {
   headers: Headers;
 };
 
@@ -1267,7 +990,7 @@ export const getPatchPlansPlanIdExpensesIdUrl = (planId: string,
 
 export const patchPlansPlanIdExpensesId = async (planId: string,
     id: string,
-    expenseItem: ExpenseItem, options?: RequestInit): Promise<patchPlansPlanIdExpensesIdResponse> => {
+    expenseItemPatchRequest: ExpenseItemPatchRequest, options?: RequestInit): Promise<patchPlansPlanIdExpensesIdResponse> => {
 
   const res = await fetch(getPatchPlansPlanIdExpensesIdUrl(planId,id),
   {
@@ -1275,7 +998,7 @@ export const patchPlansPlanIdExpensesId = async (planId: string,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      expenseItem,)
+      expenseItemPatchRequest,)
   }
 )
 
@@ -1358,10 +1081,15 @@ export type getPlansPlanIdGoalsResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdGoalsResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdGoalsResponseSuccess = (getPlansPlanIdGoalsResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdGoalsResponseError = (getPlansPlanIdGoalsResponse401) & {
+export type getPlansPlanIdGoalsResponseError = (getPlansPlanIdGoalsResponse401 | getPlansPlanIdGoalsResponse404) & {
   headers: Headers;
 };
 
@@ -1413,10 +1141,15 @@ export type postPlansPlanIdGoalsResponse401 = {
   status: 401
 }
 
+export type postPlansPlanIdGoalsResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type postPlansPlanIdGoalsResponseSuccess = (postPlansPlanIdGoalsResponse201) & {
   headers: Headers;
 };
-export type postPlansPlanIdGoalsResponseError = (postPlansPlanIdGoalsResponse400 | postPlansPlanIdGoalsResponse401) & {
+export type postPlansPlanIdGoalsResponseError = (postPlansPlanIdGoalsResponse400 | postPlansPlanIdGoalsResponse401 | postPlansPlanIdGoalsResponse404) & {
   headers: Headers;
 };
 
@@ -1431,7 +1164,7 @@ export const getPostPlansPlanIdGoalsUrl = (planId: string,) => {
 }
 
 export const postPlansPlanIdGoals = async (planId: string,
-    goal: Goal, options?: RequestInit): Promise<postPlansPlanIdGoalsResponse> => {
+    goalCreateRequest: GoalCreateRequest, options?: RequestInit): Promise<postPlansPlanIdGoalsResponse> => {
 
   const res = await fetch(getPostPlansPlanIdGoalsUrl(planId),
   {
@@ -1439,7 +1172,7 @@ export const postPlansPlanIdGoals = async (planId: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      goal,)
+      goalCreateRequest,)
   }
 )
 
@@ -1470,10 +1203,15 @@ export type getPlansPlanIdGoalsIdResponse401 = {
   status: 401
 }
 
+export type getPlansPlanIdGoalsIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type getPlansPlanIdGoalsIdResponseSuccess = (getPlansPlanIdGoalsIdResponse200) & {
   headers: Headers;
 };
-export type getPlansPlanIdGoalsIdResponseError = (getPlansPlanIdGoalsIdResponse400 | getPlansPlanIdGoalsIdResponse401) & {
+export type getPlansPlanIdGoalsIdResponseError = (getPlansPlanIdGoalsIdResponse400 | getPlansPlanIdGoalsIdResponse401 | getPlansPlanIdGoalsIdResponse404) & {
   headers: Headers;
 };
 
@@ -1527,10 +1265,15 @@ export type patchPlansPlanIdGoalsIdResponse401 = {
   status: 401
 }
 
+export type patchPlansPlanIdGoalsIdResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type patchPlansPlanIdGoalsIdResponseSuccess = (patchPlansPlanIdGoalsIdResponse200) & {
   headers: Headers;
 };
-export type patchPlansPlanIdGoalsIdResponseError = (patchPlansPlanIdGoalsIdResponse400 | patchPlansPlanIdGoalsIdResponse401) & {
+export type patchPlansPlanIdGoalsIdResponseError = (patchPlansPlanIdGoalsIdResponse400 | patchPlansPlanIdGoalsIdResponse401 | patchPlansPlanIdGoalsIdResponse404) & {
   headers: Headers;
 };
 
@@ -1547,7 +1290,7 @@ export const getPatchPlansPlanIdGoalsIdUrl = (planId: string,
 
 export const patchPlansPlanIdGoalsId = async (planId: string,
     id: string,
-    goal: Goal, options?: RequestInit): Promise<patchPlansPlanIdGoalsIdResponse> => {
+    goalPatchRequest: GoalPatchRequest, options?: RequestInit): Promise<patchPlansPlanIdGoalsIdResponse> => {
 
   const res = await fetch(getPatchPlansPlanIdGoalsIdUrl(planId,id),
   {
@@ -1555,7 +1298,7 @@ export const patchPlansPlanIdGoalsId = async (planId: string,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      goal,)
+      goalPatchRequest,)
   }
 )
 
@@ -1918,10 +1661,15 @@ export type postPlansPlanIdGoalsReorderResponse401 = {
   status: 401
 }
 
+export type postPlansPlanIdGoalsReorderResponse404 = {
+  data: NotFoundResponse
+  status: 404
+}
+
 export type postPlansPlanIdGoalsReorderResponseSuccess = (postPlansPlanIdGoalsReorderResponse200) & {
   headers: Headers;
 };
-export type postPlansPlanIdGoalsReorderResponseError = (postPlansPlanIdGoalsReorderResponse401) & {
+export type postPlansPlanIdGoalsReorderResponseError = (postPlansPlanIdGoalsReorderResponse401 | postPlansPlanIdGoalsReorderResponse404) & {
   headers: Headers;
 };
 
@@ -1936,7 +1684,7 @@ export const getPostPlansPlanIdGoalsReorderUrl = (planId: string,) => {
 }
 
 export const postPlansPlanIdGoalsReorder = async (planId: string,
-    postPlansPlanIdGoalsReorderBody: PostPlansPlanIdGoalsReorderBody, options?: RequestInit): Promise<postPlansPlanIdGoalsReorderResponse> => {
+    goalReorderRequest: GoalReorderRequest, options?: RequestInit): Promise<postPlansPlanIdGoalsReorderResponse> => {
 
   const res = await fetch(getPostPlansPlanIdGoalsReorderUrl(planId),
   {
@@ -1944,7 +1692,7 @@ export const postPlansPlanIdGoalsReorder = async (planId: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      postPlansPlanIdGoalsReorderBody,)
+      goalReorderRequest,)
   }
 )
 
@@ -3349,6 +3097,50 @@ export const getPlansPlanIdPensionProjection = async (planId: string, options?: 
 
   const data: getPlansPlanIdPensionProjectionResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as getPlansPlanIdPensionProjectionResponse
+}
+
+
+
+/**
+ * Returns service status and links to Swagger/OpenAPI and the currently implemented real backend endpoints.
+ * @summary API service index
+ */
+export type getApiIndexResponse200 = {
+  data: ApiIndexEnvelope
+  status: 200
+}
+
+export type getApiIndexResponseSuccess = (getApiIndexResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getApiIndexResponse = (getApiIndexResponseSuccess)
+
+export const getGetApiIndexUrl = () => {
+
+
+
+
+  return `${apiBaseUrl}/api/v1`
+}
+
+export const getApiIndex = async ( options?: RequestInit): Promise<getApiIndexResponse> => {
+
+  const res = await fetch(getGetApiIndexUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getApiIndexResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getApiIndexResponse
 }
 
 

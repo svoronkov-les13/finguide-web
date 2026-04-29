@@ -16,6 +16,7 @@ import {
   postPlansPlanIdGoals,
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
+import { getOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
 import { demoBearerToken } from "@/shared/api/baseUrl";
 import type {
   CashFlowProjectionPoint,
@@ -41,10 +42,11 @@ let lastPlanState: PlanState | undefined;
 let lastFinancialPlan: FinancialPlan | undefined;
 
 function requestOptions(): RequestInit {
+  const authorization = oidcAuthEnabled ? getOidcAuthorizationHeader() : demoBearerToken ? `Bearer ${demoBearerToken}` : undefined;
   return {
     headers: {
       Accept: "application/json",
-      ...(demoBearerToken ? { Authorization: `Bearer ${demoBearerToken}` } : {}),
+      ...(authorization ? { Authorization: authorization } : {}),
     },
   };
 }

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Bell, ChevronDown, Languages, Layers, LayoutDashboard, Search, Sparkles } from "lucide-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -11,6 +12,7 @@ export function Topbar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: plan } = usePlanQuery();
   const { locale, setLocale, t } = useI18n();
+  const auth = useAuth();
   const setCommandOpen = useUiStore((state) => state.setCommandOpen);
   const route = useMemo(() => [...navigation, ...systemRoutes].find((item) => item.href === pathname), [pathname]);
   const routeLabel = route ? t(route.labelKey) : t("routes.dashboard");
@@ -53,6 +55,11 @@ export function Topbar() {
           {plan?.owner.planName ?? t("common.mainPlan")}
           <ChevronDown className="size-3.5 text-muted-foreground" />
         </Button>
+        {auth.enabled ? (
+          <Button variant="secondary" size="sm" onClick={() => (auth.authenticated ? auth.logout() : void auth.login())}>
+            {auth.authenticated ? "Выйти" : "Войти"}
+          </Button>
+        ) : null}
         <button className="relative grid size-8 place-items-center rounded-full bg-[#12101c] text-xs font-bold text-white" type="button" aria-label={t("common.notifications")}>
           <Bell className="size-3.5" />
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#12101c] text-[9px]">2</span>
