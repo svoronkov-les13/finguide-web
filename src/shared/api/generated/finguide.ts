@@ -72,7 +72,6 @@ import type {
   PostScenariosCompareBody,
   PutMeAvatar200,
   PutMeAvatarBody,
-  PutMePasswordBody,
   PutPlansCurrent200,
   Scenario,
   UnauthorizedResponse,
@@ -302,57 +301,6 @@ export const deleteMeAvatar = async ( options?: RequestInit): Promise<deleteMeAv
 
   const data: deleteMeAvatarResponse['data'] = body ? JSON.parse(body) : {}
   return { data, status: res.status, headers: res.headers } as deleteMeAvatarResponse
-}
-
-
-
-/**
- * @summary Change password
- */
-export type putMePasswordResponse204 = {
-  data: void
-  status: 204
-}
-
-export type putMePasswordResponse400 = {
-  data: BadRequestResponse
-  status: 400
-}
-
-export type putMePasswordResponseSuccess = (putMePasswordResponse204) & {
-  headers: Headers;
-};
-export type putMePasswordResponseError = (putMePasswordResponse400) & {
-  headers: Headers;
-};
-
-export type putMePasswordResponse = (putMePasswordResponseSuccess | putMePasswordResponseError)
-
-export const getPutMePasswordUrl = () => {
-
-
-
-
-  return `${apiBaseUrl}/me/password`
-}
-
-export const putMePassword = async (putMePasswordBody: PutMePasswordBody, options?: RequestInit): Promise<putMePasswordResponse> => {
-
-  const res = await fetch(getPutMePasswordUrl(),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      putMePasswordBody,)
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: putMePasswordResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as putMePasswordResponse
 }
 
 

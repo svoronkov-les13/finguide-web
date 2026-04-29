@@ -110,7 +110,6 @@ export * from './postScenarios201';
 export * from './postScenariosCompareBody';
 export * from './putMeAvatar200';
 export * from './putMeAvatarBody';
-export * from './putMePasswordBody';
 export * from './putPlansCurrent200';
 export * from './scenario';
 export * from './scenarioAdjustments';
