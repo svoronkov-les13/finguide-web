@@ -98,7 +98,9 @@ const routeTree = rootRoute.addChildren([
   faqRoute,
 ]);
 
-export const router = createRouter({ routeTree });
+const routerBasepath = import.meta.env.VITE_FINGUIDE_BASE_PATH?.replace(/\/$/, "") || "/";
+
+export const router = createRouter({ routeTree, basepath: routerBasepath });
 
 declare module "@tanstack/react-router" {
   interface Register {

@@ -4,6 +4,7 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  base: process.env.VITE_FINGUIDE_BASE_PATH ?? "/",
   plugins: [react(), tailwindcss()],
   test: {
     environment: "node",

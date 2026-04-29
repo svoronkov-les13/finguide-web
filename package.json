@@ -12,6 +12,7 @@
     "dev": "bash scripts/with-node.sh vite --host 0.0.0.0",
     "typecheck": "bash scripts/with-node.sh tsc -b",
     "build": "bun run typecheck && bash scripts/with-node.sh vite build",
+    "build:fg": "VITE_FINGUIDE_BASE_PATH=/fg/ bun run build",
     "generate:api": "node scripts/generate-api.mjs",
     "preview": "bash scripts/with-node.sh vite preview --host 0.0.0.0",
     "lint": "bash scripts/with-node.sh eslint .",
