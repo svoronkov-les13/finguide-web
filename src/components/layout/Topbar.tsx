@@ -10,12 +10,16 @@ import { useUiStore } from "@/store/uiStore";
 
 export function Topbar() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { data: plan } = usePlanQuery();
+  const { data: plan, isPending: planPending } = usePlanQuery();
   const { locale, setLocale, t } = useI18n();
   const auth = useAuth();
   const setCommandOpen = useUiStore((state) => state.setCommandOpen);
   const route = useMemo(() => [...navigation, ...systemRoutes].find((item) => item.href === pathname), [pathname]);
   const routeLabel = route ? t(route.labelKey) : t("routes.dashboard");
+  const ownerName = plan?.owner.name ?? (planPending ? "Загрузка…" : "Гость");
+  const ownerInitials = initials(ownerName);
+  const planName = plan?.owner.planName ?? (planPending ? "Загрузка плана…" : t("common.mainPlan"));
+  const ownerTier = plan?.owner.tier ?? (planPending ? "…" : t("common.pro"));
 
   return (
     <header className="sticky top-0 z-30 grid h-[52px] grid-cols-[auto_minmax(260px,340px)_auto] items-center gap-5 border-b border-border/80 bg-background/94 px-5 backdrop-blur-2xl max-[1120px]:grid-cols-[auto_1fr] max-[760px]:grid-cols-1 max-[760px]:px-4">
@@ -52,7 +56,7 @@ export function Topbar() {
         </Button>
         <Button variant="secondary" size="sm">
           <Layers className="size-3.5 text-primary" />
-          {plan?.owner.planName ?? t("common.mainPlan")}
+          {planName}
           <ChevronDown className="size-3.5 text-muted-foreground" />
         </Button>
         {auth.enabled ? (
@@ -65,13 +69,23 @@ export function Topbar() {
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#12101c] text-[9px]">2</span>
         </button>
         <div className="grid grid-cols-[28px_auto] items-center gap-x-2">
-          <span className="row-span-2 grid size-7 place-items-center rounded-full border border-border bg-muted text-[10px] font-bold">АП</span>
-          <strong className="max-w-[120px] truncate text-xs">{plan?.owner.name ?? "Александр Петр..."}</strong>
-          <small className="text-[10px] text-muted-foreground">{plan?.owner.tier ?? t("common.pro")}</small>
+          <span className="row-span-2 grid size-7 place-items-center rounded-full border border-border bg-muted text-[10px] font-bold">{ownerInitials}</span>
+          <strong className="max-w-[120px] truncate text-xs">{ownerName}</strong>
+          <small className="text-[10px] text-muted-foreground">{ownerTier}</small>
         </div>
       </div>
 
       <Sparkles className="absolute right-4 top-1/2 hidden size-4 -translate-y-1/2 text-primary max-[760px]:block" />
     </header>
   );
+}
+
+function initials(name: string) {
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+  return letters || "FG";
 }

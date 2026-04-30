@@ -9,11 +9,14 @@ import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const location = useRouterState({ select: (state) => state.location.pathname });
-  const { data: plan } = usePlanQuery();
+  const { data: plan, isPending: planPending } = usePlanQuery();
   const { t } = useI18n();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const collapsed = !sidebarOpen;
+  const ownerName = plan?.owner.name ?? (planPending ? "Загрузка профиля…" : "Гость");
+  const ownerEmail = plan?.owner.email ?? (planPending ? "Подключаем план" : "demo@finguide.local");
+  const ownerInitials = initials(ownerName);
 
   return (
     <aside
@@ -74,12 +77,12 @@ export function Sidebar() {
         {!collapsed && <span className="max-[1120px]:hidden">{t("common.collapse")}</span>}
       </button>
       <div className={cn("mx-3 mb-4 flex items-center gap-3 rounded-[24px] p-3", collapsed && "justify-center")}>
-        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">АП</div>
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/15 text-xs font-bold text-primary">{ownerInitials}</div>
         {!collapsed && (
           <>
             <div className="min-w-0 flex-1 max-[1120px]:hidden">
-              <div className="truncate text-xs font-semibold text-sidebar-text/45">{plan?.owner.name ?? "Александр Петров"}</div>
-              <div className="truncate text-xs text-sidebar-text/80">{plan?.owner.email ?? "alex.petrov@email.com"}</div>
+              <div className="truncate text-xs font-semibold text-sidebar-text/45">{ownerName}</div>
+              <div className="truncate text-xs text-sidebar-text/80">{ownerEmail}</div>
             </div>
             <LogOut className="size-4 text-sidebar-text/40 max-[1120px]:hidden" />
           </>
@@ -102,6 +105,16 @@ function SidebarGroup({ label, collapsed, children }: SidebarGroupProps) {
       <nav className="grid gap-1 px-3">{children}</nav>
     </div>
   );
+}
+
+function initials(name: string) {
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+  return letters || "FG";
 }
 
 function SidebarLink({ item, active, collapsed }: { item: RouteNavItem; active: boolean; collapsed: boolean }) {
