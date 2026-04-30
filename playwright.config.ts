@@ -8,7 +8,7 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:5174",
     trace: "on-first-retry",
     launchOptions: {
-      executablePath: "/usr/bin/chromium-browser",
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || "/usr/bin/google-chrome",
     },
   },
   webServer: {
