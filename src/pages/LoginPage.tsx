@@ -2,7 +2,7 @@ import { Navigate } from "@tanstack/react-router";
 import { ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function LoginPage() {
   const auth = useAuth();
@@ -20,9 +20,6 @@ export function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-3xl">FinGuide ID</CardTitle>
-            <CardDescription className="mt-2 text-sm">
-              Вход, регистрация и восстановление доступа проходят через Keycloak в стиле FinGuide.
-            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
