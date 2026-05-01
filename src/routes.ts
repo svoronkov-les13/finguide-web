@@ -24,9 +24,9 @@ export interface RouteNavItem {
 export const navigation = [
   { href: "/dashboard", labelKey: "routes.dashboard", icon: LayoutDashboard },
   { href: "/general", labelKey: "routes.general", icon: SlidersHorizontal },
-  { href: "/income", labelKey: "routes.income", icon: Wallet, badge: "4" },
-  { href: "/expenses", labelKey: "routes.expenses", icon: CreditCard, badge: "10" },
-  { href: "/goals", labelKey: "routes.goals", icon: Target, badge: "6" },
+  { href: "/income", labelKey: "routes.income", icon: Wallet },
+  { href: "/expenses", labelKey: "routes.expenses", icon: CreditCard },
+  { href: "/goals", labelKey: "routes.goals", icon: Target },
   { href: "/tracking", labelKey: "routes.tracking", icon: CircleDollarSign },
   { href: "/pension", labelKey: "routes.pension", icon: Landmark },
   { href: "/summary", labelKey: "routes.summary", icon: FileChartColumnIncreasing },
