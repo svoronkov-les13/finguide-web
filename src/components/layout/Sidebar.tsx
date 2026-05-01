@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { navigation, systemRoutes, tools, type RouteNavItem } from "@/routes";
 import { useUiStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
+import { getSidebarCounters, sidebarBadgeForHref, type SidebarCounters } from "@/components/layout/sidebarCounters";
 
 export function Sidebar() {
   const location = useRouterState({ select: (state) => state.location.pathname });
@@ -14,6 +15,7 @@ export function Sidebar() {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const collapsed = !sidebarOpen;
+  const counters = plan ? getSidebarCounters(plan) : undefined;
   const ownerName = plan?.owner.name ?? (planPending ? "Загрузка профиля…" : "Гость");
   const ownerEmail = plan?.owner.email ?? (planPending ? "Подключаем план" : "demo@finguide.local");
   const ownerInitials = initials(ownerName);
@@ -40,17 +42,17 @@ export function Sidebar() {
 
       <SidebarGroup label={t("groups.navigation")} collapsed={collapsed}>
         {navigation.map((item) => (
-          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} />
+          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} counters={counters} />
         ))}
       </SidebarGroup>
       <SidebarGroup label={t("groups.tools")} collapsed={collapsed}>
         {tools.map((item) => (
-          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} />
+          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} counters={counters} />
         ))}
       </SidebarGroup>
       <SidebarGroup label={t("groups.system")} collapsed={collapsed}>
         {systemRoutes.map((item) => (
-          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} />
+          <SidebarLink key={item.href} item={item} active={location === item.href} collapsed={collapsed} counters={counters} />
         ))}
       </SidebarGroup>
 
@@ -117,14 +119,16 @@ function initials(name: string) {
   return letters || "FG";
 }
 
-function SidebarLink({ item, active, collapsed }: { item: RouteNavItem; active: boolean; collapsed: boolean }) {
+function SidebarLink({ item, active, collapsed, counters }: { item: RouteNavItem; active: boolean; collapsed: boolean; counters?: SidebarCounters }) {
   const Icon = item.icon;
   const { t } = useI18n();
   const label = t(item.labelKey);
+  const badge = sidebarBadgeForHref(item.href, counters);
   return (
     <Link
       to={item.href}
       title={label}
+      aria-label={badge ? `${label}: ${badge}` : label}
       className={cn(
         "relative grid min-h-[38px] grid-cols-[22px_1fr_auto] items-center gap-3 rounded-[22px] border border-transparent px-3 text-sm font-medium text-[#c4baa8] transition hover:bg-white/5",
         active && "border-primary/24 bg-primary/12 text-[#ffe082] shadow-[0_0_16px_rgba(189,150,44,0.08)]",
@@ -135,7 +139,7 @@ function SidebarLink({ item, active, collapsed }: { item: RouteNavItem; active: 
       {active && <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" />}
       <Icon className="size-[18px]" />
       {!collapsed && <span className="truncate max-[1120px]:hidden">{label}</span>}
-      {!collapsed && item.badge && <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[11px] font-bold max-[1120px]:hidden">{item.badge}</span>}
+      {!collapsed && badge !== undefined && <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[11px] font-bold max-[1120px]:hidden">{badge}</span>}
     </Link>
   );
 }

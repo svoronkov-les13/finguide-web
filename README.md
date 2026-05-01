@@ -8,6 +8,17 @@ When `VITE_FINGUIDE_AUTH_ENABLED=true`, the app restores the OIDC session from `
 
 Layout components show a neutral loading state until `/api/v1/plans/current` returns the user-owned plan. Hardcoded demo owner fallbacks must not be rendered during auth restore.
 
+## Sidebar counters
+
+The left navigation counters for income, expenses, and goals are derived from the currently loaded persisted plan state returned by `/api/v1/plans/current`.
+
+- Income/expense counters count enabled cashflow items of the corresponding type.
+- Goal counter counts goals in the current plan.
+- While the current plan is not loaded, the sidebar does not render demo/default counter values.
+- Empty persisted plans render zero counters instead of seeded demo values.
+
+Changes to this behavior should be test-driven: add or update a failing unit/integration/e2e check first, then implement the UI fix.
+
 ## Checks
 
 ```bash
