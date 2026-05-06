@@ -1,87 +1,87 @@
-# FinPlan Figma design assessment — 2026-05-06
+# Оценка дизайна FinPlan из Figma — 2026-05-06
 
-Source Figma file: `FinPlan` (`GVmbMjADqc5K8XivPpBuQq`), last modified `2026-05-05T09:31:55Z`.
+Исходный файл Figma: `FinPlan` (`GVmbMjADqc5K8XivPpBuQq`), последнее изменение: `2026-05-05T09:31:55Z`.
 
-## Result
+## Итог
 
-The design is accessible through the Figma API and can be applied to the current React/Vite frontend. The right implementation path is **manual React integration**, not direct generated Figma code import.
+Дизайн доступен через Figma API, его можно применить к текущему React/Vite frontend. Правильный путь внедрения — **ручная интеграция в React**, а не прямой импорт сгенерированного Figma-кода.
 
-## Evidence / screenshots
+## Подтверждение / скриншоты
 
-Full contact sheet:
+Общий contact sheet:
 
-![FinPlan contact sheet](./finplan-figma-2026-05-06/00-contact-sheet.jpg)
+![Contact sheet FinPlan](./finplan-figma-2026-05-06/00-contact-sheet.jpg)
 
-Key frames:
+Ключевые фреймы:
 
 ![Style guide](./finplan-figma-2026-05-06/01-style-guide.png)
 
 ![Dashboard page](./finplan-figma-2026-05-06/02-dashboard-page.png)
 
-![Main flow A](./finplan-figma-2026-05-06/03-main-flow-a.png)
+![Основной flow A](./finplan-figma-2026-05-06/03-main-flow-a.png)
 
-![Instruction modal](./finplan-figma-2026-05-06/14-instruction.png)
+![Модальное окно инструкции](./finplan-figma-2026-05-06/14-instruction.png)
 
-Additional rendered frames are stored in [`docs/design/finplan-figma-2026-05-06`](./finplan-figma-2026-05-06/).
+Дополнительные отрендеренные фреймы лежат в [`docs/design/finplan-figma-2026-05-06`](./finplan-figma-2026-05-06/).
 
-## Figma structure observed
+## Найденная структура Figma
 
-- Page `FinPlan`: 116 top-level objects/frames.
-- Page `FinPlan дубликат`: 118 top-level objects/frames.
-- Page `🎨 Style Guide`: 1 style guide frame.
-- Components/component sets: none exposed through the API.
-- Styles: 4 remote styles exposed (`XXS/Regular`, `XS/Regular`, `L/Regular`, `Neutral/80`).
+- Страница `FinPlan`: 116 объектов/фреймов верхнего уровня.
+- Страница `FinPlan дубликат`: 118 объектов/фреймов верхнего уровня.
+- Страница `🎨 Style Guide`: 1 фрейм со style guide.
+- Компоненты/component sets: через API не отдаются.
+- Стили: через API отдаются 4 remote styles (`XXS/Regular`, `XS/Regular`, `L/Regular`, `Neutral/80`).
 
-## UI direction
+## Направление UI
 
-- Light SaaS UI with warm neutral background and generous spacing.
-- Persistent dark-purple left sidebar.
-- Rounded cards, thin borders, glass/card surfaces.
-- Pastel semantic accents for financial categories and statuses.
-- Heavy use of financial tables, grouped rows, charts, tooltips, forms, and onboarding/help modals.
+- Светлый SaaS-интерфейс с тёплым нейтральным фоном и большим количеством воздуха.
+- Постоянный тёмно-фиолетовый левый sidebar.
+- Скруглённые карточки, тонкие бордеры, glass/card-поверхности.
+- Пастельные смысловые акценты для финансовых категорий и статусов.
+- Активно используются финансовые таблицы, группировки строк, графики, tooltip, формы и onboarding/help-модалки.
 
-## Applicability to current frontend
+## Применимость к текущему frontend
 
-Current frontend already uses:
+Текущий frontend уже использует:
 
 - React 19 + TypeScript + Vite.
 - TanStack Query/Router.
 - Recharts.
 - React Hook Form + Zod.
-- Radix primitives and local UI components.
+- Radix primitives и локальные UI-компоненты.
 
-This stack is compatible with the new design. Existing `AppShell`, sidebar/topbar, cards, buttons, inputs, dashboard widgets, and page routes can be evolved rather than replaced wholesale.
+Этот стек совместим с новым дизайном. Существующие `AppShell`, sidebar/topbar, карточки, кнопки, input, dashboard-виджеты и page routes можно развивать, а не переписывать с нуля.
 
-## Recommended implementation order
+## Рекомендуемый порядок внедрения
 
-1. Add design tokens: colors, typography, radii, shadows, spacing.
-2. Update base layout shell: background, sidebar, topbar, page width, card surfaces.
-3. Rework shared UI primitives: Button, Input, Select, Tabs, Card, Badge, Dialog, Tooltip.
-4. Apply pages in this order:
-   - Dashboard / summary overview.
-   - General data / onboarding flow.
-   - Income and expense sections.
-   - Goals and scenario tables.
-   - Tracker and personal account/settings.
-   - FAQ/help/instruction modals.
-5. Add visual regression screenshots for key pages before/after.
+1. Добавить дизайн-токены: цвета, типографика, радиусы, тени, spacing.
+2. Обновить базовый layout shell: фон, sidebar, topbar, ширина страниц, поверхности карточек.
+3. Переработать shared UI primitives: Button, Input, Select, Tabs, Card, Badge, Dialog, Tooltip.
+4. Переносить страницы в таком порядке:
+   - Dashboard / сводный обзор.
+   - Общие данные / onboarding flow.
+   - Доходы и расходы.
+   - Цели и таблицы сценариев.
+   - Трекер и личный кабинет/settings.
+   - FAQ/help/модальные окна инструкции.
+5. Добавить visual regression screenshots для ключевых страниц до/после.
 
-## Risks / blockers
+## Риски / блокеры
 
-- Figma file does not expose a reusable component library through the API, so the frontend design system must be rebuilt manually.
-- Desktop frames are clear; responsive/mobile behavior is not obvious from the captured frames.
-- Tables are the highest-risk area: grouping, inline states, sticky headers, empty states, and formatting.
-- Charts need precise tooltip, legend, axes, currency/percentage formatting.
-- Some UI states are missing or unclear: loading, error, hover/focus, validation errors, disabled states.
-- Backend/API gaps may block full fidelity for tracker, account/settings, scenarios, and advanced analytics screens.
+- Figma-файл не отдаёт переиспользуемую библиотеку компонентов через API, поэтому frontend design system нужно пересобрать вручную.
+- Desktop-фреймы понятны; responsive/mobile-поведение по текущим скринам не очевидно.
+- Таблицы — зона максимального риска: группировки, inline-состояния, sticky headers, empty states и форматирование.
+- Графикам нужны точные tooltip, legend, axes, форматирование валют/процентов.
+- Часть UI-состояний отсутствует или неясна: loading, error, hover/focus, validation errors, disabled states.
+- Пробелы в backend/API могут помешать полной точности для tracker, account/settings, scenarios и advanced analytics screens.
 
 ## Acceptance criteria
 
-- [ ] Design tokens are codified in `src/styles.css` / UI primitives.
-- [ ] App shell matches the new sidebar/topbar/background direction.
-- [ ] Dashboard key screenshots match Figma at desktop width.
-- [ ] Shared UI primitives cover buttons, inputs, cards, tabs, badges, dialogs, tooltips.
-- [ ] Page-by-page migration plan is split into implementation issues.
-- [ ] Missing API/data fields are listed as backend follow-up issues.
-- [ ] Build/typecheck pass.
-- [ ] Visual screenshots are attached to each implementation PR/issue.
+- [ ] Design tokens зафиксированы в `src/styles.css` / UI primitives.
+- [ ] App shell соответствует новому направлению sidebar/topbar/background.
+- [ ] Ключевые desktop-скриншоты Dashboard близко совпадают с Figma.
+- [ ] Shared UI primitives покрывают buttons, inputs, cards, tabs, badges, dialogs, tooltips.
+- [ ] Page-by-page план миграции разбит на implementation issues.
+- [ ] Недостающие API/data fields вынесены в backend follow-up issues.
+- [ ] Build/typecheck проходят.
+- [ ] Visual screenshots приложены к каждому implementation PR/issue.
