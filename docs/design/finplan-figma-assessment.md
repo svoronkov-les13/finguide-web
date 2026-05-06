@@ -8,11 +8,11 @@
 
 ## Подтверждение / скриншоты
 
-Общий contact sheet:
+Общий contact sheet для навигации по экранам:
 
 ![Contact sheet FinPlan](./finplan-figma-2026-05-06/00-contact-sheet.jpg)
 
-Ключевые фреймы:
+Ключевые фреймы отрендерены из Figma в high-res PNG (`scale=3`), чтобы по ним можно было делать вёрстку:
 
 ![Style guide](./finplan-figma-2026-05-06/01-style-guide.png)
 
@@ -22,7 +22,7 @@
 
 ![Модальное окно инструкции](./finplan-figma-2026-05-06/14-instruction.png)
 
-Дополнительные отрендеренные фреймы лежат в [`docs/design/finplan-figma-2026-05-06`](./finplan-figma-2026-05-06/).
+Дополнительные high-res фреймы лежат в [`docs/design/finplan-figma-2026-05-06`](./finplan-figma-2026-05-06/). Для точных размеров, отступов и инспекта слоёв всё равно нужно использовать Figma как основной источник; PNG — вспомогательный артефакт для задач/PR.
 
 ## Найденная структура Figma
 
