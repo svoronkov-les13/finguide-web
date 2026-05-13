@@ -1,0 +1,40 @@
+name: Deploy FinGuide Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: finguide-web-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, finguide-web]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build /fg frontend
+        run: bun run build:fg
+
+      - name: Deploy static files
+        run: |
+          set -euo pipefail
+          DEPLOY_DIR=/var/www/mtproxy-info/fg
+          BACKUP_DIR=/var/www/mtproxy-info/backups/fg-actions-$(date -u +%Y%m%dT%H%M%SZ)
+          sudo install -d -o clawd -g clawd /var/www/mtproxy-info/backups
+          if [ -d "$DEPLOY_DIR" ]; then
+            cp -a "$DEPLOY_DIR" "$BACKUP_DIR"
+          fi
+          sudo install -d -o clawd -g clawd "$DEPLOY_DIR"
+          rsync -a --delete dist/ "$DEPLOY_DIR"/
+
+      - name: Smoke test public page
+        run: curl -fsS http://66.42.121.18/fg/ >/dev/null
