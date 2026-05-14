@@ -8,7 +8,9 @@ import { AuthErrorPage } from "@/pages/AuthErrorPage";
 import { GeneralDataPage } from "@/pages/GeneralDataPage";
 import { GoalsPage } from "@/pages/GoalsPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { OnboardingPage } from "@/pages/OnboardingPage";
 import { PensionPage } from "@/pages/PensionPage";
+import { RegisterPage } from "@/pages/RegisterPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SummaryPage } from "@/pages/SummaryPage";
 import { TrackingPage } from "@/pages/TrackingPage";
@@ -23,10 +25,20 @@ const appRoute = createRoute({
   component: ProtectedRoute,
 });
 
+function IndexRedirect() {
+  try {
+    const onboardingSeen = globalThis.localStorage?.getItem("fp.onboarding.seen") === "true";
+    if (!onboardingSeen) return <Navigate to="/onboarding" replace />;
+  } catch {
+    /* Non-critical — fall through to /dashboard */
+  }
+  return <Navigate to="/dashboard" replace />;
+}
+
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => <Navigate to="/dashboard" replace />,
+  component: IndexRedirect,
 });
 
 const dashboardRoute = createRoute({
@@ -51,6 +63,12 @@ const expensesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/expenses",
   component: () => <CashflowPage type="expense" />,
+});
+
+const expenseRedirectRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/expense",
+  component: () => <Navigate to="/expenses" replace />,
 });
 
 const goalsRoute = createRoute({
@@ -89,10 +107,22 @@ const faqRoute = createRoute({
   component: FaqPage,
 });
 
+const onboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding",
+  component: OnboardingPage,
+});
+
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: LoginPage,
+});
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/register",
+  component: RegisterPage,
 });
 
 const authCallbackRoute = createRoute({
@@ -109,7 +139,9 @@ const authErrorRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  onboardingRoute,
   loginRoute,
+  registerRoute,
   authCallbackRoute,
   authErrorRoute,
   appRoute.addChildren([
@@ -117,6 +149,7 @@ const routeTree = rootRoute.addChildren([
     generalRoute,
     incomeRoute,
     expensesRoute,
+    expenseRedirectRoute,
     goalsRoute,
     trackingRoute,
     pensionRoute,

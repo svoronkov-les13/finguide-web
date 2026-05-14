@@ -42,4 +42,20 @@ describe("mockApi", () => {
     expect(reset.dashboardSnapshot?.independenceYear).toBe(2076);
     expect(reset.settings.retirementAge).toBe(50);
   });
+
+  it("applies a what-if scenario without mutating base settings", async () => {
+    const initial = await mockApi.getPlan();
+    const next = await mockApi.saveWhatIfScenario({
+      incomeGrowthDelta: 0.15,
+      expenseGrowthDelta: 0.05,
+      returnDelta: 0.01,
+      inflationDelta: -0.01,
+      retirementAgeShift: -2,
+      goalsCostDelta: 0,
+    });
+
+    expect(next.activeScenario).toBe("whatif");
+    expect(next.settings).toEqual(initial.settings);
+    expect(next.forecast.at(-1)?.capital).not.toBe(initial.forecast.at(-1)?.capital);
+  });
 });

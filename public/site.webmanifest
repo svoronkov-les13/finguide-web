@@ -1,0 +1,22 @@
+{
+  "name": "FinPlan",
+  "short_name": "FinPlan",
+  "description": "Financial planning application",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#1b0e26",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

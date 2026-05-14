@@ -14,7 +14,7 @@ export function DashboardPage() {
   return (
     <Page className="gap-2.5">
       <section className="flex items-end justify-between gap-6 max-[760px]:block">
-        <h1 className="text-[26px] font-bold leading-[1.4] max-[760px]:mb-4 max-[760px]:text-2xl">{t("dashboard.title")}</h1>
+        <h1 className="page-title max-[760px]:mb-4 max-[760px]:text-2xl">{t("dashboard.title")}</h1>
         <ScenarioBar onWhatIf={() => setWhatIfOpen(true)} />
       </section>
       <KpiCards />

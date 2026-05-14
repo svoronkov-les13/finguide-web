@@ -168,12 +168,29 @@ export const mockApi = {
     return snapshot();
   },
 
-  async saveWhatIfScenario(input: { incomeGrowthDelta: number; expenseGrowthDelta: number; returnDelta: number }) {
+  async saveWhatIfScenario(input: {
+    incomeGrowthDelta: number;
+    expenseGrowthDelta: number;
+    returnDelta: number;
+    inflationDelta?: number;
+    retirementAgeShift?: number;
+    goalsCostDelta?: number;
+    description?: string;
+  }) {
     await wait(160);
+    const hasWhatIf = db.scenarios.some((scenario) => scenario.id === "whatif");
+    const whatIfScenario = {
+      id: "whatif" as const,
+      name: "Что если?",
+      ...input,
+    };
+
     return commit({
       ...db,
       activeScenario: "whatif",
-      scenarios: db.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...input } : scenario)),
+      scenarios: hasWhatIf
+        ? db.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...whatIfScenario } : scenario))
+        : [...db.scenarios, whatIfScenario],
     });
   },
 };

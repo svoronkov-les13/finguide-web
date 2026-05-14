@@ -3,8 +3,10 @@ import {
   beginOidcLogin,
   completeOidcLogin,
   endOidcSession,
+  getKeycloakRegistrationUrl,
   getStoredAuthSession,
   hasValidAuthSession,
+  loginWithCredentials as oidcLoginWithCredentials,
   oidcAuthEnabled,
   type AuthSession,
 } from "@/auth/oidc";
@@ -14,9 +16,11 @@ type AuthContextValue = {
   session?: AuthSession;
   authenticated: boolean;
   login: (returnTo?: string) => Promise<void>;
+  loginWithCredentials: (email: string, password: string) => Promise<AuthSession>;
   completeLogin: () => Promise<string>;
   logout: () => void;
   refresh: () => void;
+  registrationUrl: string;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -31,6 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       authenticated,
       login: (returnTo?: string) => beginOidcLogin(returnTo),
+      loginWithCredentials: async (email: string, password: string) => {
+        const newSession = await oidcLoginWithCredentials(email, password);
+        setSession(newSession);
+        return newSession;
+      },
       completeLogin: async () => {
         const result = await completeOidcLogin();
         setSession(result.session);
@@ -41,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(undefined);
       },
       refresh: () => setSession(getStoredAuthSession()),
+      registrationUrl: getKeycloakRegistrationUrl(),
     }),
     [authenticated, session],
   );

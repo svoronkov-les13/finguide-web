@@ -4,15 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors duration-[var(--fp-duration-normal)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-accent-gold)]/30 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-soft hover:bg-[#a98322]",
-        secondary: "border border-border/80 bg-card/80 text-foreground shadow-soft hover:bg-surface-hover",
-        ghost: "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
-        danger: "bg-rose-500/10 text-rose-700 hover:bg-rose-500/15",
-        active: "border border-primary/35 bg-primary/12 text-[#9b761f]",
+        default: "bg-[var(--fp-color-primary)] text-[var(--fp-color-primary-foreground)] shadow-[var(--fp-shadow-soft)] hover:bg-[var(--fp-color-sidebar-soft)]",
+        secondary: "border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)] hover:bg-[var(--fp-color-surface-hover)]",
+        ghost: "text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]",
+        danger: "bg-[var(--fp-color-danger-soft)] text-[var(--fp-color-danger)] hover:bg-[var(--fp-color-danger)]/15",
+        active: "border border-[var(--fp-color-sidebar-active-border)] bg-[var(--fp-color-accent-gold-soft)] text-[var(--fp-color-accent-gold-text)]",
+        success: "bg-[var(--fp-color-teal)] text-white shadow-[var(--fp-shadow-soft)] hover:bg-[var(--fp-color-teal)]/90",
+        "success-outline": "border border-[var(--fp-color-teal)]/40 text-[var(--fp-color-teal)] hover:bg-[var(--fp-color-teal-soft)]",
+        "danger-outline": "border border-[var(--fp-color-coral)]/40 text-[var(--fp-color-coral)] hover:bg-[var(--fp-color-coral-soft)]",
       },
       size: {
         sm: "h-8 px-3 text-[13px]",

@@ -14,9 +14,12 @@ export const settingsSchema = z.object({
 export type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export const whatIfSchema = z.object({
-  investmentReturnPercent: z.coerce.number().min(-20).max(50),
-  inflationPercent: z.coerce.number().min(0).max(30),
-  retirementAge: z.coerce.number().int().min(35).max(90),
+  incomeChangePercent: z.coerce.number().min(-50).max(100),
+  expenseChangePercent: z.coerce.number().min(-50).max(100),
+  returnDeltaPercent: z.coerce.number().min(-5).max(10),
+  inflationDeltaPercent: z.coerce.number().min(-5).max(10),
+  retirementAgeShift: z.coerce.number().int().min(-10).max(10),
+  goalsCostChangePercent: z.coerce.number().min(-30).max(100),
 });
 
 export type WhatIfFormValues = z.infer<typeof whatIfSchema>;

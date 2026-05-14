@@ -17,6 +17,7 @@ import {
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
 import { getOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
+import { calculateForecast } from "@/engine/calculateForecast";
 import { demoBearerToken } from "@/shared/api/baseUrl";
 import type {
   CashFlowProjectionPoint,
@@ -115,8 +116,9 @@ function mapBackendPlan(input: {
     forecast,
   };
 
-  lastFinancialPlan = plan;
-  return plan;
+  const projectedPlan = { ...plan, forecast: calculateForecast(plan) };
+  lastFinancialPlan = projectedPlan;
+  return projectedPlan;
 }
 
 function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undefined) {
@@ -164,7 +166,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
     enabled: true,
-    category: source.frequency === "yearly" ? "Ежегодные доходы" : "Ежемесячные доходы",
+    category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "onetime" ? "Разовые доходы" : "Ежегодные доходы",
   };
 }
 
@@ -180,7 +182,7 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
     enabled: true,
-    category: source.frequency === "yearly" ? "Ежегодные расходы" : "Ежемесячные расходы",
+    category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "onetime" ? "Разовые расходы" : "Ежегодные расходы",
   };
 }
 
@@ -214,21 +216,33 @@ function mapGoal(goal: ApiGoal, lastForecastYear: number): Goal {
 }
 
 function mapScenarios(scenarios: ApiScenario[]): Scenario[] {
-  const mapped = scenarios.map((scenario, index) => ({
+  const mapped: Scenario[] = scenarios.map((scenario, index) => ({
     id: toScenarioId(scenario.id, index),
     name: scenario.name,
-    incomeGrowthDelta: scenario.adjustments?.incomeAdjPct ?? 0,
-    expenseGrowthDelta: scenario.adjustments?.expenseAdjPct ?? 0,
-    returnDelta: scenario.adjustments?.returnAdjPct ?? 0,
+    incomeGrowthDelta: adjustmentPct(scenario.adjustments?.incomeAdjPct),
+    expenseGrowthDelta: adjustmentPct(scenario.adjustments?.expenseAdjPct),
+    returnDelta: adjustmentPct(scenario.adjustments?.returnAdjPct),
+    inflationDelta: adjustmentPct(scenario.adjustments?.inflationAdjPct),
+    retirementAgeShift: scenario.adjustments?.retirementAgeShift ?? 0,
+    goalsCostDelta: adjustmentPct(scenario.adjustments?.goalsCostAdjPct),
+    description: scenario.description,
   }));
 
-  return mapped.length > 0
+  const baseScenarios: Scenario[] = mapped.length > 0
     ? mapped
     : [
         { id: "base", name: "Базовый", incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0 },
-        { id: "optimistic", name: "Оптимистичный", incomeGrowthDelta: 0.015, expenseGrowthDelta: -0.008, returnDelta: 0.015 },
-        { id: "pessimistic", name: "Пессимистичный", incomeGrowthDelta: -0.012, expenseGrowthDelta: 0.015, returnDelta: -0.018 },
+        { id: "optimistic", name: "Оптимистичный", incomeGrowthDelta: 0.15, expenseGrowthDelta: 0.05, returnDelta: 0.01, inflationDelta: -0.01, retirementAgeShift: -2, goalsCostDelta: 0 },
+        { id: "pessimistic", name: "Пессимистичный", incomeGrowthDelta: -0.1, expenseGrowthDelta: 0.12, returnDelta: -0.02, inflationDelta: 0.02, retirementAgeShift: 3, goalsCostDelta: 0.15 },
       ];
+
+  return baseScenarios.some((scenario) => scenario.id === "whatif")
+    ? baseScenarios
+    : [...baseScenarios, { id: "whatif", name: "Что если?", incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0, inflationDelta: 0, retirementAgeShift: 0, goalsCostDelta: 0 }];
+}
+
+function adjustmentPct(value: number | undefined) {
+  return value === undefined ? 0 : value / 100;
 }
 
 function mapDashboardSnapshot(
@@ -287,6 +301,7 @@ function mapTracker(dashboard: DashboardMetrics): TrackerEntry[] {
 }
 
 function toUiFrequency(frequency: string): Cashflow["frequency"] {
+  if (frequency === "onetime") return "onetime";
   return frequency === "monthly" ? "monthly" : "yearly";
 }
 
@@ -314,6 +329,7 @@ function endDateFromYear(year: number) {
 }
 
 function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
+  const effectiveEndYear = input.endYear ?? input.startYear + 30;
   return {
     id: input.id,
     name: input.name,
@@ -323,9 +339,9 @@ function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
     growthType: "manual",
     growthPct: input.growth * 100,
     startDate: startDateFromYear(input.startYear),
-    endDate: endDateFromYear(input.endYear),
+    endDate: endDateFromYear(effectiveEndYear),
     startYear: input.startYear,
-    endYear: input.endYear,
+    endYear: effectiveEndYear,
   };
 }
 
@@ -523,10 +539,21 @@ export const backendPlanClient = {
     return readBackendPlan();
   },
 
-  async saveWhatIfScenario(input: { incomeGrowthDelta: number; expenseGrowthDelta: number; returnDelta: number }) {
+  async saveWhatIfScenario(input: {
+    incomeGrowthDelta: number;
+    expenseGrowthDelta: number;
+    returnDelta: number;
+    inflationDelta?: number;
+    retirementAgeShift?: number;
+    goalsCostDelta?: number;
+    description?: string;
+  }) {
     const optimistic = await readBackendPlan();
     optimistic.activeScenario = "whatif";
-    optimistic.scenarios = optimistic.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...input } : scenario));
+    optimistic.scenarios = optimistic.scenarios.some((scenario) => scenario.id === "whatif")
+      ? optimistic.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...input } : scenario))
+      : [...optimistic.scenarios, { id: "whatif", name: "Что если?", ...input }];
+    optimistic.forecast = calculateForecast(optimistic);
     activeScenario = "whatif";
     lastFinancialPlan = optimistic;
     return optimistic;

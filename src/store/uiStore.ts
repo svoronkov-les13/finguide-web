@@ -13,7 +13,7 @@ interface UiState {
 
 export const useUiStore = create<UiState>((set) => ({
   commandOpen: false,
-  sidebarOpen: true,
+  sidebarOpen: false,
   hintVisible: true,
   toastVisible: true,
   setCommandOpen: (commandOpen) => set({ commandOpen }),

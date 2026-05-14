@@ -13,6 +13,7 @@
     "typecheck": "bash scripts/with-node.sh tsc -b",
     "build": "bun run typecheck && bash scripts/with-node.sh vite build",
     "build:fg": "VITE_FINGUIDE_BASE_PATH=/fg/ VITE_FINGUIDE_AUTH_ENABLED=true VITE_FINGUIDE_OIDC_ISSUER_URL=http://66.42.121.18/auth/realms/finguide VITE_FINGUIDE_OIDC_CLIENT_ID=finguide-web VITE_FINGUIDE_OIDC_SCOPE='openid profile email' bun run build",
+    "cache:figma": "bash scripts/with-node.sh node scripts/cache-figma.mjs",
     "generate:api": "node scripts/generate-api.mjs",
     "preview": "bash scripts/with-node.sh vite preview --host 0.0.0.0",
     "lint": "bash scripts/with-node.sh eslint .",

@@ -12,24 +12,36 @@ export function ScenarioBar({ onWhatIf }: { onWhatIf: () => void }) {
 
   if (!plan) return null;
 
+  const visibleScenarios = plan.scenarios.filter((scenario) => scenario.id !== "whatif");
+  const whatIfActive = plan.activeScenario === "whatif";
+
   return (
-    <div className="scrollbar-thin flex gap-2 overflow-x-auto pb-1" role="group" aria-label={t("dashboard.scenariosLabel")}>
-      {plan.scenarios.map((scenario) => (
+    <div className="scrollbar-thin flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label={t("dashboard.scenariosLabel")}>
+      {visibleScenarios.map((scenario) => (
         <Button
           key={scenario.id}
           type="button"
           variant={plan.activeScenario === scenario.id ? "active" : "secondary"}
           size="sm"
-          className={cn("shrink-0", scenario.id === "whatif" && "border-dashed")}
+          className="shrink-0"
           onClick={() => {
-            if (scenario.id === "whatif") onWhatIf();
             setScenario.mutate(scenario.id as ScenarioId);
           }}
         >
-          {scenario.id === "whatif" && <WandSparkles className="size-3.5" />}
           {scenario.name}
         </Button>
       ))}
+      <span className="mx-1 h-7 w-px shrink-0 bg-[var(--fp-color-border)]" />
+      <Button
+        type="button"
+        variant={whatIfActive ? "active" : "secondary"}
+        size="sm"
+        className={cn("shrink-0", !whatIfActive && "border-[var(--fp-color-foreground)]/80")}
+        onClick={onWhatIf}
+      >
+        <WandSparkles className="size-3.5" />
+        Моделирование сценариев
+      </Button>
     </div>
   );
 }

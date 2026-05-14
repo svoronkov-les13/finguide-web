@@ -1,81 +1,107 @@
 import { useMemo } from "react";
-import { useRouterState } from "@tanstack/react-router";
-import { Bell, ChevronDown, Languages, Layers, LayoutDashboard, Search, Sparkles } from "lucide-react";
-import { useAuth } from "@/auth/AuthProvider";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Check, ChevronDown, Layers, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { usePlanQuery } from "@/api/planQueries";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/auth/AuthProvider";
 import { useI18n } from "@/i18n/I18nProvider";
-import { navigation, systemRoutes } from "@/routes";
-import { useUiStore } from "@/store/uiStore";
+import { navigation, systemRoutes, tools } from "@/routes";
 
 export function Topbar() {
+  const auth = useAuth();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: plan, isPending: planPending } = usePlanQuery();
-  const { locale, setLocale, t } = useI18n();
-  const auth = useAuth();
-  const setCommandOpen = useUiStore((state) => state.setCommandOpen);
-  const route = useMemo(() => [...navigation, ...systemRoutes].find((item) => item.href === pathname), [pathname]);
+  const { t } = useI18n();
+  const route = useMemo(() => [...navigation, ...tools, ...systemRoutes].find((item) => item.href === pathname), [pathname]);
+  const group = useMemo(() => {
+    if (navigation.some((item) => item.href === pathname)) return { key: "groups.navigation", href: "/dashboard" };
+    if (tools.some((item) => item.href === pathname)) return { key: "groups.tools", href: "/tracking" };
+    if (systemRoutes.some((item) => item.href === pathname)) return { key: "groups.system", href: "/settings" };
+    return { key: "groups.navigation", href: "/dashboard" };
+  }, [pathname]);
   const routeLabel = route ? t(route.labelKey) : t("routes.dashboard");
-  const ownerName = plan?.owner.name ?? (planPending ? "Загрузка…" : "Гость");
+  const planName = plan?.owner.planName ?? (planPending ? t("topbar.loadingPlan") : t("common.mainPlan"));
+  const ownerName = auth.session?.profile?.name || auth.session?.profile?.preferredUsername || plan?.owner.name || (planPending ? t("topbar.loading") : t("topbar.guest"));
   const ownerInitials = initials(ownerName);
-  const planName = plan?.owner.planName ?? (planPending ? "Загрузка плана…" : t("common.mainPlan"));
-  const ownerTier = plan?.owner.tier ?? (planPending ? "…" : t("common.pro"));
 
   return (
-    <header className="sticky top-0 z-30 grid h-[52px] grid-cols-[auto_minmax(260px,340px)_auto] items-center gap-5 border-b border-border/80 bg-background/94 px-5 backdrop-blur-2xl max-[1120px]:grid-cols-[auto_1fr] max-[760px]:grid-cols-1 max-[760px]:px-4">
-      <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-        <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border/80 bg-card/70">
+    <header className="sticky top-0 z-[var(--fp-z-topbar)] grid h-[52px] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-6 border-b border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-6 max-[760px]:grid-cols-[1fr_auto] max-[760px]:gap-3 max-[760px]:px-4">
+      <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--fp-color-muted-foreground)]">
+        <span className="grid size-6 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] text-[var(--fp-color-muted-foreground)] shadow-[var(--fp-shadow-soft)]">
           {route?.icon ? <route.icon className="size-3.5" /> : <LayoutDashboard className="size-3.5" />}
         </span>
-        <span>{t("common.overview")}</span>
-        <span>/</span>
-        <strong className="truncate text-foreground">{routeLabel}</strong>
+        <Link to={group.href} className="max-[520px]:hidden transition-colors hover:text-[var(--fp-color-foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)] rounded-sm">
+          {t(group.key as any)}
+        </Link>
+        <span className="max-[520px]:hidden">/</span>
+        <Link to={route?.href ?? "/dashboard"} className="truncate text-[var(--fp-color-foreground)] transition-opacity hover:opacity-80 outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)] rounded-sm">
+          <strong>{routeLabel}</strong>
+        </Link>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setCommandOpen(true)}
-        className="flex h-9 min-w-0 items-center gap-2 rounded-full border border-border/80 bg-card/70 px-3 text-left text-xs text-muted-foreground shadow-soft transition hover:bg-surface max-[760px]:hidden"
-      >
-        <Search className="size-3.5 shrink-0" />
-        <span className="min-w-0 flex-1 truncate">{t("common.searchPlaceholder")}</span>
-        <kbd className="grid size-5 place-items-center rounded-full border border-border text-[10px]">⌘</kbd>
-        <kbd className="grid size-5 place-items-center rounded-full border border-border text-[10px]">K</kbd>
-      </button>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            className="inline-flex h-9 items-center gap-3 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)] transition hover:bg-[var(--fp-color-surface)] max-[760px]:hidden outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)]"
+          >
+            <Layers className="size-4 text-[var(--fp-color-muted-foreground)]" />
+            <span className="max-w-[190px] truncate">{planName}</span>
+            <ChevronDown className="size-4 text-[var(--fp-color-muted-foreground)]" />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            align="end"
+            className="z-[var(--fp-z-topbar)] mt-2 min-w-[240px] overflow-hidden rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-1.5 shadow-[var(--fp-shadow-card)]"
+          >
+            <DropdownMenu.Item className="flex cursor-pointer items-center justify-between gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]">
+              <span className="truncate">{planName}</span>
+              <Check className="size-4 shrink-0 text-[var(--fp-color-primary)]" />
+            </DropdownMenu.Item>
+            
+            <DropdownMenu.Separator className="my-1 h-px bg-[var(--fp-color-border)]" />
+            
+            <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-muted-foreground)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)] focus:bg-[var(--fp-color-surface-hover)] focus:text-[var(--fp-color-foreground)]">
+              <Settings className="size-4 shrink-0" />
+              <span>{t("topbar.managePlans", "Управление планами")}</span>
+            </DropdownMenu.Item>
+            
+            <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-primary)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]">
+              <Plus className="size-4 shrink-0" />
+              <span className="font-medium">{t("topbar.createPlan", "Создать новый план")}</span>
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
 
-      <div className="flex items-center justify-end gap-3 max-[1120px]:hidden">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setLocale(locale === "ru" ? "en" : "ru")}
-          aria-label={t("common.language")}
-          title={locale === "ru" ? t("common.english") : t("common.russian")}
-        >
-          <Languages className="size-3.5 text-primary" />
-          {locale.toUpperCase()}
-        </Button>
-        <Button variant="secondary" size="sm">
-          <Layers className="size-3.5 text-primary" />
-          {planName}
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        </Button>
-        {auth.enabled ? (
-          <Button variant="secondary" size="sm" onClick={() => (auth.authenticated ? auth.logout() : void auth.login())}>
-            {auth.authenticated ? "Выйти" : "Войти"}
-          </Button>
-        ) : null}
-        <button className="relative grid size-8 place-items-center rounded-full bg-[#12101c] text-xs font-bold text-white" type="button" aria-label={t("common.notifications")}>
-          <Bell className="size-3.5" />
-          <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[#12101c] text-[9px]">2</span>
-        </button>
-        <div className="grid grid-cols-[28px_auto] items-center gap-x-2">
-          <span className="row-span-2 grid size-7 place-items-center rounded-full border border-border bg-muted text-[10px] font-bold">{ownerInitials}</span>
-          <strong className="max-w-[120px] truncate text-xs">{ownerName}</strong>
-          <small className="text-[10px] text-muted-foreground">{ownerTier}</small>
-        </div>
+      <div className="flex min-w-0 items-center gap-3 border-l border-[var(--fp-color-border)] pl-6 max-[760px]:border-l-0 max-[760px]:pl-0">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-muted)] text-[11px] font-semibold text-[var(--fp-color-foreground)]">
+          {ownerInitials}
+        </span>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button type="button" className="flex min-w-0 items-center gap-2 text-left text-sm outline-none max-[760px]:hidden">
+              <span className="max-w-[180px] truncate">{ownerName}</span>
+              <ChevronDown className="size-4 shrink-0 text-[var(--fp-color-muted-foreground)]" />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              className="z-[var(--fp-z-topbar)] mt-2 min-w-48 overflow-hidden rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-1.5 shadow-[var(--fp-shadow-card)]"
+            >
+              <DropdownMenu.Item
+                onClick={() => auth.logout()}
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm text-red-500 outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"
+              >
+                <LogOut className="size-4 opacity-70" />
+                <span className="font-medium">{t("sidebar.logout")}</span>
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
-
-      <Sparkles className="absolute right-4 top-1/2 hidden size-4 -translate-y-1/2 text-primary max-[760px]:block" />
     </header>
   );
 }
@@ -87,5 +113,5 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
-  return letters || "FG";
+  return letters || "FP";
 }
