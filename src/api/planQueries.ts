@@ -175,7 +175,7 @@ export function useContributionsQuery() {
   const { data: plan } = usePlanQuery();
   return useQuery({
     queryKey: contributionsQueryKey,
-    queryFn: () => financialPlanClient.getContributions(),
+    queryFn: () => financialPlanClient.getContributions(plan!.planId!),
     enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
     staleTime: 30_000,
   });
@@ -184,7 +184,8 @@ export function useContributionsQuery() {
 export function useAddContributionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: Omit<Contribution, "id">) => financialPlanClient.addContribution(input),
+    mutationFn: ({ planId, ...input }: { planId: string } & Omit<Contribution, "id">) =>
+      financialPlanClient.addContribution(planId, input),
     onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
   });
 }
@@ -192,8 +193,8 @@ export function useAddContributionMutation() {
 export function useUpdateContributionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<Omit<Contribution, "id">> }) =>
-      financialPlanClient.updateContribution(id, patch),
+    mutationFn: ({ planId, id, patch }: { planId: string; id: string; patch: Partial<Omit<Contribution, "id">> }) =>
+      financialPlanClient.updateContribution(planId, id, patch),
     onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
   });
 }
@@ -201,7 +202,8 @@ export function useUpdateContributionMutation() {
 export function useDeleteContributionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => financialPlanClient.deleteContribution(id),
+    mutationFn: ({ planId, id }: { planId: string; id: string }) =>
+      financialPlanClient.deleteContribution(planId, id),
     onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
   });
 }
@@ -216,7 +218,7 @@ export function useMonthlyTrackerQuery() {
   const { data: plan } = usePlanQuery();
   return useQuery({
     queryKey: monthlyTrackerQueryKey,
-    queryFn: () => financialPlanClient.getMonthlyTracker(),
+    queryFn: () => financialPlanClient.getMonthlyTracker(plan!.planId!),
     enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
     staleTime: 30_000,
   });
@@ -225,9 +227,8 @@ export function useMonthlyTrackerQuery() {
 export function useSaveMonthlyTrackerMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ month, status, amount, note }: { month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
-      financialPlanClient.saveMonthlyTrackerEntry(month, status, amount, note),
-    // API returns 204 No Content → invalidate and refetch instead of setQueryData(undefined)
+    mutationFn: ({ planId, month, status, amount, note }: { planId: string; month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
+      financialPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
     },

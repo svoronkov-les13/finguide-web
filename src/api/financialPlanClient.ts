@@ -53,14 +53,14 @@ const backendFirstClient = {
   saveWhatIfScenario: (input: Parameters<typeof backendPlanClient.saveWhatIfScenario>[0]) =>
     activeClient().saveWhatIfScenario(input),
   // Contributions & Monthly tracker — always hit backend
-  getContributions: () => backendPlanClient.getContributions(),
-  addContribution: (input: Omit<Contribution, "id">) => backendPlanClient.addContribution(input),
-  updateContribution: (id: string, patch: Partial<Omit<Contribution, "id">>) =>
-    backendPlanClient.updateContribution(id, patch),
-  deleteContribution: (id: string) => backendPlanClient.deleteContribution(id),
-  getMonthlyTracker: () => backendPlanClient.getMonthlyTracker(),
-  saveMonthlyTrackerEntry: (month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
-    backendPlanClient.saveMonthlyTrackerEntry(month, status, amount, note),
+  getContributions: (planId: string) => backendPlanClient.getContributions(planId),
+  addContribution: (planId: string, input: Omit<Contribution, "id">) => backendPlanClient.addContribution(planId, input),
+  updateContribution: (planId: string, id: string, patch: Partial<Omit<Contribution, "id">>) =>
+    backendPlanClient.updateContribution(planId, id, patch),
+  deleteContribution: (planId: string, id: string) => backendPlanClient.deleteContribution(planId, id),
+  getMonthlyTracker: (planId: string) => backendPlanClient.getMonthlyTracker(planId),
+  saveMonthlyTrackerEntry: (planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
+    backendPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
 };
 
 export type FinancialPlanClient = typeof backendFirstClient;

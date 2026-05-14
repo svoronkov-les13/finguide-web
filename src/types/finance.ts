@@ -95,7 +95,7 @@ export interface PlanSettings {
 }
 
 export interface FinancialPlan {
-  planId?: string;   // backend plan UUID — set by backendPlanClient after first fetch
+  planId?: string;
   owner: {
     name: string;
     email: string;

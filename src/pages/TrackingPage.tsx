@@ -46,29 +46,24 @@ function makeEmptyYear(year: number, currentYear: number, currentMonthIdx: numbe
 
 interface MonthFormProps {
   month: MonthData;
-  monthKey: string;
+  monthKey: string; // "YYYY-MM"
   monthlyTarget: number;
-  existingNote?: string | null;
+  plan: import("@/types/finance").FinancialPlan;
   onClose: () => void;
   t: ReturnType<typeof useI18n>["t"];
 }
 
-function MonthForm({ month, monthKey, monthlyTarget, existingNote, onClose, t }: MonthFormProps) {
+function MonthForm({ month, monthKey, monthlyTarget, plan, onClose, t }: MonthFormProps) {
   const saveMutation = useSaveMonthlyTrackerMutation();
   const [amount, setAmount] = useState<string>(String(month.amount ?? monthlyTarget));
-  const [note, setNote] = useState<string>(existingNote ?? "");
-  const [pickedStatus, setPickedStatus] = useState<MonthlyStatus | null>(null);
+  const [note, setNote] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const submit = () => {
-    const amt = Number(amount) || 0;
-    const norm = monthlyTarget;
-    const autoStatus: MonthlyStatus = amt >= norm ? "completed" : amt > 0 ? "partial" : "missed";
-    const status = pickedStatus ?? autoStatus;
+  const submit = (status: MonthlyStatus) => {
     saveMutation.mutate(
-      { month: monthKey, status, amount: amt || null, note: note || null },
+      { planId: plan.planId!, month: monthKey, status, amount: Number(amount) || null, note: note || null },
       { onSuccess: onClose },
     );
   };
@@ -140,35 +135,52 @@ function MonthForm({ month, monthKey, monthlyTarget, existingNote, onClose, t }:
           />
         </label>
 
-        {/* Quick amount presets */}
+        {/* Quick buttons */}
         <div className="flex flex-wrap gap-2">
-          <span className="self-center text-[12px] text-[var(--fp-color-label)]">{t("tracking.monthFormQuick100").replace("100% нормы","Быстро")}:</span>
-          <button type="button" onClick={() => { setAmount(String(monthlyTarget)); setPickedStatus("completed"); }}
-            className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${pickedStatus==="completed"?"bg-[var(--fp-color-teal)] text-white":"bg-[var(--fp-color-teal-soft)] text-[var(--fp-color-teal)] hover:bg-[var(--fp-color-teal)]/20"}`}>
-            {t("tracking.statusCompleted")}
+          <span className="self-center text-[12px] text-[var(--fp-color-label)]">Быстро:</span>
+          <button
+            type="button"
+            onClick={() => setAmount(String(monthlyTarget))}
+            className="rounded-full bg-[var(--fp-color-teal-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--fp-color-teal)] hover:bg-[var(--fp-color-teal)]/20 transition-colors"
+          >
+            {t("tracking.monthFormQuick100")}
           </button>
-          <button type="button" onClick={() => { setAmount(String(Math.round(monthlyTarget*0.5))); setPickedStatus("partial"); }}
-            className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${pickedStatus==="partial"?"bg-[var(--fp-color-accent-gold)] text-white":"bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-border)]"}`}>
-            {t("tracking.statusPartial")}
+          <button
+            type="button"
+            onClick={() => setAmount(String(Math.round(monthlyTarget * 0.5)))}
+            className="rounded-full bg-[var(--fp-color-surface-hover)] px-3 py-1 text-[12px] font-semibold text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-border)] transition-colors"
+          >
+            {t("tracking.monthFormQuick50")}
           </button>
-          <button type="button" onClick={() => { setAmount("0"); setPickedStatus("missed"); }}
-            className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${pickedStatus==="missed"?"bg-[var(--fp-color-coral)] text-white":"bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)] hover:bg-[var(--fp-color-coral)]/20"}`}>
-            {t("tracking.statusMissed")}
+          <button
+            type="button"
+            onClick={() => setAmount("0")}
+            className="rounded-full bg-[var(--fp-color-coral-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--fp-color-coral)] hover:bg-[var(--fp-color-coral)]/20 transition-colors"
+          >
+            {t("tracking.monthFormQuickFailed")}
           </button>
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2 pt-1">
           <button
-            onClick={submit}
+            onClick={() => {
+              const amt = Number(amount) || 0;
+              const norm = monthlyTarget;
+              const status: MonthlyStatus = amt >= norm ? "completed" : amt > 0 ? "partial" : "missed";
+              submit(status);
+            }}
             disabled={saveMutation.isPending}
             className="flex flex-1 items-center justify-center gap-2 rounded-[10px] bg-[var(--fp-color-foreground)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fp-color-background)] hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             <CheckCircle2 className="size-4" />
             {saveMutation.isPending ? t("tracking.monthFormSaving") : t("tracking.monthFormSave")}
           </button>
-          <button type="button" onClick={onClose}
-            className="rounded-[10px] border border-[var(--fp-color-border)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)] transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-[10px] border border-[var(--fp-color-border)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)] transition-colors"
+          >
             {t("tracking.monthFormCancel")}
           </button>
         </div>
@@ -201,25 +213,19 @@ export function TrackingPage() {
       if (Number(entryYear) !== viewYear) return;
       const idx = Number(entryMonth) - 1;
       if (idx < 0 || idx > 11) return;
-      const pct = entry.amount != null && monthlyTarget > 0
-        ? Math.round((entry.amount / monthlyTarget) * 100) : undefined;
       base[idx] = {
         ...base[idx],
         status: entry.status === "pending" ? (idx === currentMonthIdx && viewYear === currentYear ? "current" : "pending") : entry.status as MonthStatus,
         amount: entry.amount ?? undefined,
-        percent: pct,
       };
     });
+    // Mark current month
     if (viewYear === currentYear) {
       const cur = base[currentMonthIdx];
       if (cur && cur.status === "pending") base[currentMonthIdx] = { ...cur, status: "current" };
     }
     return base;
   })();
-
-  // Lookup existing note for a month tile (to pre-fill form)
-  const existingNote = (monthId: string) =>
-    trackerData.find((e) => e.month === `${viewYear}-${monthId}`)?.note ?? null;
 
   const completedMonths = months.filter((m) => m.status === "completed");
   const partialMonths = months.filter((m) => m.status === "partial");
@@ -390,16 +396,15 @@ export function TrackingPage() {
         <div className="grid grid-cols-4 gap-3">
           {months.map((m) => {
             const isSelected = selectedMonthId === m.id;
-            const isCurrent = m.status === "current";
+            const canMark = m.status === "current" || m.status === "pending" || m.status === "missed" || m.status === "partial" || m.status === "completed";
             return (
               <button
                 key={m.id}
-                onClick={() => setSelectedMonthId(isSelected ? null : m.id)}
+                onClick={() => canMark ? setSelectedMonthId(isSelected ? null : m.id) : undefined}
                 className={cn(
                   "group relative rounded-[14px] border p-3 text-left transition-all hover:shadow-sm",
                   getCardStyle(m.status),
                   isSelected && "ring-2 ring-[var(--fp-color-teal)]",
-                  isCurrent && !isSelected && "ring-2 ring-[var(--fp-color-accent-gold)]/60 animate-pulse-ring",
                 )}
               >
                 <div className="text-[13px] font-semibold text-[var(--fp-color-foreground)]">
@@ -414,7 +419,7 @@ export function TrackingPage() {
                   </div>
                 ) : (
                   <div className="mt-1 text-[12px] text-[var(--fp-color-label)]">
-                    {isCurrent ? t("tracking.mark") : t("tracking.ahead")}
+                    {m.status === "pending" ? t("tracking.ahead") : ""}
                   </div>
                 )}
                 <div className="mt-1">{getStatusLabel(m)}</div>
@@ -425,12 +430,12 @@ export function TrackingPage() {
       </div>
 
       {/* Month form (inline, below grid) */}
-      {selectedMonth && (
+      {selectedMonth && plan && (
         <MonthForm
           month={selectedMonth}
           monthKey={monthKey(selectedMonth.id)}
           monthlyTarget={monthlyTarget}
-          existingNote={existingNote(selectedMonth.id)}
+          plan={plan}
           onClose={() => setSelectedMonthId(null)}
           t={t}
         />
