@@ -119,8 +119,7 @@ async function readBackendPlan() {
 
   lastPlanState = planState;
 
-  const tracker = await backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries")
-    .catch(() => []);
+  const tracker = await backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries");
 
   return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios, tracker });
 }
