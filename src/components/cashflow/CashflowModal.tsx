@@ -9,12 +9,13 @@ import { Switch } from "@/components/ui/switch";
 import { usePlanQuery } from "@/api/planQueries";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
+import type { TranslationKey } from "@/i18n/messages";
 
 interface CashflowFormData {
   id?: string;
   name: string;
   amount: number;
-  currency: string;
+  currency: Cashflow["currency"];
   category: string;
   startYear: number;
   endYear: number | null;
@@ -27,6 +28,10 @@ interface CashflowFormData {
 }
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
+
+function stepTitleKey(key: (typeof STEP_KEYS)[number], type: "income" | "expense"): TranslationKey {
+  return key === "stepType" ? `cashflow.${key}_${type}` : `cashflow.${key}`;
+}
 
 export function CashflowModal({
   open,
@@ -403,7 +408,7 @@ export function CashflowModal({
                     </span>
                     <div>
                       <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
-                        {t(`cashflow.${key}` === "cashflow.stepType" ? `cashflow.${key}_${type}` : `cashflow.${key}`)}
+                        {t(stepTitleKey(key, type))}
                       </div>
                       <div className="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
                         {t(`cashflow.${key}Desc_${type}`)}

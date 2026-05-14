@@ -166,7 +166,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
     enabled: true,
-    category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "onetime" ? "Разовые доходы" : "Ежегодные доходы",
+    category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
   };
 }
 
@@ -182,7 +182,7 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
     enabled: true,
-    category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "onetime" ? "Разовые расходы" : "Ежегодные расходы",
+    category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "one_time" ? "Разовые расходы" : "Ежегодные расходы",
   };
 }
 
@@ -301,8 +301,12 @@ function mapTracker(dashboard: DashboardMetrics): TrackerEntry[] {
 }
 
 function toUiFrequency(frequency: string): Cashflow["frequency"] {
-  if (frequency === "onetime") return "onetime";
+  if (frequency === "one_time" || frequency === "onetime") return "onetime";
   return frequency === "monthly" ? "monthly" : "yearly";
+}
+
+function toApiFrequency(frequency: Cashflow["frequency"]) {
+  return frequency === "onetime" ? "one_time" : frequency;
 }
 
 function toUiCurrency(currency: string): Cashflow["currency"] {
@@ -335,7 +339,7 @@ function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
     name: input.name,
     amount: input.amount,
     currency: input.currency,
-    frequency: input.frequency,
+    frequency: toApiFrequency(input.frequency),
     growthType: "manual",
     growthPct: input.growth * 100,
     startDate: startDateFromYear(input.startYear),
@@ -439,7 +443,8 @@ export const backendPlanClient = {
     } else if (next.type === "expense") {
       await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next), requestOptions());
     } else {
-      await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...findGoal(id), id, name: next.name, targetYear: next.endYear, cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), requestOptions());
+      const currentGoal = findGoal(id);
+      await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...currentGoal, id, name: next.name, targetYear: next.endYear ?? currentGoal?.targetYear ?? next.startYear, cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), requestOptions());
     }
 
     return readBackendPlan();
@@ -454,7 +459,7 @@ export const backendPlanClient = {
     } else if (cashflow.type === "expense") {
       await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow), requestOptions());
     } else {
-      await postPlansPlanIdGoals(planId, baseGoalFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear, cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), requestOptions());
+      await postPlansPlanIdGoals(planId, baseGoalFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear ?? cashflow.startYear, cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), requestOptions());
     }
 
     return readBackendPlan();
