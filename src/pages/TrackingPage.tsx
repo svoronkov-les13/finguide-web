@@ -70,7 +70,7 @@ export function TrackingPage() {
             <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 max-[760px]:block">
               <div>
                 <h2 className="font-semibold">Журнал операций</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Данные сохраняются через текущий API-клиент. В real backend tracker пока работает как клиентский optimistic слой.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Данные сохраняются в backend-журнале операций текущего плана.</p>
               </div>
               <div className="flex gap-2 max-[760px]:mt-3">
                 <Badge variant="subtle">{tracker.length} операций</Badge>
@@ -123,8 +123,8 @@ export function TrackingPage() {
             </dl>
           </Card>
 
-          <HelpBlock title="Что уже интегрировано">Frontend использует общий plan client и React Query cache. В mock режиме операции сохраняются локально.</HelpBlock>
-          <HelpBlock title="Ограничение backend">По актуальному status budget/monthly tracker ещё не реализован на сервере, поэтому real API пока не получает постоянные tracker mutations.</HelpBlock>
+          <HelpBlock title="Что уже интегрировано">Frontend использует общий plan client, а real API сохраняет операции в журнале текущего плана.</HelpBlock>
+          <HelpBlock title="Важно">Плановые строки больше не генерируются автоматически: журнал показывает только сохранённые операции.</HelpBlock>
         </aside>
       </div>
     </div>
