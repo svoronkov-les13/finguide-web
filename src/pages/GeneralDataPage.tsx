@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { settingsSchema, type SettingsFormValues } from "@/forms/settingsSchema";
 import { formatRub } from "@/lib/utils";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function GeneralDataPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const auth = useAuth();
   const { data: plan } = usePlanQuery();
@@ -61,8 +63,8 @@ export function GeneralDataPage() {
             <SlidersHorizontal className="size-5" />
           </span>
           <div>
-            <h1 className="page-title">Общие данные</h1>
-            <p className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">Фундамент финансового плана - параметры, на которых строятся все расчеты</p>
+            <h1 className="page-title">{t("general.title")}</h1>
+            <p className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">{t("general.subtitle")}</p>
           </div>
         </div>
       </header>
@@ -73,10 +75,8 @@ export function GeneralDataPage() {
             <div className="flex items-start gap-3 text-sm text-muted-foreground">
               <Info className="mt-0.5 size-4 shrink-0" />
               <div>
-                <div className="font-semibold text-foreground">Как это работает</div>
-                <p className="mt-1 leading-5">
-                  Эти параметры - основа всех расчетов FinPlan. Возраст определяет горизонт, доходность и инфляция корректируют прогнозы, а начальный капитал учитывается при расчете пенсионного фонда и достижимости целей.
-                </p>
+                <div className="font-semibold text-foreground">{t("general.howItWorks")}</div>
+                <p className="mt-1 leading-5">{t("general.howItWorksDesc")}</p>
               </div>
             </div>
           </Card>
@@ -84,25 +84,25 @@ export function GeneralDataPage() {
           <Card className="px-5 py-4">
             <div className="mb-5 flex items-center gap-2 text-sm font-semibold">
               <BookOpen className="size-4 text-muted-foreground" />
-              Инструкция
+              {t("general.instruction")}
             </div>
             <div className="grid gap-4 text-sm text-muted-foreground md:grid-cols-3">
-              <InstructionStep index={1} title="Заполнение">Заполните основные параметры модели</InstructionStep>
-              <InstructionStep index={2} title="Сохранение">После заполнения данных нажмите «Сохранить»</InstructionStep>
-              <InstructionStep index={3} title="Переход к следующему этапу">Продолжить заполнение можно после фиксации изменений</InstructionStep>
+              <InstructionStep index={1} title={t("general.step1Title")}>{t("general.step1Desc")}</InstructionStep>
+              <InstructionStep index={2} title={t("general.step2Title")}>{t("general.step2Desc")}</InstructionStep>
+              <InstructionStep index={3} title={t("general.step3Title")}>{t("general.step3Desc")}</InstructionStep>
             </div>
           </Card>
 
           <FormSection
             icon={<CircleDollarSign className="size-4" />}
-            title="Валюта и капитал"
-            description="Базовая валюта расчетов и текущие накопления для корректного финансового планирования"
+            title={t("general.currencyAndCapital")}
+            description={t("general.currencyAndCapitalDesc")}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Основная валюта" hint="Определяет валюту всех сумм в приложении">
-                <Input value="RUB - Российский рубль" readOnly />
+              <Field label={t("general.baseCurrency")} hint={t("general.baseCurrencyHint")}>
+                <Input value={t("general.rubCurrencyName")} readOnly />
               </Field>
-              <Field label="Начальный капитал" hint="Деньги, вклады, депозиты, акции, облигации" error={form.formState.errors.startingCapital?.message}>
+              <Field label={t("general.startingCapital")} hint={t("general.startingCapitalHint")} error={form.formState.errors.startingCapital?.message}>
                 <Input type="number" {...form.register("startingCapital")} />
               </Field>
             </div>
@@ -110,30 +110,49 @@ export function GeneralDataPage() {
 
           <FormSection
             icon={<TrendingUp className="size-4" />}
-            title="Параметры модели"
-            description="Инфляция, доходность и горизонт планирования"
+            title={t("general.modelParameters")}
+            description={t("general.modelParametersDesc")}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Ожидаемая доходность" hint="Средняя доходность инвестиций" error={form.formState.errors.investmentReturnPercent?.message}>
+              <Field label={t("general.investmentReturn")} hint={t("general.investmentReturnHint")} error={form.formState.errors.investmentReturnPercent?.message}>
                 <Input type="number" step="0.1" {...form.register("investmentReturnPercent")} />
               </Field>
-              <Field label="Инфляция" hint="Прогнозируемая инфляция" error={form.formState.errors.inflationPercent?.message}>
+              <Field label={t("general.inflation")} hint={t("general.inflationHint")} error={form.formState.errors.inflationPercent?.message}>
                 <Input type="number" step="0.1" {...form.register("inflationPercent")} />
               </Field>
-              <MetricBox label="Реальная доходность" value={`${realReturn > 0 ? "+" : ""}${realReturn.toFixed(1)}%`} detail="доходность - инфляция" />
-              <MetricBox label="Горизонт" value={`${horizon} лет`} detail="до пенсионного возраста" />
+              <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${realReturn.toFixed(1)}%`} detail={t("general.realReturnDetail")} />
+              <MetricBox label={t("general.horizon")} value={`${horizon} ${t("general.years")}`} detail={t("general.horizonDetail")} />
             </div>
           </FormSection>
 
-          {/* Hidden fields for data not shown in Figma but required by schema */}
-          <input type="hidden" {...form.register("startYear")} />
-          <input type="hidden" {...form.register("birthYear")} />
-          <input type="hidden" {...form.register("retirementAge")} />
-          <input type="hidden" {...form.register("monthsInYear")} />
+          {/* Temporary visible fields (Not in Figma) */}
+          <FormSection
+            icon={<Info className="size-4 text-amber-500" />}
+            title={
+              <div className="flex items-center gap-2 text-amber-600">
+                {t("general.tempFields")}
+                <span className="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">{t("general.tempBadge")}</span>
+              </div>
+            }
+            description={t("general.tempFieldsDesc")}
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label={t("general.birthYear")} hint={t("general.birthYearHint")} error={form.formState.errors.birthYear?.message}>
+                <Input type="number" {...form.register("birthYear", { valueAsNumber: true })} />
+              </Field>
+              <Field label={t("general.retirementAge")} hint={t("general.retirementAgeHint")} error={form.formState.errors.retirementAge?.message}>
+                <Input type="number" {...form.register("retirementAge", { valueAsNumber: true })} />
+              </Field>
+            </div>
+          </FormSection>
+
+          {/* Hidden technical fields */}
+          <input type="hidden" {...form.register("startYear", { valueAsNumber: true })} />
+          <input type="hidden" {...form.register("monthsInYear", { valueAsNumber: true })} />
 
           <div className="flex flex-wrap gap-3">
             <Button type="submit" size="lg" disabled={updateSettings.isPending} className="px-8 font-semibold">
-              Сохранить
+              {t("general.save")}
             </Button>
             <Button
               type="button"
@@ -142,7 +161,7 @@ export function GeneralDataPage() {
               className="px-8 font-semibold"
               onClick={() => navigate({ to: "/income" })}
             >
-              Продолжить заполнение
+              {t("general.continue")}
               <ArrowRight className="ml-2 size-4" />
             </Button>
           </div>
@@ -160,10 +179,10 @@ export function GeneralDataPage() {
             horizon={horizon}
             retirementAge={values.retirementAge}
           />
-          <HelpBlock title="Основная валюта">Используется для всех расчетов. Суммы в других валютах автоматически конвертируются по актуальному курсу.</HelpBlock>
-          <HelpBlock title="Начальный капитал">Сумма ваших текущих накоплений: счета, вклады, депозиты, наличные и другие доступные средства.</HelpBlock>
-          <HelpBlock title="Ожидаемая доходность">Средняя ожидаемая доходность ваших накоплений или инвестиций в год. Укажите значение, которое соответствует вашему сценарию.</HelpBlock>
-          <HelpBlock title="Инфляция">Прогнозируемый рост цен в год. Рекомендуем использовать среднее значение, но при необходимости можно задать свой показатель.</HelpBlock>
+          <HelpBlock title={t("general.baseCurrency")}>{t("general.helpCurrency")}</HelpBlock>
+          <HelpBlock title={t("general.startingCapital")}>{t("general.helpCapital")}</HelpBlock>
+          <HelpBlock title={t("general.investmentReturn")}>{t("general.helpReturn")}</HelpBlock>
+          <HelpBlock title={t("general.inflation")}>{t("general.helpInflation")}</HelpBlock>
         </aside>
       </div>
     </form>
@@ -181,22 +200,23 @@ function SummaryCard(props: {
   horizon: number;
   retirementAge: number;
 }) {
+  const { t } = useI18n();
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2 font-semibold">
         <SlidersHorizontal className="size-4 text-muted-foreground" />
-        Сводка модели
+        {t("general.summaryTitle")}
       </div>
       <dl className="grid gap-3 text-sm">
-        <SummaryRow label="Профиль" value={props.name} />
-        <SummaryRow label="Возраст" value={`${props.age} лет`} />
-        <SummaryRow label="Валюта" value={props.currency} />
-        <SummaryRow label="Капитал" value={formatRub(props.capital)} />
-        <SummaryRow label="Доходность" value={`${props.returnPct}%`} tone="positive" />
-        <SummaryRow label="Инфляция" value={`${props.inflationPct}%`} tone="negative" />
-        <SummaryRow label="Реальная" value={`${props.realReturn > 0 ? "+" : ""}${props.realReturn.toFixed(1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
-        <SummaryRow label="Горизонт" value={`${props.horizon} лет`} />
-        <SummaryRow label="Пенсия в" value={`${props.retirementAge} лет`} />
+        <SummaryRow label={t("general.profile")} value={props.name} />
+        <SummaryRow label={t("general.age")} value={`${props.age} ${t("general.years")}`} />
+        <SummaryRow label={t("general.currency")} value={props.currency} />
+        <SummaryRow label={t("general.capital")} value={formatRub(props.capital)} />
+        <SummaryRow label={t("general.returnPct")} value={`${props.returnPct}%`} tone="positive" />
+        <SummaryRow label={t("general.inflationPct")} value={`${props.inflationPct}%`} tone="negative" />
+        <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${props.realReturn.toFixed(1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
+        <SummaryRow label={t("general.horizon")} value={`${props.horizon} ${t("general.years")}`} />
+        <SummaryRow label={t("general.pensionIn")} value={`${props.retirementAge} ${t("general.years")}`} />
       </dl>
     </Card>
   );
@@ -223,7 +243,7 @@ function InstructionStep({ index, title, children }: { index: number; title: str
   );
 }
 
-function FormSection({ icon, title, description, children }: { icon: ReactNode; title: string; description: string; children: ReactNode }) {
+function FormSection({ icon, title, description, children }: { icon: ReactNode; title: ReactNode; description: ReactNode; children: ReactNode }) {
   return (
     <Card className="p-6">
       <div className="mb-5 flex items-start gap-3">

@@ -168,7 +168,7 @@ export function GoalModal({
                         "Home", "Car", "Plane", "GraduationCap", "Heart", "Clock", "Briefcase", "Diamond",
                         "Shield", "Umbrella", "Gift", "Camera", "Laptop", "Palette", "Scissors", "Mountain"
                       ].map((iconName) => {
-                        const Icon = (Icons as Record<string, React.ElementType>)[iconName] || Icons.Target;
+                        const Icon = (Icons as any)[iconName] || Icons.Target;
                         const isSelected = iconValue === iconName;
                         return (
                           <button

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Target, Download, CheckCircle2, Search } from "lucide-react";
+import { Plus, Target, Download, Search } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { GoalListItem } from "@/components/goals/GoalListItem";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 export function GoalsPage() {
   const { t } = useI18n();
@@ -32,7 +31,7 @@ export function GoalsPage() {
   const totalSaved = goals.reduce((sum, goal) => sum + goal.saved, 0);
   const accumulatedPercent = totalCost > 0 ? Math.min(100, Math.round((totalSaved / totalCost) * 100)) : 0;
   
-  let filteredGoals = goals.filter((goal) => {
+  const filteredGoals = goals.filter((goal) => {
     const matchesSearch = goal.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === "all" || goal.type === activeFilter;
     return matchesSearch && matchesFilter;

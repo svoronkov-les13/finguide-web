@@ -306,9 +306,7 @@ function toUiFrequency(frequency: string): Cashflow["frequency"] {
   return frequency === "monthly" ? "monthly" : "yearly";
 }
 
-function toApiFrequency(frequency: Cashflow["frequency"]) {
-  return frequency === "onetime" ? "one_time" : frequency;
-}
+
 
 function toUiCurrency(currency: string): Cashflow["currency"] {
   return currency === "USD" ? "USD" : "RUB";

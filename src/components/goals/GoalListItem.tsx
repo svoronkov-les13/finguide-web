@@ -11,7 +11,6 @@ interface GoalListItemProps {
 
 export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalListItemProps) {
   const progress = Math.min(100, Math.round((goal.saved / goal.cost) * 100));
-  // @ts-expect-error Goal type is periodic
   const isPeriodic = goal.type === "periodic";
 
   return (

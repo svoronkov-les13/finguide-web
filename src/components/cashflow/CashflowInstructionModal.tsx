@@ -1,7 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, BookOpen } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
-import type { TranslationKey } from "@/i18n/messages";
 
 interface CashflowInstructionModalProps {
   open: boolean;
@@ -11,9 +10,7 @@ interface CashflowInstructionModalProps {
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
 
-function stepTitleKey(key: (typeof STEP_KEYS)[number], type: CashflowInstructionModalProps["type"]): TranslationKey {
-  return key === "stepType" ? `cashflow.${key}_${type}` : `cashflow.${key}`;
-}
+
 
 export function CashflowInstructionModal({ open, onOpenChange, type }: CashflowInstructionModalProps) {
   const { t } = useI18n();
