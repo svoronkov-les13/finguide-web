@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { financialPlanClient } from "@/api/financialPlanClient";
 import { useAuth } from "@/auth/AuthProvider";
 import type { AuthSession } from "@/auth/oidc";
-import type { Cashflow, EditablePlanPatch, Goal, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, ScenarioId, TrackerEntry } from "@/types/finance";
 
 export const planQueryKey = ["financial-plan"] as const;
 export const anonymousPlanQueryKey = [...planQueryKey, "anonymous"] as const;
@@ -162,5 +162,67 @@ export function useSaveWhatIfScenarioMutation() {
       description?: string;
     }) => financialPlanClient.saveWhatIfScenario(input),
     onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+  });
+}
+
+// ─── Contributions ────────────────────────────────────────────────────────────
+
+export const contributionsQueryKey = ["contributions"] as const;
+
+export function useContributionsQuery() {
+  const auth = useAuth();
+  return useQuery({
+    queryKey: contributionsQueryKey,
+    queryFn: () => financialPlanClient.getContributions(),
+    enabled: !auth.enabled || auth.authenticated,
+    staleTime: 30_000,
+  });
+}
+
+export function useAddContributionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Omit<Contribution, "id">) => financialPlanClient.addContribution(input),
+    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+  });
+}
+
+export function useUpdateContributionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<Omit<Contribution, "id">> }) =>
+      financialPlanClient.updateContribution(id, patch),
+    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+  });
+}
+
+export function useDeleteContributionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financialPlanClient.deleteContribution(id),
+    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+  });
+}
+
+// ─── Monthly Tracker ──────────────────────────────────────────────────────────
+
+export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
+
+export function useMonthlyTrackerQuery() {
+  const auth = useAuth();
+  return useQuery({
+    queryKey: monthlyTrackerQueryKey,
+    queryFn: () => financialPlanClient.getMonthlyTracker(),
+    enabled: !auth.enabled || auth.authenticated,
+    staleTime: 30_000,
+  });
+}
+
+export function useSaveMonthlyTrackerMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ month, status, amount, note }: { month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
+      financialPlanClient.saveMonthlyTrackerEntry(month, status, amount, note),
+    onSuccess: (data) => queryClient.setQueryData(monthlyTrackerQueryKey, data),
   });
 }

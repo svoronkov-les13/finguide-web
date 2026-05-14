@@ -31,7 +31,7 @@ import type {
   PlanState,
   Scenario as ApiScenario,
 } from "@/shared/api/generated/model";
-import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, Contribution, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
 
 type ApiResponse = {
   status: number;
@@ -597,4 +597,91 @@ export const backendPlanClient = {
     lastFinancialPlan = optimistic;
     return optimistic;
   },
+
+  // ─── Contributions ────────────────────────────────────────────────────────
+
+  async getContributions(): Promise<Contribution[]> {
+    const planId = currentPlanId();
+    const raw = await backendJson<unknown[]>(`/plans/${planId}/contributions`, undefined, "GET /contributions");
+    return raw.map(contributionFromApi);
+  },
+
+  async addContribution(input: Omit<Contribution, "id">) {
+    const planId = currentPlanId();
+    await backendJson<unknown>(`/plans/${planId}/contributions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contributionToApi(input)),
+    }, "POST /contributions");
+    return backendPlanClient.getContributions();
+  },
+
+  async updateContribution(id: string, patch: Partial<Omit<Contribution, "id">>) {
+    const planId = currentPlanId();
+    await backendJson<unknown>(`/plans/${planId}/contributions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contributionToApi(patch)),
+    }, "PATCH /contributions/{id}");
+    return backendPlanClient.getContributions();
+  },
+
+  async deleteContribution(id: string) {
+    await backendNoContent(`/plans/${currentPlanId()}/contributions/${id}`, { method: "DELETE" }, "DELETE /contributions/{id}");
+    return backendPlanClient.getContributions();
+  },
+
+  // ─── Monthly Tracker ──────────────────────────────────────────────────────
+
+  async getMonthlyTracker(): Promise<MonthlyTrackerEntry[]> {
+    const planId = currentPlanId();
+    const raw = await backendJson<unknown[]>(`/plans/${planId}/calendar/monthly-tracker`, undefined, "GET /monthly-tracker");
+    return raw.map(monthlyTrackerFromApi);
+  },
+
+  async saveMonthlyTrackerEntry(month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) {
+    const planId = currentPlanId();
+    await backendJson<unknown>(`/plans/${planId}/calendar/monthly-tracker`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ month, status, amount: amount ?? undefined, note: note ?? undefined }),
+    }, "POST /monthly-tracker");
+    return backendPlanClient.getMonthlyTracker();
+  },
 };
+
+// ─── Contribution mappers ────────────────────────────────────────────────────
+
+function contributionFromApi(raw: unknown): Contribution {
+  const r = raw as Record<string, unknown>;
+  return {
+    id: String(r.id ?? ""),
+    goalId: r.goalId ? String(r.goalId) : null,
+    amount: Number(r.amount ?? 0),
+    currency: (r.currency as "RUB" | "USD") ?? "RUB",
+    date: String(r.date ?? ""),
+    note: r.note ? String(r.note) : null,
+  };
+}
+
+function contributionToApi(input: Partial<Omit<Contribution, "id">>) {
+  return {
+    ...(input.goalId !== undefined && { goalId: input.goalId }),
+    ...(input.amount !== undefined && { amount: input.amount }),
+    ...(input.currency !== undefined && { currency: input.currency }),
+    ...(input.date !== undefined && { date: input.date }),
+    ...(input.note !== undefined && { note: input.note }),
+  };
+}
+
+// ─── Monthly Tracker mappers ─────────────────────────────────────────────────
+
+function monthlyTrackerFromApi(raw: unknown): MonthlyTrackerEntry {
+  const r = raw as Record<string, unknown>;
+  return {
+    month: String(r.month ?? ""),
+    status: (r.status as MonthlyStatus) ?? "pending",
+    amount: r.amount != null ? Number(r.amount) : null,
+    note: r.note ? String(r.note) : null,
+  };
+}
