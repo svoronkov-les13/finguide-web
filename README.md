@@ -59,6 +59,31 @@ The left navigation counters for income, expenses and goals are derived from the
 - While the current plan is not loaded, the sidebar does not render demo/default counter values.
 - Empty persisted plans render zero counters instead of seeded demo values.
 
+## CI/CD
+
+Frontend deploy автоматизирован через `.github/workflows/deploy.yml`.
+
+Триггеры:
+
+- push в `main`;
+- ручной `workflow_dispatch`.
+
+Runner:
+
+- self-hosted GitHub Actions runner на `66.42.121.18`;
+- labels: `self-hosted`, `finguide-web`;
+- рабочая директория runner на сервере: `/home/clawd/actions-runner-finguide-web`.
+
+Deploy job делает:
+
+1. `bun install --frozen-lockfile`;
+2. `bun run build:fg`;
+3. backup текущего `/var/www/mtproxy-info/fg` в `/var/www/mtproxy-info/backups/`;
+4. `rsync --delete dist/` в `/var/www/mtproxy-info/fg`;
+5. smoke test публичной страницы `http://66.42.121.18/fg/`.
+
+`main` автоматически деплоится, поэтому незавершённые изменения нужно вести в отдельной ветке/worktree.
+
 ## Environment
 
 Typical local `.env` values:
