@@ -171,10 +171,12 @@ export const contributionsQueryKey = ["contributions"] as const;
 
 export function useContributionsQuery() {
   const auth = useAuth();
+  // Wait for plan to load so currentPlanId() returns the real UUID, not "plan_demo"
+  const { data: plan } = usePlanQuery();
   return useQuery({
     queryKey: contributionsQueryKey,
     queryFn: () => financialPlanClient.getContributions(),
-    enabled: !auth.enabled || auth.authenticated,
+    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
     staleTime: 30_000,
   });
 }
@@ -210,10 +212,12 @@ export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
 
 export function useMonthlyTrackerQuery() {
   const auth = useAuth();
+  // Wait for plan to load so currentPlanId() returns the real UUID, not "plan_demo"
+  const { data: plan } = usePlanQuery();
   return useQuery({
     queryKey: monthlyTrackerQueryKey,
     queryFn: () => financialPlanClient.getMonthlyTracker(),
-    enabled: !auth.enabled || auth.authenticated,
+    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
     staleTime: 30_000,
   });
 }
