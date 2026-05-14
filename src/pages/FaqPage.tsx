@@ -1,4 +1,5 @@
 import { CircleHelp, Search } from "lucide-react";
+import { Page } from "@/components/layout/Page";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
@@ -11,7 +12,7 @@ const questions = [
 
 export function FaqPage() {
   return (
-    <div className="grid max-w-[900px] gap-6">
+    <Page bottom={false}>
       <header className="flex min-w-0 items-center gap-4">
         <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
           <CircleHelp className="size-5" />
@@ -42,6 +43,6 @@ export function FaqPage() {
           </Card>
         ))}
       </div>
-    </div>
+    </Page>
   );
 }

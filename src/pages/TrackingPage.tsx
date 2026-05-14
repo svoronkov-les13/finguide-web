@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Page } from "@/components/layout/Page";
 import { CheckCircle2, Calendar, HelpCircle, Minus, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
@@ -136,7 +137,7 @@ export function TrackingPage() {
   }
 
   return (
-    <div className="grid max-w-[1256px] gap-6 pb-12">
+    <Page>
       <header>
         <h1 className="text-[28px] font-bold tracking-tight text-[var(--fp-color-foreground)]">
           {t("tracking.title")}
@@ -431,6 +432,6 @@ export function TrackingPage() {
         <HelpCircle className="size-5 shrink-0 text-[var(--fp-color-teal)] mt-0.5" />
         <p className="leading-relaxed">{t("tracking.tip")}</p>
       </div>
-    </div>
+    </Page>
   );
 }

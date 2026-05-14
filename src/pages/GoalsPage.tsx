@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Page } from "@/components/layout/Page";
 import { Plus, Target, Download, Search } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
@@ -98,7 +99,7 @@ export function GoalsPage() {
   };
 
   return (
-    <div className="grid max-w-[1256px] gap-6 pb-12">
+    <Page>
       {/* Header */}
       <header className="flex items-start justify-between gap-5 max-[760px]:flex-col">
         <div className="flex min-w-0 items-center gap-4">
@@ -361,6 +362,6 @@ export function GoalsPage() {
         onSubmit={handleModalSubmit}
         onDelete={(id) => deleteGoal.mutate(id)}
       />
-    </div>
+    </Page>
   );
 }

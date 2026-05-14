@@ -1,4 +1,5 @@
 import { Bell, Settings, Shield, SlidersHorizontal } from "lucide-react";
+import { Page } from "@/components/layout/Page";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
@@ -22,7 +23,7 @@ const groups = [
 
 export function SettingsPage() {
   return (
-    <div className="grid max-w-[1256px] gap-6">
+    <Page bottom={false}>
       <header className="flex min-w-0 items-center gap-4">
         <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
           <Settings className="size-5" />
@@ -71,7 +72,7 @@ export function SettingsPage() {
           <HelpBlock title="Profile/API">Profile/avatar/account mutations пока отмечены в backend status как follow-up, поэтому настройки аккаунта не отправляются на сервер.</HelpBlock>
         </aside>
       </div>
-    </div>
+    </Page>
   );
 }
 

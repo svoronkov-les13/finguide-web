@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Page } from "@/components/layout/Page";
 import {
   FileChartColumnIncreasing, ChevronDown, ChevronUp, Edit3,
   LayoutDashboard, Target, TrendingUp, ExternalLink,
@@ -37,7 +38,7 @@ export function SummaryPage() {
   const expenses = plan.cashflows.filter(c => c.type === "expense");
 
   return (
-    <div className="grid max-w-[1000px] gap-6 pb-12">
+    <Page>
       {/* Header */}
       <header className="flex items-start justify-between gap-5 flex-wrap">
         <div className="flex min-w-0 items-center gap-4">
@@ -183,7 +184,7 @@ export function SummaryPage() {
           ))}
         </div>
       </Card>
-    </div>
+    </Page>
   );
 }
 

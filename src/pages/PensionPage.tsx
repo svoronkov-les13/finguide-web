@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Page } from "@/components/layout/Page";
 import { CheckCircle2, ChevronLeft, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -70,7 +71,7 @@ export function PensionPage() {
   };
 
   return (
-    <div className="grid max-w-[1000px] gap-6 pb-12">
+    <Page>
       <div>
         <button className="flex items-center text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] transition-colors mb-4 cursor-pointer bg-transparent border-none p-0">
           <ChevronLeft className="size-4 mr-1" /> {t("cashflow.back")}
@@ -472,6 +473,6 @@ export function PensionPage() {
           </Card>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

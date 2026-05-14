@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Page } from "@/components/layout/Page";
 import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
@@ -116,7 +117,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   };
 
   return (
-    <div className="grid max-w-[1400px] gap-6">
+    <Page size="wide" bottom={false}>
       {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -353,6 +354,6 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
         itemsCount={items.filter((i) => i.enabled).length}
         startYear={plan.settings.startYear}
       />
-    </div>
+    </Page>
   );
 }
