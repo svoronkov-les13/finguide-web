@@ -18,7 +18,7 @@ import {
 } from "@/shared/api/generated/finguide";
 import { getOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
 import { calculateForecast } from "@/engine/calculateForecast";
-import { demoBearerToken } from "@/shared/api/baseUrl";
+import { apiBaseUrl, demoBearerToken } from "@/shared/api/baseUrl";
 import type {
   CashFlowProjectionPoint,
   DashboardMetrics,
@@ -36,6 +36,15 @@ import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, Scenario, Scenar
 type ApiResponse = {
   status: number;
   data: unknown;
+};
+
+type ApiTrackerEntry = {
+  id: string;
+  date: string;
+  title: string;
+  amount: number;
+  type: TrackerEntry["type"];
+  status: TrackerEntry["status"];
 };
 
 let activeScenario: ScenarioId = "base";
@@ -65,6 +74,36 @@ function unwrapData<T>(response: ApiResponse, operation: string): T {
   return envelope.data as T;
 }
 
+async function backendJson<T>(path: string, options: RequestInit = {}, operation = path): Promise<T> {
+  const baseOptions = requestOptions();
+  const res = await fetch(`${apiBaseUrl}${path}`, {
+    ...baseOptions,
+    ...options,
+    headers: {
+      ...baseOptions.headers,
+      ...options.headers,
+    },
+  });
+  const text = [204, 205, 304].includes(res.status) ? "" : await res.text();
+  const data = text ? JSON.parse(text) : undefined;
+  return unwrapData<T>({ status: res.status, data }, operation);
+}
+
+async function backendNoContent(path: string, options: RequestInit = {}, operation = path) {
+  const baseOptions = requestOptions();
+  const res = await fetch(`${apiBaseUrl}${path}`, {
+    ...baseOptions,
+    ...options,
+    headers: {
+      ...baseOptions.headers,
+      ...options.headers,
+    },
+  });
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`${operation} failed with HTTP ${res.status}`);
+  }
+}
+
 async function readBackendPlan() {
   const planState = unwrapData<PlanState>(await getPlansCurrent(requestOptions()), "GET /plans/current");
   const planId = planState.id;
@@ -80,7 +119,10 @@ async function readBackendPlan() {
 
   lastPlanState = planState;
 
-  return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios });
+  const tracker = await backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries")
+    .catch(() => []);
+
+  return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios, tracker });
 }
 
 function mapBackendPlan(input: {
@@ -89,8 +131,9 @@ function mapBackendPlan(input: {
   cashflow: CashFlowProjectionPoint[];
   health: HealthScore;
   scenarios: ApiScenario[];
+  tracker: ApiTrackerEntry[];
 }): FinancialPlan {
-  const { planState, dashboard, cashflow, health, scenarios } = input;
+  const { planState, dashboard, cashflow, health, scenarios, tracker } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   const forecast = cashflow.map(mapForecastPoint);
@@ -112,7 +155,7 @@ function mapBackendPlan(input: {
       ...planState.goals.filter((item) => item.type === "recurring").map((item) => mapGoalCashflow(item, assumptions)),
     ],
     goals,
-    tracker: mapTracker(dashboard),
+    tracker: tracker.map(trackerEntryFromApi),
     forecast,
   };
 
@@ -268,36 +311,25 @@ function mapDashboardSnapshot(
   };
 }
 
-function mapTracker(dashboard: DashboardMetrics): TrackerEntry[] {
-  const now = new Date();
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+export function trackerEntryRequest(input: Omit<TrackerEntry, "id"> | Partial<TrackerEntry>) {
+  return {
+    ...(input.date !== undefined ? { date: input.date } : {}),
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    ...(input.amount !== undefined ? { amount: input.amount } : {}),
+    ...(input.type !== undefined ? { type: input.type } : {}),
+    ...(input.status !== undefined ? { status: input.status } : {}),
+  };
+}
 
-  return [
-    {
-      id: `${month}-income`,
-      date: `${month}-01`,
-      title: "Плановый доход месяца",
-      amount: dashboard.totalMonthlyIncome,
-      type: "income",
-      status: "planned",
-    },
-    {
-      id: `${month}-expenses`,
-      date: `${month}-05`,
-      title: "Плановые расходы месяца",
-      amount: -dashboard.totalMonthlyExpenses,
-      type: "expense",
-      status: "planned",
-    },
-    {
-      id: `${month}-goals`,
-      date: `${month}-10`,
-      title: "Плановый взнос в цели",
-      amount: -dashboard.monthlyGoalContribution,
-      type: "goal",
-      status: "planned",
-    },
-  ];
+export function trackerEntryFromApi(input: ApiTrackerEntry): TrackerEntry {
+  return {
+    id: input.id,
+    date: input.date,
+    title: input.title,
+    amount: input.amount,
+    type: input.type,
+    status: input.status,
+  };
 }
 
 function toUiFrequency(frequency: string): Cashflow["frequency"] {
@@ -519,24 +551,26 @@ export const backendPlanClient = {
   },
 
   async addTrackerEntry(input: Omit<TrackerEntry, "id">) {
-    const optimistic = await readBackendPlan();
-    optimistic.tracker = [{ ...input, id: `tr-${Date.now()}` }, ...optimistic.tracker];
-    lastFinancialPlan = optimistic;
-    return optimistic;
+    await backendJson<ApiTrackerEntry>(`/plans/${currentPlanId()}/tracker/entries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trackerEntryRequest(input)),
+    }, "POST /tracker/entries");
+    return readBackendPlan();
   },
 
   async updateTrackerEntry(id: string, patch: Partial<TrackerEntry>) {
-    const optimistic = await readBackendPlan();
-    optimistic.tracker = optimistic.tracker.map((item) => (item.id === id ? { ...item, ...patch } : item));
-    lastFinancialPlan = optimistic;
-    return optimistic;
+    await backendJson<ApiTrackerEntry>(`/plans/${currentPlanId()}/tracker/entries/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trackerEntryRequest(patch)),
+    }, "PATCH /tracker/entries/{id}");
+    return readBackendPlan();
   },
 
   async deleteTrackerEntry(id: string) {
-    const optimistic = await readBackendPlan();
-    optimistic.tracker = optimistic.tracker.filter((item) => item.id !== id);
-    lastFinancialPlan = optimistic;
-    return optimistic;
+    await backendNoContent(`/plans/${currentPlanId()}/tracker/entries/${id}`, { method: "DELETE" }, "DELETE /tracker/entries/{id}");
+    return readBackendPlan();
   },
 
   async resetPlan() {
