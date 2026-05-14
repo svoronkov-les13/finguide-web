@@ -212,6 +212,7 @@ function mapGoal(goal: ApiGoal, lastForecastYear: number): Goal {
     saved: goal.savedAmount,
     growth: goal.growthPct / 100,
     reachable: goal.savedAmount >= goal.currentCost || goal.targetYear <= lastForecastYear,
+    type: goal.type === "recurring" ? "periodic" : "onetime",
   };
 }
 
@@ -366,7 +367,7 @@ function baseGoalFromGoal(input: Goal, priority: number): ApiGoal {
     savedAmount: input.saved,
     currency: "RUB",
     targetYear: input.targetYear,
-    type: "one_time",
+    type: input.type === "periodic" ? "recurring" : "one_time",
     growthType: "manual",
     growthPct: input.growth * 100,
     priority,

@@ -22,7 +22,8 @@ export function GoalsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "onetime" | "periodic">("all");
-  const [sortOrder, setSortOrder] = useState<"default" | "cost" | "year">("default");
+  const [sortField, setSortField] = useState<"name" | "cost" | "type" | "year">("year");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
 
@@ -37,22 +38,11 @@ export function GoalsPage() {
     return matchesSearch && matchesFilter;
   });
 
-  if (sortOrder === "cost") {
-    filteredGoals = [...filteredGoals].sort((a, b) => b.cost - a.cost);
-  } else if (sortOrder === "year" || sortOrder === "default") {
-    // Default sorting is by year, then by cost descending
-    filteredGoals = [...filteredGoals].sort((a, b) => {
-      if (a.targetYear !== b.targetYear) return a.targetYear - b.targetYear;
-      return b.cost - a.cost;
-    });
-  }
-
-  // Active Goal Logic
   const activeGoal = [...goals]
     .sort((a, b) => a.targetYear - b.targetYear)
     .find(g => Math.round((g.saved / g.cost) * 100) < 100) || goals[0];
-  
-  // Group by year
+
+  // Group by year first
   const groupedGoals = filteredGoals.reduce((acc, goal) => {
     const year = goal.targetYear;
     if (!acc[year]) acc[year] = [];
@@ -60,7 +50,22 @@ export function GoalsPage() {
     return acc;
   }, {} as Record<number, Goal[]>);
 
-  const sortedYears = Object.keys(groupedGoals).map(Number).sort((a, b) => a - b);
+  // Sort years
+  const sortedYears = Object.keys(groupedGoals)
+    .map(Number)
+    .sort((a, b) => sortDirection === "asc" ? a - b : b - a);
+
+  // Sort items within each year
+  sortedYears.forEach(year => {
+    groupedGoals[year].sort((a, b) => {
+      let result = 0;
+      if (sortField === "name") result = a.name.localeCompare(b.name);
+      if (sortField === "cost") result = a.cost - b.cost;
+      if (sortField === "type") result = String(a.type).localeCompare(String(b.type));
+      if (sortField === "year") result = a.cost - b.cost; // Fallback inner sort when sorting by year
+      return sortDirection === "asc" ? result : -result;
+    });
+  });
   
   const handleEdit = (goal: Goal) => {
     setEditingItem(goal);
@@ -186,164 +191,151 @@ export function GoalsPage() {
 
       {/* Toolbar */}
       {goals.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4 border-b border-[var(--fp-color-border)] pb-4">
-          <div className="flex items-center gap-2 mr-auto">
-            <button
-              onClick={() => setActiveFilter("all")}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                activeFilter === "all"
-                  ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-[var(--fp-color-background)]"
-                  : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
-              )}
-            >
-              {t("goals.filterAll")}
-            </button>
-            <button
-              onClick={() => setActiveFilter("onetime")}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                activeFilter === "onetime"
-                  ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-[var(--fp-color-background)]"
-                  : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
-              )}
-            >
-              {t("goals.filterOnetime")}
-            </button>
-            <button
-              onClick={() => setActiveFilter("periodic")}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                activeFilter === "periodic"
-                  ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-[var(--fp-color-background)]"
-                  : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
-              )}
-            >
-              {t("goals.filterPeriodic")}
-            </button>
+        <div className="flex flex-col gap-4 border-b border-[var(--fp-color-border)] pb-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative w-full sm:w-auto min-w-[300px]">
+              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
+              <input
+                type="text"
+                placeholder={t("goals.searchPlaceholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-[48px] w-full rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] pl-10 pr-4 text-sm font-medium text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-muted-foreground)] focus:border-[var(--fp-color-primary)]"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveFilter("all")}
+                className={cn(
+                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
+                  activeFilter === "all"
+                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
+                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
+                )}
+              >
+                {t("goals.filterAll")}
+              </button>
+              <button
+                onClick={() => setActiveFilter("onetime")}
+                className={cn(
+                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
+                  activeFilter === "onetime"
+                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
+                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
+                )}
+              >
+                {t("goals.filterOnetime")}
+              </button>
+              <button
+                onClick={() => setActiveFilter("periodic")}
+                className={cn(
+                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
+                  activeFilter === "periodic"
+                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
+                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
+                )}
+              >
+                {t("goals.filterPeriodic")}
+              </button>
+            </div>
           </div>
 
-          <div className="relative w-full sm:w-auto min-w-[250px]">
-            <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
-            <input
-              type="text"
-              placeholder={t("goals.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] pl-10 pr-4 text-sm text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-muted-foreground)] focus:border-[var(--fp-color-primary)]"
-            />
-          </div>
-          
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="secondary" className="font-semibold text-xs border-0 bg-transparent text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]">
-                {t("goals.sortPrefix")}
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                align="end"
-                className="z-50 min-w-[200px] overflow-hidden rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1.5 shadow-[var(--fp-shadow-popover)] animate-in fade-in-0 zoom-in-95"
+          <div className="flex items-center gap-4 text-sm font-semibold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
+            <span>{t("goals.sortPrefix")}</span>
+            {(["name", "cost", "type", "year"] as const).map((field) => (
+              <button
+                key={field}
+                onClick={() => {
+                  if (sortField === field) {
+                    setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+                  } else {
+                    setSortField(field);
+                    setSortDirection("asc");
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors",
+                  sortField === field
+                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)]"
+                    : "hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
+                )}
               >
-                <DropdownMenu.Item 
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
-                  onClick={() => setSortOrder("default")}
-                >
-                  <span className="flex-1">{t("goals.sortDefault")}</span>
-                  {sortOrder === "default" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item 
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
-                  onClick={() => setSortOrder("cost")}
-                >
-                  <span className="flex-1">{t("goals.sortCostDesc")}</span>
-                  {sortOrder === "cost" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item 
-                  className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
-                  onClick={() => setSortOrder("year")}
-                >
-                  <span className="flex-1">{t("goals.sortYearAsc")}</span>
-                  {sortOrder === "year" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                {t(`goals.sort_${field}`)}
+                <span className="text-[10px] opacity-70">
+                  {sortField === field ? (sortDirection === "asc" ? "↑" : "↓") : "↑↓"}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Grid / List */}
       {goals.length > 0 ? (
         filteredGoals.length > 0 ? (
-          <div className="flex flex-col gap-0">
-            {/* Grid Header */}
-            <div className="flex items-center gap-4 px-4 py-2 text-xs font-semibold text-[var(--fp-color-muted-foreground)] hidden">
-              <div className="w-[30%] min-w-[200px]">{t("goals.colName")}</div>
-              <div className="w-[30%] min-w-[200px]">{t("goals.colCost")}</div>
-              <div className="w-[20%] min-w-[120px]">{t("goals.colType")}</div>
-              <div className="flex-1">{t("goals.colYear")}</div>
-            </div>
-            
-            {/* List */}
-            <div className="flex flex-col gap-6">
-              {sortedYears.map((year) => {
-                const yearGoals = groupedGoals[year];
-                const yearCost = yearGoals.reduce((sum, g) => sum + g.cost, 0);
-                const yearSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
-                const yearProgress = yearCost > 0 ? Math.min(100, Math.round((yearSaved / yearCost) * 100)) : 0;
-                const isAccumulation = activeGoal?.targetYear === year;
-                const isCompleted = activeGoal ? activeGoal.targetYear > year : true;
+          <div className="flex flex-col gap-6 mt-4">
+            {sortedYears.map((year) => {
+              const yearGoals = groupedGoals[year];
+              if (!yearGoals || yearGoals.length === 0) return null;
 
-                return (
-                  <div key={year} className="flex flex-col gap-3">
-                    {/* Year Group Header */}
-                    <div className="flex flex-col gap-2 rounded-2xl bg-[var(--fp-color-surface)] p-4 border border-[var(--fp-color-border)]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-2xl font-bold text-[var(--fp-color-foreground)]">{year}</h2>
-                          {isAccumulation ? (
-                            <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-2 py-0.5 text-[10px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]" className="uppercase">{t("goals.accumulationBadge")}</span>
-                          ) : isCompleted ? (
-                            <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600" className="uppercase">{t("goals.completedBadge")}</span>
-                          ) : (
-                            <span className="rounded bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sky-600" className="uppercase">{t("goals.queueBadge")}</span>
-                          )}
-                          <span className="text-sm font-medium text-[var(--fp-color-muted-foreground)]">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 w-[40%] min-w-[250px] max-w-[400px]">
-                          <span className="text-sm font-bold text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(yearCost)}</span>
-                          <div className="h-1.5 w-full flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)]">
-                            <div className="h-full bg-[var(--fp-color-foreground)] transition-all" style={{ width: `${yearProgress}%` }} />
-                          </div>
-                          <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)] w-8 text-right">{yearProgress}%</span>
-                        </div>
+              const isAccumulation = activeGoal?.targetYear === year;
+              const isCompleted = yearGoals.every(g => g.saved >= g.cost);
+              const yearTotalCost = yearGoals.reduce((sum, g) => sum + g.cost, 0);
+              const yearTotalSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
+              const yearPercent = yearTotalCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearTotalCost) * 100)) : 0;
+
+              return (
+                <div key={year} className="flex flex-col gap-4">
+                  {/* Year Header Block */}
+                  <div className={cn(
+                    "flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl p-5 border",
+                    isAccumulation ? "bg-[var(--fp-color-accent-gold-soft)] border-[var(--fp-color-accent-gold-soft)]" : "bg-[var(--fp-color-surface)] border-transparent"
+                  )}>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3">
+                        <h2 className={cn("text-[28px] font-extrabold tracking-tight", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{year}</h2>
+                        {isAccumulation ? (
+                          <span className="rounded bg-white/50 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-accent-gold-text)] uppercase">{t("goals.accumulationBadge")}</span>
+                        ) : isCompleted ? (
+                          <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-emerald-600 uppercase">{t("goals.completedBadge")}</span>
+                        ) : (
+                          <span className="rounded bg-sky-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-sky-600 uppercase">{t("goals.queueBadge")}</span>
+                        )}
+                        <span className="text-sm font-bold opacity-70 ml-2">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
                       </div>
-                      <p className="text-xs text-[var(--fp-color-muted-foreground)]">
-                        {isAccumulation 
-                          ? t("goals.yearAccumulationInfo", { year: String(year) }) 
-                          : isCompleted
-                          ? t("goals.yearCompletedInfo", { year: String(year) })
-                          : t("goals.yearQueueInfo", { year: String(year) })}
+                      <p className="text-sm font-medium opacity-70">
+                        {isAccumulation ? t("goals.yearAccumulationInfo", { year: String(year) }) : isCompleted ? t("goals.yearCompletedInfo", { year: String(year) }) : t("goals.yearQueueInfo", { year: String(year) })}
                       </p>
                     </div>
 
-                    {/* Goals List */}
-                    <div className="flex flex-col gap-2">
-                      {yearGoals.map((goal) => (
-                        <GoalListItem 
-                          key={goal.id} 
-                          goal={goal} 
-                          isAccumulation={isAccumulation}
-                          isQueue={!isCompleted && !isAccumulation}
-                          onClick={() => handleEdit(goal)} 
+                    <div className="flex items-center gap-4 bg-white/40 px-4 py-2 rounded-full border border-white/20">
+                      <span className={cn("font-bold text-lg", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{formatRub(yearTotalCost)}</span>
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/10">
+                        <div 
+                          className={cn("h-full rounded-full", isAccumulation ? "bg-[var(--fp-color-accent-gold-text)]" : "bg-[var(--fp-color-foreground)]")} 
+                          style={{ width: `${yearPercent}%` }} 
                         />
-                      ))}
+                      </div>
+                      <span className={cn("text-xs font-bold", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-muted-foreground)]")}>{yearPercent}%</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Goals List */}
+                  <div className="flex flex-col gap-3">
+                    {yearGoals.map((goal) => (
+                      <GoalListItem 
+                        key={goal.id} 
+                        goal={goal} 
+                        isAccumulation={isAccumulation}
+                        isQueue={!isCompleted && !isAccumulation}
+                        onClick={() => handleEdit(goal)} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed border-[var(--fp-color-border)]">
