@@ -15,7 +15,7 @@ export function GoalsTable() {
   const reachable = goals.filter((goal) => goal.reachable).length;
 
   return (
-    <section className="max-w-[1122px]">
+    <section className="w-full">
       <div className="mb-2 flex items-center justify-between gap-4 max-[760px]:block">
         <h2 className="section-title text-[var(--fp-text-md)]">Достижимость целей</h2>
         <div className="flex items-center gap-4 text-xs text-[var(--fp-color-muted-foreground)] max-[760px]:mt-2">
