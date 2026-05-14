@@ -43,6 +43,9 @@ export interface Goal {
   targetYear: number;
   cost: number;
   saved: number;
+  projectedCost?: number;
+  projectedSaved?: number;
+  projectedProgressPct?: number;
   growth: number;
   reachable: boolean;
   type?: "onetime" | "periodic";

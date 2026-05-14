@@ -28,6 +28,16 @@ export interface Goal {
   indexLabel?: string;
   /** @minimum 1 */
   priority: number;
+  /** Cost inflated to the goal target year for projected allocation. */
+  projectedTargetCost?: number;
+  /** Forecast amount allocated from income minus expenses by goal priority. */
+  projectedSavedAmount?: number;
+  /** Forecast progress toward projectedTargetCost, capped at 100. */
+  projectedProgressPct?: number;
+  /** Whether projectedSavedAmount reaches projectedTargetCost. */
+  projectedReachable?: boolean;
+  /** First forecast year when the goal is fully allocated. */
+  projectedCompletionYear?: number | null;
   createdAt?: string;
   updatedAt?: string;
   /**

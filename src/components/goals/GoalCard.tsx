@@ -19,7 +19,9 @@ export function GoalCard({
   const { t } = useI18n();
   const Icon = iconMap[item.icon] ?? Target;
   
-  const progress = Math.min(100, Math.round((item.saved / item.cost) * 100));
+  const displayCost = item.projectedCost ?? item.cost;
+  const displaySaved = item.projectedSaved ?? item.saved;
+  const progress = item.projectedProgressPct ?? Math.min(100, Math.round((displaySaved / displayCost) * 100));
 
   return (
     <div
@@ -79,7 +81,7 @@ export function GoalCard({
         </div>
         {!compact && (
           <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
-            {formatRub(item.saved, { compact: true })} {t("goals.saved").toLowerCase()}
+            {formatRub(displaySaved, { compact: true })} {t("goals.saved").toLowerCase()}
           </div>
         )}
       </div>

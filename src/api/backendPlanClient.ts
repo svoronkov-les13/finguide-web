@@ -136,7 +136,7 @@ function mapBackendPlan(input: {
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   const forecast = cashflow.map(mapForecastPoint);
-  const goals = planState.goals.map((goal) => mapGoal(goal, forecast.at(-1)?.year ?? settings.startYear));
+  const goals = planState.goals.map((goal) => goalFromApi(goal, forecast.at(-1)?.year ?? settings.startYear));
   const plan: FinancialPlan = {
     owner: {
       name: planState.profile.name,
@@ -244,7 +244,7 @@ function mapGoalCashflow(source: ApiGoal, assumptions: ModelAssumptions | undefi
   };
 }
 
-function mapGoal(goal: ApiGoal, lastForecastYear: number): Goal {
+export function goalFromApi(goal: ApiGoal, lastForecastYear: number): Goal {
   return {
     id: goal.id,
     name: goal.name,
@@ -252,8 +252,11 @@ function mapGoal(goal: ApiGoal, lastForecastYear: number): Goal {
     targetYear: goal.targetYear,
     cost: goal.currentCost,
     saved: goal.savedAmount,
+    projectedCost: goal.projectedTargetCost,
+    projectedSaved: goal.projectedSavedAmount,
+    projectedProgressPct: goal.projectedProgressPct,
     growth: goal.growthPct / 100,
-    reachable: goal.savedAmount >= goal.currentCost || goal.targetYear <= lastForecastYear,
+    reachable: goal.projectedReachable ?? (goal.savedAmount >= goal.currentCost || goal.targetYear <= lastForecastYear),
     type: goal.type === "recurring" ? "periodic" : "onetime",
   };
 }

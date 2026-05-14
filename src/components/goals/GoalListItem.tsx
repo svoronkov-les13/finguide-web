@@ -10,7 +10,9 @@ interface GoalListItemProps {
 }
 
 export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalListItemProps) {
-  const progress = Math.min(100, Math.round((goal.saved / goal.cost) * 100));
+  const displayCost = goal.projectedCost ?? goal.cost;
+  const displaySaved = goal.projectedSaved ?? goal.saved;
+  const progress = goal.projectedProgressPct ?? Math.min(100, Math.round((displaySaved / displayCost) * 100));
   const isPeriodic = goal.type === "periodic";
 
   return (
@@ -39,7 +41,7 @@ export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalLis
       </div>
 
       <div className="flex w-[40%] min-w-[250px] max-w-[400px] items-center gap-4">
-         <span className="font-semibold text-sm text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(goal.cost)}</span>
+         <span className="font-semibold text-sm text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(displayCost)}</span>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
            <div className="h-full bg-[var(--fp-color-foreground)] transition-all" style={{ width: `${progress}%` }} />
          </div>
