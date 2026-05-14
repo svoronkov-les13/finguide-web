@@ -112,3 +112,25 @@ export interface FinancialPlan {
 }
 
 export type EditablePlanPatch = Partial<PlanSettings>;
+
+// ─── Contributions (Savings page) ─────────────────────────────────────────────
+
+export interface Contribution {
+  id: string;
+  goalId: string | null;
+  amount: number;
+  currency: "RUB" | "USD";
+  date: string; // ISO date "YYYY-MM-DD"
+  note: string | null;
+}
+
+// ─── Monthly Tracker (Calendar tracker) ───────────────────────────────────────
+
+export type MonthlyStatus = "completed" | "partial" | "missed" | "pending";
+
+export interface MonthlyTrackerEntry {
+  month: string; // "YYYY-MM"
+  status: MonthlyStatus;
+  amount: number | null;
+  note: string | null;
+}

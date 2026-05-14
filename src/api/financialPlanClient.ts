@@ -1,11 +1,9 @@
 import { backendPlanClient } from "@/api/backendPlanClient";
 import { mockApi } from "@/api/mockApi";
-import type { Cashflow, EditablePlanPatch, Goal, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, ScenarioId, TrackerEntry } from "@/types/finance";
 
 const useMockApi = import.meta.env.VITE_FINGUIDE_USE_MOCK === "true";
 const allowDevMockFallback = import.meta.env.DEV && import.meta.env.VITE_FINGUIDE_DEV_MOCK_FALLBACK !== "false";
-
-export type FinancialPlanClient = typeof mockApi;
 
 let devMockFallbackActive = false;
 
@@ -32,11 +30,12 @@ async function getPlanWithDevFallback() {
   }
 }
 
-function activeClient(): FinancialPlanClient {
+function activeClient() {
   return devMockFallbackActive ? mockApi : backendPlanClient;
 }
 
-const backendFirstClient: FinancialPlanClient = {
+// New contribution/tracker methods always go to backend (no mock fallback needed)
+const backendFirstClient = {
   getPlan: getPlanWithDevFallback,
   setScenario: (id: ScenarioId) => activeClient().setScenario(id),
   updateSettings: (patch: EditablePlanPatch) => activeClient().updateSettings(patch),
@@ -51,7 +50,19 @@ const backendFirstClient: FinancialPlanClient = {
   updateTrackerEntry: (id: string, patch: Partial<TrackerEntry>) => activeClient().updateTrackerEntry(id, patch),
   deleteTrackerEntry: (id: string) => activeClient().deleteTrackerEntry(id),
   resetPlan: () => activeClient().resetPlan(),
-  saveWhatIfScenario: (input) => activeClient().saveWhatIfScenario(input),
+  saveWhatIfScenario: (input: Parameters<typeof backendPlanClient.saveWhatIfScenario>[0]) =>
+    activeClient().saveWhatIfScenario(input),
+  // Contributions & Monthly tracker — always hit backend
+  getContributions: () => backendPlanClient.getContributions(),
+  addContribution: (input: Omit<Contribution, "id">) => backendPlanClient.addContribution(input),
+  updateContribution: (id: string, patch: Partial<Omit<Contribution, "id">>) =>
+    backendPlanClient.updateContribution(id, patch),
+  deleteContribution: (id: string) => backendPlanClient.deleteContribution(id),
+  getMonthlyTracker: () => backendPlanClient.getMonthlyTracker(),
+  saveMonthlyTrackerEntry: (month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
+    backendPlanClient.saveMonthlyTrackerEntry(month, status, amount, note),
 };
 
-export const financialPlanClient: FinancialPlanClient = useMockApi ? mockApi : backendFirstClient;
+export type FinancialPlanClient = typeof backendFirstClient;
+
+export const financialPlanClient: FinancialPlanClient = useMockApi ? (mockApi as unknown as FinancialPlanClient) : backendFirstClient;
