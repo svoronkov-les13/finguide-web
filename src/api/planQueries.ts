@@ -152,7 +152,15 @@ export function useSaveWhatIfScenarioMutation() {
   const queryClient = useQueryClient();
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
-    mutationFn: (input: { incomeGrowthDelta: number; expenseGrowthDelta: number; returnDelta: number }) => financialPlanClient.saveWhatIfScenario(input),
+    mutationFn: (input: {
+      incomeGrowthDelta: number;
+      expenseGrowthDelta: number;
+      returnDelta: number;
+      inflationDelta?: number;
+      retirementAgeShift?: number;
+      goalsCostDelta?: number;
+      description?: string;
+    }) => financialPlanClient.saveWhatIfScenario(input),
     onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
   });
 }

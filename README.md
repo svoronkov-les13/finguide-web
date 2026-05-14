@@ -111,6 +111,13 @@ VITE_FINGUIDE_OIDC_CLIENT_ID=finguide-web
 VITE_FINGUIDE_OIDC_SCOPE="openid profile email"
 ```
 
+In local dev the app uses the backend client first. If the backend route is unavailable, it falls back to the in-memory demo plan so the UI stays usable:
+
+```bash
+# Optional: disable automatic local fallback and surface API errors.
+VITE_FINGUIDE_DEV_MOCK_FALLBACK=false
+```
+
 Demo build under `/fg/` uses:
 
 ```bash

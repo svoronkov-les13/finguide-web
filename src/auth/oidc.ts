@@ -139,6 +139,54 @@ export function clearAuthSession() {
   window.localStorage.removeItem(AUTH_SESSION_KEY);
 }
 
+/**
+ * Login via Keycloak Resource Owner Password Credentials (ROPC) grant.
+ * This enables Figma-designed login forms instead of Keycloak redirect.
+ */
+export async function loginWithCredentials(email: string, password: string) {
+  const body = new URLSearchParams({
+    grant_type: "password",
+    client_id: oidcClientId,
+    username: email,
+    password,
+    scope: oidcScope,
+  });
+
+  const response = await fetch(`${oidcIssuerUrl}/protocol/openid-connect/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const errorDescription = (errorBody as Record<string, string>).error_description;
+    throw new Error(errorDescription || `Login failed with HTTP ${response.status}`);
+  }
+
+  const token = (await response.json()) as TokenResponse;
+  return storeTokenResponse(token);
+}
+
+/**
+ * Build the Keycloak registration URL (redirects user to Keycloak's registration form).
+ */
+export function getKeycloakRegistrationUrl(returnTo = "/dashboard") {
+  const state = randomState();
+  const pending: PendingAuthorization = { state, verifier: "", returnTo };
+  window.sessionStorage.setItem(OIDC_STATE_KEY, JSON.stringify(pending));
+
+  const params = new URLSearchParams({
+    client_id: oidcClientId,
+    redirect_uri: callbackUrl(),
+    response_type: "code",
+    scope: oidcScope,
+    state,
+  });
+
+  return `${oidcIssuerUrl}/protocol/openid-connect/registrations?${params.toString()}`;
+}
+
 function storeTokenResponse(token: TokenResponse) {
   if (!token.access_token) {
     throw new Error("Keycloak token response does not contain access_token");

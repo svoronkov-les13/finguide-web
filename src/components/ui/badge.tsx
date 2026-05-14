@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 const badgeVariants = cva("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold", {
   variants: {
     variant: {
-      default: "bg-muted text-foreground",
-      success: "bg-emerald-500/12 text-emerald-700",
-      warning: "bg-primary/15 text-primary",
-      danger: "bg-rose-500/12 text-rose-700",
-      subtle: "border border-border bg-surface/70 text-muted-foreground",
+      default: "bg-[var(--fp-color-muted)] text-[var(--fp-color-foreground)]",
+      success: "bg-[var(--fp-color-teal-soft)] text-[var(--fp-color-teal)]",
+      warning: "bg-[var(--fp-color-accent-gold-soft)] text-[var(--fp-color-accent-gold)]",
+      danger: "bg-[var(--fp-color-danger-soft)] text-[var(--fp-color-danger)]",
+      subtle: "border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/70 text-[var(--fp-color-muted-foreground)]",
     },
   },
   defaultVariants: {

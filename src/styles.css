@@ -1,26 +1,37 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap&subset=cyrillic");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap&subset=cyrillic");
+@import "./tokens.css";
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --color-background: #f4f1eb;
-  --color-foreground: #24202a;
-  --color-card: #fbfaf6;
-  --color-surface: #f1eee8;
-  --color-surface-hover: #e9e4dc;
-  --color-muted: #e5ded4;
-  --color-muted-foreground: #756f67;
-  --color-label: #746b61;
-  --color-border: rgba(36, 32, 42, 0.14);
-  --color-primary: #bd962c;
-  --color-primary-foreground: #fff7dc;
-  --color-sidebar: #080712;
-  --color-sidebar-soft: #15101b;
-  --color-sidebar-text: #f3ecdc;
-  --color-cyan: #2aa18d;
-  --shadow-card: 0 10px 28px rgba(34, 29, 22, 0.07), 0 1px 1px rgba(34, 29, 22, 0.05);
-  --shadow-soft: 0 2px 8px rgba(34, 29, 22, 0.06);
-  --shadow-elevated: 0 18px 48px rgba(34, 29, 22, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.42) inset;
+  --font-sans: var(--fp-font-primary);
+  --font-mono: var(--fp-font-mono);
+
+  /* Colors: map tokens into Tailwind theme */
+  --color-background: var(--fp-color-background);
+  --color-foreground: var(--fp-color-foreground);
+  --color-card: var(--fp-color-card);
+  --color-surface: var(--fp-color-surface);
+  --color-surface-hover: var(--fp-color-surface-hover);
+  --color-muted: var(--fp-color-muted);
+  --color-muted-foreground: var(--fp-color-muted-foreground);
+  --color-label: var(--fp-color-label);
+  --color-border: var(--fp-color-border);
+  --color-border-strong: var(--fp-color-border-strong);
+  --color-primary: var(--fp-color-accent-gold);
+  --color-primary-foreground: #fff8e4;
+  --color-sidebar: var(--fp-color-sidebar-bg);
+  --color-sidebar-soft: var(--fp-color-sidebar-soft);
+  --color-sidebar-text: var(--fp-color-sidebar-text);
+  --color-teal: var(--fp-color-teal);
+  --color-coral: var(--fp-color-coral);
+  --color-danger: var(--fp-color-danger);
+
+  /* Shadows */
+  --shadow-card: var(--fp-shadow-card);
+  --shadow-soft: var(--fp-shadow-soft);
+  --shadow-elevated: var(--fp-shadow-elevated);
+  --shadow-glass: var(--fp-shadow-glass);
+  --shadow-tooltip: var(--fp-shadow-tooltip);
 }
 
 * {
@@ -28,7 +39,7 @@
 }
 
 html {
-  background: var(--color-background);
+  background: var(--fp-color-background);
 }
 
 body {
@@ -36,15 +47,19 @@ body {
   min-height: 100vh;
   margin: 0;
   overflow: hidden;
-  color: var(--color-foreground);
-  background: var(--color-background);
-  font-family: var(--font-sans);
+  color: var(--fp-color-foreground);
+  background: var(--fp-color-background);
+  font-family: var(--fp-font-primary);
+  font-size: var(--fp-text-base);
   letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -56,6 +71,10 @@ button {
   background: rgba(189, 150, 44, 0.22);
 }
 
+/* =============================================
+   Layout helpers
+   ============================================= */
+
 .mesh-bg::before {
   position: fixed;
   inset: 0;
@@ -65,10 +84,14 @@ button {
   background: transparent;
 }
 
+/* =============================================
+   Typography utilities
+   ============================================= */
+
 .section-title {
   position: relative;
-  padding-left: 12px;
-  font-weight: 700;
+  padding-left: var(--fp-space-base);
+  font-weight: var(--fp-weight-bold);
 }
 
 .section-title::before {
@@ -77,10 +100,92 @@ button {
   bottom: 0.3em;
   left: 0;
   width: 3px;
-  border-radius: 999px;
+  border-radius: var(--fp-radius-full);
   background: currentColor;
   content: "";
 }
+
+/* Figma: Label / Caption UPPERCASE — 11px Medium, ls +0.88px */
+.label-caps {
+  font-size: var(--fp-text-xs);
+  font-weight: var(--fp-weight-medium);
+  letter-spacing: var(--fp-tracking-wide);
+  text-transform: uppercase;
+  color: var(--fp-color-label);
+}
+
+/* Figma: Card Value Large — 15px SemiBold, ls -0.3px */
+.card-value-lg {
+  font-family: var(--fp-font-numbers);
+  font-size: var(--fp-text-md);
+  font-weight: var(--fp-weight-semibold);
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Figma: Card Value XL — 21px Semi Bold, ls -0.38px */
+.card-value-xl {
+  font-family: var(--fp-font-numbers);
+  font-size: var(--fp-text-xl);
+  font-weight: var(--fp-weight-semibold);
+  letter-spacing: var(--fp-tracking-snug);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Figma: H1 / Page Title — 27px Bold, ls -0.54px */
+.page-title {
+  font-size: var(--fp-text-3xl);
+  font-weight: var(--fp-weight-bold);
+  letter-spacing: var(--fp-tracking-tight);
+  line-height: var(--fp-leading-normal);
+}
+
+/* Figma: H2 / Section Title — 16px SemiBold */
+.section-heading {
+  font-size: var(--fp-text-lg);
+  font-weight: var(--fp-weight-semibold);
+  line-height: var(--fp-leading-snug);
+}
+
+/* Figma: Body / Row Text — 13px Regular, opacity 92% */
+.body-text {
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-weight-regular);
+  color: var(--fp-color-text-94);
+}
+
+/* Figma: Secondary / Meta — 11px SemiBold, opacity 76% */
+.meta-text {
+  font-size: var(--fp-text-xs);
+  font-weight: var(--fp-weight-semibold);
+  color: var(--fp-color-text-76);
+}
+
+/* Figma: Table Header — 12px SemiBold, ls +1.2px, CAPS */
+.table-header {
+  font-size: 12px;
+  font-weight: var(--fp-weight-semibold);
+  letter-spacing: var(--fp-tracking-wider);
+  text-transform: uppercase;
+}
+
+/* Figma: Progress Numbers (Inter) — 13px Regular, ls -0.27px */
+.progress-nums {
+  font-family: var(--fp-font-numbers);
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-weight-regular);
+  letter-spacing: -0.27px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tabular nums utility */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* =============================================
+   Scrollbar
+   ============================================= */
 
 .scrollbar-thin {
   scrollbar-color: rgba(31, 28, 37, 0.24) transparent;
@@ -93,29 +198,33 @@ button {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  border-radius: 999px;
+  border-radius: var(--fp-radius-full);
   background: rgba(31, 28, 37, 0.22);
 }
 
-.num {
-  font-variant-numeric: tabular-nums;
-}
+/* =============================================
+   Recharts overrides
+   ============================================= */
 
 .recharts-cartesian-axis-tick-value,
 .recharts-legend-item-text {
-  fill: #756f67;
-  color: #756f67 !important;
+  fill: var(--fp-color-label);
+  color: var(--fp-color-label) !important;
   font-size: 12px;
 }
 
 .recharts-cartesian-grid line {
-  stroke: rgba(26, 20, 30, 0.08);
+  stroke: var(--fp-color-divider);
   stroke-dasharray: 4 7;
 }
 
 .recharts-tooltip-wrapper {
   outline: none;
 }
+
+/* =============================================
+   Responsive
+   ============================================= */
 
 @media (max-width: 760px) {
   body {

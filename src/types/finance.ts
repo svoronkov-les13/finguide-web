@@ -1,6 +1,6 @@
 export type ScenarioId = "base" | "optimistic" | "pessimistic" | "whatif";
 
-export type CashflowFrequency = "monthly" | "yearly";
+export type CashflowFrequency = "monthly" | "yearly" | "onetime";
 
 export interface Scenario {
   id: ScenarioId;
@@ -8,6 +8,16 @@ export interface Scenario {
   incomeGrowthDelta: number;
   expenseGrowthDelta: number;
   returnDelta: number;
+  inflationDelta?: number;
+  retirementAgeShift?: number;
+  goalsCostDelta?: number;
+  description?: string;
+}
+
+export interface GrowthRange {
+  startYear: number;
+  endYear: number | null;
+  growthPercent: number;
 }
 
 export interface Cashflow {
@@ -18,8 +28,10 @@ export interface Cashflow {
   amount: number;
   currency: "USD" | "RUB";
   startYear: number;
-  endYear: number;
+  endYear: number | null;
   growth: number;
+  growthType?: "inflation" | "custom" | "ranges";
+  growthRanges?: GrowthRange[];
   enabled: boolean;
   category: string;
 }
@@ -33,6 +45,7 @@ export interface Goal {
   saved: number;
   growth: number;
   reachable: boolean;
+  type?: "onetime" | "periodic";
 }
 
 export interface ForecastPoint {
