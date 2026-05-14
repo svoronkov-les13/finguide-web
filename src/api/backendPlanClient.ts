@@ -75,7 +75,7 @@ function unwrapData<T>(response: ApiResponse, operation: string): T {
 }
 
 async function backendJson<T>(path: string, options: RequestInit = {}, operation = path): Promise<T> {
-  const baseOptions = requestOptions();
+  const baseOptions = await requestOptions();
   const res = await fetch(`${apiBaseUrl}${path}`, {
     ...baseOptions,
     ...options,
@@ -90,7 +90,7 @@ async function backendJson<T>(path: string, options: RequestInit = {}, operation
 }
 
 async function backendNoContent(path: string, options: RequestInit = {}, operation = path) {
-  const baseOptions = requestOptions();
+  const baseOptions = await requestOptions();
   const res = await fetch(`${apiBaseUrl}${path}`, {
     ...baseOptions,
     ...options,
