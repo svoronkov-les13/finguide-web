@@ -1,206 +1,437 @@
-import { CalendarCheck, CheckCircle2, CircleDollarSign, Plus, Trash2, WalletCards } from "lucide-react";
-import { useAddTrackerEntryMutation, useDeleteTrackerEntryMutation, usePlanQuery, useUpdateTrackerEntryMutation } from "@/api/planQueries";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Page } from "@/components/layout/Page";
+import { CheckCircle2, Calendar, HelpCircle, Minus, X, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { usePlanQuery } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { formatRub } from "@/lib/utils";
-import type { TrackerEntry } from "@/types/finance";
+import { useI18n } from "@/i18n/I18nProvider";
+
+type MonthStatus = "completed" | "partial" | "missed" | "current" | "pending";
+
+interface MonthData {
+  id: string;
+  name: string;
+  status: MonthStatus;
+  amount?: number;
+  percent?: number;
+}
+
+const MONTH_NAMES = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+];
+
+const INITIAL_MONTHS: MonthData[] = [
+  { id: "01", name: "Январь", status: "partial", amount: 95000, percent: 23 },
+  { id: "02", name: "Февраль", status: "completed", amount: 192000 },
+  { id: "03", name: "Март", status: "completed", amount: 185000 },
+  { id: "04", name: "Апрель", status: "current" },
+  { id: "05", name: "Май", status: "pending" },
+  { id: "06", name: "Июнь", status: "pending" },
+  { id: "07", name: "Июль", status: "pending" },
+  { id: "08", name: "Август", status: "pending" },
+  { id: "09", name: "Сентябрь", status: "pending" },
+  { id: "10", name: "Октябрь", status: "pending" },
+  { id: "11", name: "Ноябрь", status: "pending" },
+  { id: "12", name: "Декабрь", status: "pending" },
+];
+
+function makeEmptyYear(): MonthData[] {
+  return MONTH_NAMES.map((name, i) => ({
+    id: String(i + 1).padStart(2, "0"),
+    name,
+    status: "pending" as MonthStatus,
+  }));
+}
 
 export function TrackingPage() {
   const { data: plan } = usePlanQuery();
-  const addTrackerEntry = useAddTrackerEntryMutation();
-  const updateTrackerEntry = useUpdateTrackerEntryMutation();
-  const deleteTrackerEntry = useDeleteTrackerEntryMutation();
-  const tracker = plan?.tracker ?? [];
-  const totals = tracker.reduce(
-    (acc, entry) => {
-      acc.balance += entry.amount;
-      if (entry.status === "actual") acc.actual += entry.amount;
-      if (entry.status === "planned") acc.planned += entry.amount;
-      return acc;
-    },
-    { balance: 0, actual: 0, planned: 0 },
-  );
+  const { t } = useI18n();
 
-  const addEntry = () =>
-    addTrackerEntry.mutate({
-      date: new Date().toISOString().slice(0, 10),
-      title: "Новая операция",
-      amount: 0,
-      type: "expense",
-      status: "planned",
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0-indexed
+
+  const [viewYear, setViewYear] = useState(currentYear);
+  const [yearData, setYearData] = useState<Record<number, MonthData[]>>({
+    [currentYear]: INITIAL_MONTHS,
+  });
+
+  const months = yearData[viewYear] ?? makeEmptyYear();
+
+  const activeGoal = plan?.goals.find(g => !g.reachable) || plan?.goals[0];
+  const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub || 405000;
+
+  const completedMonths = months.filter(m => m.status === "completed");
+  const partialMonths = months.filter(m => m.status === "partial");
+  const missedMonths = months.filter(m => m.status === "missed");
+  const trackedMonths = months.filter(m => m.status === "completed" || m.status === "partial");
+
+  const totalSaved = months.reduce((acc, m) => acc + (m.amount || 0), 0);
+  const totalPlanned = monthlyTarget * 12;
+  const totalPercent = totalPlanned > 0 ? Math.round((totalSaved / totalPlanned) * 100) : 0;
+
+  const completionPercent = trackedMonths.length > 0
+    ? Math.round((completedMonths.length / trackedMonths.length) * 100)
+    : 0;
+
+  // Current month card shows current calendar month, always from the current year data
+  const currentMonthData = (yearData[currentYear] ?? makeEmptyYear())[currentMonth];
+
+  function markMonth(id: string, status: "completed" | "partial" | "missed") {
+    setYearData(prev => {
+      const prevMonths = prev[viewYear] ?? makeEmptyYear();
+      return {
+        ...prev,
+        [viewYear]: prevMonths.map(m =>
+          m.id === id
+            ? { ...m, status, amount: status === "completed" ? monthlyTarget : status === "partial" ? Math.round(monthlyTarget * 0.23) : 0 }
+            : m
+        ),
+      };
     });
+  }
+
+  function getCardStyle(status: MonthStatus): string {
+    switch (status) {
+      case "completed": return "border-[var(--fp-color-teal)]/30 bg-[var(--fp-color-teal)]/5";
+      case "partial": return "border-[var(--fp-color-accent-gold)]/40 bg-[var(--fp-color-accent-gold-soft)]";
+      case "missed": return "border-[var(--fp-color-coral)]/30 bg-[var(--fp-color-coral-soft)]";
+      case "current": return "border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface-hover)]";
+      default: return "border-[var(--fp-color-border)] bg-[var(--fp-color-card)]";
+    }
+  }
+
+  function getStatusBadge(m: MonthData) {
+    switch (m.status) {
+      case "completed":
+        return (
+          <span className="text-[12px] font-semibold text-[var(--fp-color-teal)] flex items-center gap-1">
+            <CheckCircle2 className="size-[14px]" /> {t("tracking.completed")}
+          </span>
+        );
+      case "partial":
+        return (
+          <span className="text-[12px] font-semibold text-[var(--fp-color-accent-gold-text)]">
+            {t("tracking.partial")}
+          </span>
+        );
+      case "missed":
+        return (
+          <span className="text-[12px] font-semibold text-[var(--fp-color-coral)]">
+            {t("tracking.missed")}
+          </span>
+        );
+      case "current":
+        return (
+          <span className="text-[12px] font-semibold text-[var(--fp-color-muted-foreground)]">
+            {t("tracking.markNow")}
+          </span>
+        );
+      default:
+        return (
+          <span className="text-[12px] text-[var(--fp-color-muted-foreground)]">
+            {t("tracking.ahead")}
+          </span>
+        );
+    }
+  }
 
   return (
-    <div className="grid max-w-[1256px] gap-6">
-      <header className="flex items-start justify-between gap-5 max-[760px]:block">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-            <CalendarCheck className="size-5" />
-          </span>
-          <div>
-            <h1 className="page-title">Трекер операций</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Плановые и фактические операции, которые можно сверять с прогнозом</p>
-          </div>
-        </div>
-        <Button className="max-[760px]:mt-4" onClick={addEntry}>
-          <Plus className="size-4" />
-          Операция
-        </Button>
+    <Page>
+      <header>
+        <h1 className="text-[28px] font-bold tracking-tight text-[var(--fp-color-foreground)]">
+          {t("tracking.title")}
+        </h1>
+        <p className="mt-1.5 text-[15px] text-[var(--fp-color-label)]">
+          {t("tracking.subtitle")}
+        </p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,800px)_280px]">
-        <div className="grid gap-5">
-          <Card className="px-5 py-4">
-            <div className="grid gap-4 text-sm text-muted-foreground md:grid-cols-3">
-              <InstructionStep index={1} title="План">Добавляйте ожидаемые доходы, расходы и взносы</InstructionStep>
-              <InstructionStep index={2} title="Факт">Отмечайте реальные движения денег</InstructionStep>
-              <InstructionStep index={3} title="Сверка">Смотрите отклонение от прогноза и корректируйте модель</InstructionStep>
+      {/* Top stats row — 2 cards side by side */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Left: Active Goal + Monthly Norm */}
+        <Card className="p-6 rounded-[20px] border-[var(--fp-color-border)] bg-[var(--fp-color-card)] shadow-sm">
+          {/* Active goal */}
+          <div className="mb-6 pb-6 border-b border-[var(--fp-color-border)]">
+            <div className="text-[11px] font-semibold tracking-widest text-[var(--fp-color-label)] uppercase mb-3">
+              {t("tracking.activeGoal")}
             </div>
-          </Card>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <MetricCard icon={<WalletCards className="size-4" />} label="Баланс периода" value={formatRub(totals.balance, { compact: true, sign: true })} />
-            <MetricCard icon={<CheckCircle2 className="size-4" />} label="Факт" value={formatRub(totals.actual, { compact: true, sign: true })} tone="positive" />
-            <MetricCard icon={<CircleDollarSign className="size-4" />} label="План" value={formatRub(totals.planned, { compact: true, sign: true })} tone="muted" />
+            {activeGoal ? (
+              <>
+                <div className="flex justify-between items-baseline gap-2 mb-2">
+                  <h3 className="font-bold text-[17px] truncate pr-2 text-[var(--fp-color-foreground)]">
+                    {activeGoal.name}
+                  </h3>
+                  <span className="text-[22px] font-bold text-[var(--fp-color-teal)] shrink-0">
+                    {activeGoal.cost > 0 ? Math.min(100, Math.round((activeGoal.saved / activeGoal.cost) * 100)) : 0}%
+                  </span>
+                </div>
+                <p className="text-[13px] text-[var(--fp-color-label)] mb-3">
+                  {formatRub(activeGoal.saved)} {t("tracking.outOf")} {formatRub(activeGoal.cost)}
+                </p>
+                <div className="h-[6px] w-full bg-[var(--fp-color-muted)] rounded-full overflow-hidden mb-2">
+                  <div
+                    className="h-full bg-[var(--fp-color-teal)] rounded-full transition-all"
+                    style={{ width: `${activeGoal.cost > 0 ? Math.min(100, Math.round((activeGoal.saved / activeGoal.cost) * 100)) : 0}%` }}
+                  />
+                </div>
+                <div className="text-[12px] text-[var(--fp-color-label)]">
+                  {t("tracking.goalYear", { year: String(activeGoal.targetYear) })}
+                </div>
+              </>
+            ) : (
+              <div className="text-[14px] text-[var(--fp-color-label)]">{t("tracking.noActiveGoals")}</div>
+            )}
           </div>
 
-          <Card className="overflow-hidden">
-            <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 max-[760px]:block">
+          {/* Monthly norm */}
+          <div>
+            <div className="text-[11px] font-semibold tracking-widest text-[var(--fp-color-label)] uppercase mb-2">
+              {t("tracking.monthlyNorm")}
+            </div>
+            <div className="text-[32px] font-bold leading-tight mb-1">
+              {formatRub(monthlyTarget)}
+            </div>
+            <div className="text-[13px] text-[var(--fp-color-label)] mb-5">
+              {t("tracking.incomeMinusExpenses")}
+            </div>
+
+            <div className="flex justify-between items-end">
               <div>
-                <h2 className="font-semibold">Журнал операций</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Данные сохраняются в backend-журнале операций текущего плана.</p>
-              </div>
-              <div className="flex gap-2 max-[760px]:mt-3">
-                <Badge variant="subtle">{tracker.length} операций</Badge>
-                <Badge variant={totals.balance >= 0 ? "success" : "danger"}>{formatRub(totals.balance, { compact: true, sign: true })}</Badge>
-              </div>
-            </div>
-
-            <div className="scrollbar-thin overflow-x-auto">
-              <div className="min-w-[860px]">
-                <div className="grid grid-cols-[130px_1fr_150px_110px_110px_44px] gap-3 border-b border-border px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-label">
-                  <span>Дата</span>
-                  <span>Операция</span>
-                  <span className="text-right">Сумма</span>
-                  <span>Тип</span>
-                  <span>Статус</span>
-                  <span />
+                <div className="text-[13px] text-[var(--fp-color-label)] mb-1">
+                  {t("tracking.forYear", { year: String(viewYear) })}
                 </div>
-                {tracker.length > 0 ? (
-                  tracker.map((entry) => (
-                    <TrackerRow
-                      key={entry.id}
-                      entry={entry}
-                      onUpdate={(patch) => updateTrackerEntry.mutate({ id: entry.id, patch })}
-                      onDelete={() => deleteTrackerEntry.mutate(entry.id)}
-                    />
-                  ))
-                ) : (
-                  <div className="px-5 py-12 text-center text-sm text-muted-foreground">
-                    Операций пока нет. Добавьте первую плановую или фактическую операцию.
+                <div className="text-[22px] font-bold text-[var(--fp-color-teal)]">
+                  {formatRub(totalSaved)}
+                </div>
+              </div>
+              <div className="text-right text-[13px] text-[var(--fp-color-label)]">
+                <div className="font-semibold text-[var(--fp-color-foreground)]">{t("tracking.marked")}</div>
+                <div>{trackedMonths.length} {t("tracking.outOf3")} 4 {t("tracking.months")}</div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Right: Current Month + Summary */}
+        <div className="grid gap-5">
+          {/* Current month card */}
+          <Card className="p-6 rounded-[20px] border-[var(--fp-color-border)] bg-[var(--fp-color-card)] shadow-sm">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="grid size-9 place-items-center rounded-[10px] bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
+                  <Calendar className="size-[18px] text-[var(--fp-color-label)]" />
+                </div>
+                <div>
+                  <div className="font-semibold text-[16px] text-[var(--fp-color-foreground)]">
+                    {MONTH_NAMES[currentMonth]} {currentYear}
                   </div>
-                )}
+                  <div className="text-[12px] text-[var(--fp-color-label)]">{t("tracking.currentMonth")}</div>
+                </div>
+              </div>
+              <button
+                className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] transition-colors"
+                onClick={() => markMonth(currentMonthData.id, "completed")}
+              >
+                <Pencil className="size-[14px]" />
+                {t("tracking.mark")}
+              </button>
+            </div>
+
+            {currentMonthData?.status === "current" ? (
+              <div className="text-center py-3">
+                <div className="grid size-10 place-items-center rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)] mx-auto mb-3">
+                  <Calendar className="size-5 text-[var(--fp-color-muted-foreground)]" />
+                </div>
+                <div className="font-semibold text-[15px] text-[var(--fp-color-foreground)] mb-1">
+                  {t("tracking.monthNotMarked")}
+                </div>
+                <p className="text-[12px] text-[var(--fp-color-label)]">
+                  {t("tracking.markHint")}
+                </p>
+              </div>
+            ) : (
+              <div className="font-semibold text-[22px] text-[var(--fp-color-teal)]">
+                {formatRub(currentMonthData?.amount || 0)}
+              </div>
+            )}
+
+            {/* Status buttons */}
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => markMonth(currentMonthData.id, "completed")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-[var(--fp-color-teal)]/30 bg-[var(--fp-color-teal)]/5 text-[var(--fp-color-teal)] hover:bg-[var(--fp-color-teal)]/10 transition-colors"
+              >
+                <CheckCircle2 className="size-3.5" /> {t("tracking.completed")}
+              </button>
+              <button
+                onClick={() => markMonth(currentMonthData.id, "partial")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-[var(--fp-color-accent-gold)]/40 bg-[var(--fp-color-accent-gold-soft)] text-[var(--fp-color-accent-gold-text)] hover:opacity-80 transition-opacity"
+              >
+                <Minus className="size-3.5" /> {t("tracking.partial")}
+              </button>
+              <button
+                onClick={() => markMonth(currentMonthData.id, "missed")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border border-[var(--fp-color-coral)]/30 bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)] hover:opacity-80 transition-opacity"
+              >
+                <X className="size-3.5" /> {t("tracking.missed")}
+              </button>
+            </div>
+          </Card>
+
+          {/* Annual summary */}
+          <Card className="p-6 rounded-[20px] border-[var(--fp-color-border)] bg-[var(--fp-color-card)] shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[var(--fp-color-label)]">☀</span>
+              <h3 className="font-semibold text-[15px]">{t("tracking.yearSummary", { year: String(viewYear) })}</h3>
+            </div>
+            <p className="text-[13px] text-[var(--fp-color-label)] mb-3 leading-relaxed">
+              {t("tracking.yearSummaryText", {
+                year: String(viewYear),
+                total: String(trackedMonths.length),
+                completed: String(completedMonths.length),
+                partial: String(partialMonths.length),
+              })}
+            </p>
+            <p className="text-[13px] text-[var(--fp-color-foreground)] mb-4">
+              {t("tracking.totalSavings")}:{" "}
+              <span className="font-bold text-[var(--fp-color-teal)]">{formatRub(totalSaved)}</span>{" "}
+              {t("tracking.outOfPlanned")}{" "}
+              <span className="font-bold">{formatRub(totalPlanned)}</span>{" "}
+              ({totalPercent}%).
+            </p>
+
+            <div className="flex items-center justify-between bg-[var(--fp-color-background)] p-3 rounded-[14px]">
+              <div>
+                <div className="text-[11px] text-[var(--fp-color-label)] mb-0.5">{viewYear}</div>
+                <div className="text-[13px] font-semibold text-[var(--fp-color-foreground)]">{t("tracking.current")}</div>
+              </div>
+              <div className="flex gap-5 text-center">
+                <div>
+                  <div className="text-[18px] font-bold text-[var(--fp-color-teal)]">{completedMonths.length}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--fp-color-label)]">{t("tracking.completedShort")}</div>
+                </div>
+                <div>
+                  <div className="text-[18px] font-bold text-[var(--fp-color-accent-gold-text)]">{partialMonths.length}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--fp-color-label)]">{t("tracking.partialShort")}</div>
+                </div>
+                <div>
+                  <div className="text-[18px] font-bold text-[var(--fp-color-coral)]">{missedMonths.length}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--fp-color-label)]">{t("tracking.missedShort")}</div>
+                </div>
               </div>
             </div>
           </Card>
         </div>
-
-        <aside className="grid content-start gap-5">
-          <Card className="p-5">
-            <div className="mb-4 flex items-center gap-2 font-semibold">
-              <CalendarCheck className="size-4 text-muted-foreground" />
-              Сводка трекера
-            </div>
-            <dl className="grid gap-3 text-sm">
-              <SummaryRow label="Всего операций" value={String(tracker.length)} />
-              <SummaryRow label="Плановых" value={String(tracker.filter((entry) => entry.status === "planned").length)} />
-              <SummaryRow label="Фактических" value={String(tracker.filter((entry) => entry.status === "actual").length)} />
-              <SummaryRow label="Доходы" value={formatRub(sumByType(tracker, "income"), { compact: true, sign: true })} tone="positive" />
-              <SummaryRow label="Расходы" value={formatRub(sumByType(tracker, "expense"), { compact: true, sign: true })} tone="negative" />
-              <SummaryRow label="Цели" value={formatRub(sumByType(tracker, "goal"), { compact: true, sign: true })} />
-            </dl>
-          </Card>
-
-          <HelpBlock title="Что уже интегрировано">Frontend использует общий plan client, а real API сохраняет операции в журнале текущего плана.</HelpBlock>
-          <HelpBlock title="Важно">Плановые строки больше не генерируются автоматически: журнал показывает только сохранённые операции.</HelpBlock>
-        </aside>
       </div>
-    </div>
-  );
-}
 
-function TrackerRow({ entry, onUpdate, onDelete }: { entry: TrackerEntry; onUpdate: (patch: Partial<TrackerEntry>) => void; onDelete: () => void }) {
-  return (
-    <div className="grid grid-cols-[130px_1fr_150px_110px_110px_44px] items-center gap-3 border-b border-border/70 px-5 py-3 text-sm last:border-b-0">
-      <Input type="date" defaultValue={entry.date} onBlur={(event) => onUpdate({ date: event.currentTarget.value })} />
-      <Input defaultValue={entry.title} onBlur={(event) => onUpdate({ title: event.currentTarget.value })} />
-      <Input className="text-right" type="number" defaultValue={entry.amount} onBlur={(event) => onUpdate({ amount: Number(event.currentTarget.value) })} />
-      <Badge variant={entry.type === "income" ? "success" : entry.type === "goal" ? "warning" : "danger"}>
-        {entry.type === "income" ? "Доход" : entry.type === "goal" ? "Цель" : "Расход"}
-      </Badge>
-      <button
-        type="button"
-        className="inline-flex h-8 items-center justify-center rounded-full border border-border bg-card px-3 text-xs font-semibold text-muted-foreground"
-        onClick={() => onUpdate({ status: entry.status === "actual" ? "planned" : "actual" })}
-      >
-        {entry.status === "actual" ? "Факт" : "План"}
-      </button>
-      <Button variant="danger" size="iconSm" onClick={onDelete} aria-label={`Удалить ${entry.title}`}>
-        <Trash2 className="size-3.5" />
-      </Button>
-    </div>
-  );
-}
-
-function MetricCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: "positive" | "muted" }) {
-  return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="label-caps">{label}</div>
-          <div className={tone === "positive" ? "mt-3 text-2xl font-bold text-[var(--fp-color-teal)]" : "mt-3 text-2xl font-bold"}>{value}</div>
+      {/* Calendar section */}
+      <div>
+        {/* Year navigation */}
+        <div className="flex items-center justify-between py-4 px-5 bg-[var(--fp-color-card)] border border-[var(--fp-color-border)] rounded-[20px] mb-4 shadow-sm">
+          <button
+            onClick={() => setViewYear(y => y - 1)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--fp-color-surface-hover)] transition-colors text-[var(--fp-color-label)]"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-[18px] font-bold text-[var(--fp-color-foreground)]">{viewYear}</span>
+            {viewYear === currentYear && (
+              <span className="px-2.5 py-0.5 rounded-full bg-[var(--fp-color-foreground)] text-white text-[11px] font-semibold">
+                {t("tracking.current")}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setViewYear(y => y + 1)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--fp-color-surface-hover)] transition-colors text-[var(--fp-color-label)]"
+          >
+            <ChevronRight className="size-4" />
+          </button>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-surface text-muted-foreground">{icon}</span>
+
+        {/* Filters/legend row */}
+        <div className="flex items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-4 text-[13px] font-medium">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]">
+              <CheckCircle2 className="size-3.5" /> {t("tracking.completed")} {completedMonths.length}
+            </span>
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--fp-color-accent-gold-soft)] text-[var(--fp-color-accent-gold-text)]">
+              <Minus className="size-3.5" /> {t("tracking.partial")} {partialMonths.length}
+            </span>
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)]">
+              <X className="size-3.5" /> {t("tracking.missed")} {missedMonths.length}
+            </span>
+          </div>
+          <div className="text-[13px] text-[var(--fp-color-label)] font-medium">
+            {t("tracking.completion")}: {completionPercent}%
+          </div>
+        </div>
+
+        {/* Months grid 4×3 */}
+        <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[500px]:grid-cols-1">
+          {months.map((m) => (
+            <div
+              key={m.id}
+              className={`relative p-4 rounded-[16px] border transition-all cursor-default ${getCardStyle(m.status)}`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="font-bold text-[15px] text-[var(--fp-color-foreground)]">{m.name}</div>
+                {getStatusBadge(m)}
+              </div>
+
+              {(m.status === "completed" || m.status === "partial") && m.amount && (
+                <div className="text-[14px] font-semibold text-[var(--fp-color-foreground)]">
+                  {formatRub(m.amount)}
+                  {m.status === "partial" && m.percent && (
+                    <span className="text-[12px] font-medium text-[var(--fp-color-accent-gold-text)] ml-2">
+                      ({m.percent}%)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {m.status === "current" && (
+                <button
+                  onClick={() => markMonth(m.id, "completed")}
+                  className="mt-1 text-[13px] font-semibold text-[var(--fp-color-foreground)] underline underline-offset-2 hover:no-underline transition-all"
+                >
+                  {t("tracking.markNow")}
+                </button>
+              )}
+
+              {m.status === "pending" && (
+                <div className="text-[13px] text-[var(--fp-color-label)]">
+                  {t("tracking.ahead")}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom legend */}
+        <div className="flex items-center gap-6 mt-4 px-1 text-[12px] text-[var(--fp-color-label)]">
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="size-3.5 text-[var(--fp-color-teal)]" /> {t("tracking.completed")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Minus className="size-3.5 text-[var(--fp-color-accent-gold-text)]" /> {t("tracking.partial")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <X className="size-3.5 text-[var(--fp-color-coral)]" /> {t("tracking.missed")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <div className="size-2 rounded-full bg-[var(--fp-color-border)]" /> {t("tracking.awaitingLabel")}
+          </span>
+        </div>
       </div>
-    </Card>
-  );
-}
 
-function InstructionStep({ index, title, children }: { index: number; title: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[24px_1fr] gap-3">
-      <span className="grid size-6 place-items-center rounded-full border border-border bg-surface text-xs text-muted-foreground">{index}</span>
-      <div>
-        <div className="font-semibold text-foreground">{title}</div>
-        <p className="mt-1 leading-5">{children}</p>
+      {/* Tip */}
+      <div className="flex gap-3 text-[13px] text-[var(--fp-color-label)] bg-[var(--fp-color-card)] p-4 rounded-[16px] border border-[var(--fp-color-border)]">
+        <HelpCircle className="size-5 shrink-0 text-[var(--fp-color-teal)] mt-0.5" />
+        <p className="leading-relaxed">{t("tracking.tip")}</p>
       </div>
-    </div>
+    </Page>
   );
-}
-
-function SummaryRow({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/70 pb-2 last:border-b-0">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className={tone === "positive" ? "text-[var(--fp-color-teal)]" : tone === "negative" ? "text-[var(--fp-color-coral)]" : "text-foreground"}>{value}</dd>
-    </div>
-  );
-}
-
-function HelpBlock({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[14px_1fr] gap-3 text-sm text-muted-foreground">
-      <span className="pt-0.5">→</span>
-      <div>
-        <div className="font-semibold text-foreground">{title}</div>
-        <p className="mt-1 leading-5">{children}</p>
-      </div>
-    </div>
-  );
-}
-
-function sumByType(tracker: TrackerEntry[], type: TrackerEntry["type"]) {
-  return tracker.filter((entry) => entry.type === type).reduce((sum, entry) => sum + entry.amount, 0);
 }

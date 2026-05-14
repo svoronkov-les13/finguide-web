@@ -27,7 +27,7 @@ export const navigation = [
   { href: "/income", labelKey: "routes.income", icon: Wallet },
   { href: "/expenses", labelKey: "routes.expenses", icon: CreditCard },
   { href: "/goals", labelKey: "routes.goals", icon: Target },
-  { href: "/tracking", labelKey: "routes.tracking", icon: CircleDollarSign },
+  { href: "/", labelKey: "routes.na", icon: CircleDollarSign },
   { href: "/pension", labelKey: "routes.pension", icon: Landmark },
   { href: "/summary", labelKey: "routes.summary", icon: FileChartColumnIncreasing },
 ] satisfies RouteNavItem[];
