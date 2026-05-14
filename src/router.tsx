@@ -26,12 +26,13 @@ const appRoute = createRoute({
 });
 
 function IndexRedirect() {
+  let onboardingSeen = false;
   try {
-    const onboardingSeen = globalThis.localStorage?.getItem("fp.onboarding.seen") === "true";
-    if (!onboardingSeen) return <Navigate to="/onboarding" replace />;
+    onboardingSeen = globalThis.localStorage?.getItem("fp.onboarding.seen") === "true";
   } catch {
     /* Non-critical — fall through to /dashboard */
   }
+  if (!onboardingSeen) return <Navigate to="/onboarding" replace />;
   return <Navigate to="/dashboard" replace />;
 }
 

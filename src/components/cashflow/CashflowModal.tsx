@@ -105,7 +105,6 @@ export function CashflowModal({
           style={{ padding: "32px 0" }}
           onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false); }}
         >
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div className="mx-auto flex w-full max-w-[1100px] overflow-hidden rounded-[24px] bg-[var(--fp-color-background)] shadow-elevated" onClick={(e) => e.stopPropagation()}>
             {/* Left: Form */}
             <div className="flex flex-1 flex-col overflow-y-auto">
@@ -425,7 +424,7 @@ export function CashflowModal({
                 {[1, 2, 3, 4].map((i) => (
                   <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
                     <span className="mt-0.5 text-[10px]">→</span>
-                    <span>{t(`cashflow.tip${i}_${type}` as any)}</span>
+                    <span>{t(`cashflow.tip${i}_${type}` as Parameters<typeof t>[0])}</span>
                   </li>
                 ))}
               </ul>

@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Link, Navigate } from "@tanstack/react-router";

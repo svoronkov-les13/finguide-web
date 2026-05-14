@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BarChart3,
   Check,
-  CheckCircle2,
   ChevronRight,
   Minus,
   Target,

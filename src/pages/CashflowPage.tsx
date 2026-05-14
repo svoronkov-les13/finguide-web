@@ -89,7 +89,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
 
   const handleSubmit = (data: Partial<Cashflow>) => {
     const frequency = data.frequency || "monthly";
-    const category = data.category || t(`cashflow.defaultCategoryMonthly_${type}` as any);
+    const category = data.category || t(`cashflow.defaultCategoryMonthly_${type}` as Parameters<typeof t>[0]);
 
     if (data.id) {
       updateCashflow.mutate({ id: data.id, patch: { ...data, category, frequency } });

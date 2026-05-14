@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/I18nProvider";
 import * as Icons from "lucide-react";
 
@@ -18,6 +17,7 @@ interface GoalFormData {
   saved: number;
   growth: number;
   reachable: boolean;
+  type: "onetime" | "periodic";
 }
 
 export function GoalModal({
@@ -39,6 +39,7 @@ export function GoalModal({
       icon: "Target",
       growth: 0.05,
       reachable: true,
+      type: "onetime",
     },
   });
 
@@ -57,6 +58,7 @@ export function GoalModal({
         saved: initialData?.saved || 0,
         growth: initialData?.growth || 0.05,
         reachable: initialData?.reachable ?? true,
+        type: initialData?.type || "onetime",
       } as GoalFormData);
     }
   }, [open, initialData, form]);
@@ -75,7 +77,6 @@ export function GoalModal({
           style={{ padding: "32px 0" }}
           onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false); }}
         >
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div className="mx-auto flex w-full max-w-[600px] overflow-hidden rounded-[24px] bg-[var(--fp-color-background)] shadow-elevated" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-1 flex-col overflow-y-auto">
               <div className="flex items-center justify-between px-10 pt-10 pb-2">
@@ -107,6 +108,35 @@ export function GoalModal({
                         {...form.register("icon")}
                         className="h-[48px] w-[120px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm"
                       />
+                    </div>
+                  </div>
+
+                  {/* Type Selector */}
+                  <div className="grid gap-2">
+                    <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.colType")}</Label>
+                    <div className="flex h-[48px] items-center gap-1 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1">
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("type", "onetime")}
+                        className={`flex-1 rounded-full text-sm font-medium transition-colors h-full ${
+                          form.watch("type") === "onetime"
+                            ? "bg-[var(--fp-color-foreground)] text-[var(--fp-color-background)]"
+                            : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
+                        }`}
+                      >
+                        {t("goals.typeOnetime")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("type", "periodic")}
+                        className={`flex-1 rounded-full text-sm font-medium transition-colors h-full ${
+                          form.watch("type") === "periodic"
+                            ? "bg-[var(--fp-color-foreground)] text-[var(--fp-color-background)]"
+                            : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
+                        }`}
+                      >
+                        {t("goals.typePeriodic")}
+                      </button>
                     </div>
                   </div>
 

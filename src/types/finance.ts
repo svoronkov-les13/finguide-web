@@ -45,6 +45,7 @@ export interface Goal {
   saved: number;
   growth: number;
   reachable: boolean;
+  type?: "onetime" | "periodic";
 }
 
 export interface ForecastPoint {

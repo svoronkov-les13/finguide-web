@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, BookOpen, CircleDollarSign, Clock, Info, Save, SlidersHorizontal, TrendingUp } from "lucide-react";
+import { ArrowRight, BookOpen, CircleDollarSign, Info, SlidersHorizontal, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";

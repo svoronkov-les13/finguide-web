@@ -7,12 +7,10 @@ import { useI18n } from "@/i18n/I18nProvider";
 export function CashflowCard({
   item,
   onClick,
-  onToggle,
   compact,
 }: {
   item: Cashflow;
   onClick: () => void;
-  onToggle: (enabled: boolean) => void;
   compact?: boolean;
 }) {
   const { t } = useI18n();

@@ -31,7 +31,7 @@ export function Topbar() {
           {route?.icon ? <route.icon className="size-3.5" /> : <LayoutDashboard className="size-3.5" />}
         </span>
         <Link to={group.href} className="max-[520px]:hidden transition-colors hover:text-[var(--fp-color-foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)] rounded-sm">
-          {t(group.key as any)}
+          {t(group.key as Parameters<typeof t>[0])}
         </Link>
         <span className="max-[520px]:hidden">/</span>
         <Link to={route?.href ?? "/dashboard"} className="truncate text-[var(--fp-color-foreground)] transition-opacity hover:opacity-80 outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)] rounded-sm">

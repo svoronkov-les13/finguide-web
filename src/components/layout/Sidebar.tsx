@@ -1,7 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
-import { useAuth } from "@/auth/AuthProvider";
 import { getSidebarCounters, sidebarBadgeForHref, type SidebarCounters } from "@/components/layout/sidebarCounters";
 import { useI18n } from "@/i18n/I18nProvider";
 import { navigation, systemRoutes, tools, type RouteNavItem } from "@/routes";
@@ -9,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
 
 export function Sidebar() {
-  const auth = useAuth();
   const location = useRouterState({ select: (state) => state.location.pathname });
   const { data: plan } = usePlanQuery();
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
