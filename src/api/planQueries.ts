@@ -227,6 +227,9 @@ export function useSaveMonthlyTrackerMutation() {
   return useMutation({
     mutationFn: ({ month, status, amount, note }: { month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
       financialPlanClient.saveMonthlyTrackerEntry(month, status, amount, note),
-    onSuccess: (data) => queryClient.setQueryData(monthlyTrackerQueryKey, data),
+    // API returns 204 No Content → invalidate and refetch instead of setQueryData(undefined)
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
+    },
   });
 }
