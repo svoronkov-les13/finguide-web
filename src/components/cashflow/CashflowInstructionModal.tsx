@@ -53,10 +53,10 @@ export function CashflowInstructionModal({ open, onOpenChange, type }: CashflowI
                     </span>
                     <div>
                       <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
-                        {t(stepTitleKey(key, type))}
+                        {t((key === "stepType" ? `cashflow.stepType_${type}` : `cashflow.${key}`) as Parameters<typeof t>[0])}
                       </div>
                       <div className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                        {t(`cashflow.${key}Desc_${type}`)}
+                        {t(`cashflow.${key}Desc_${type}` as Parameters<typeof t>[0])}
                       </div>
                     </div>
                   </div>

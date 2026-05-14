@@ -221,6 +221,38 @@ export const ru = {
     totalGoalsCountFew: "{{count}} цели",
     typeOnetime: "Разовая",
     typePeriodic: "Периодическая",
+    accumulationBadge: "НАКОПЛЕНИЕ",
+    queueBadge: "ОЧЕРЕДЬ",
+    completedBadge: "ВЫПОЛНЕНО",
+    activeGoalPrefix: "АКТИВНАЯ:",
+    activeGoalInfo: "Накопления направляются в «{{name}}» ({{year}}). Следующие цели пополняются только после закрытия предыдущей.",
+    yearAccumulationInfo: "{{year}} — активные цели. Все накопления направляются сюда.",
+    yearCompletedInfo: "{{year}} — цели профинансированы.",
+    yearQueueInfo: "{{year}} — ожидает. Финансирование начнется после закрытия текущей цели.",
+    sortDefault: "По умолчанию",
+    sortCostDesc: "По стоимости (убывание)",
+    sortYearAsc: "По году (ближайшие)",
+    modalInstructionTitle: "Инструкция",
+    modalInstructionDesc: "Определите финансовую цель — её стоимость, срок и ожидаемую индексацию. Finlight рассчитает достижимость автоматически.",
+    modalStep1Title: "Название",
+    modalStep1Desc: "Укажите понятное название: «Квартира», «Автомобиль», «Образование детей» и т.д.",
+    modalStep2Title: "Стоимость и валюта",
+    modalStep2Desc: "Введите текущую стоимость цели. Валюта конвертируется автоматически по актуальному курсу.",
+    modalStep3Title: "Тип цели",
+    modalStep3Desc: "Разовая — крупная покупка, переезд. Ежегодная — отпуск, страхование, образование.",
+    modalStep4Title: "Иконка цели",
+    modalStep4Desc: "Выберите подходящую иконку для визуального отличия цели в списке и на графиках.",
+    modalStep5Title: "Год и накопления",
+    modalStep5Desc: "Укажите целевой год и сумму уже отложенных средств — это повысит точность прогноза.",
+    modalStep6Title: "Индексация",
+    modalStep6Desc: "Выберите индексацию по инфляции или задайте свой процент роста стоимости цели.",
+    modalTipsTitle: "Советы",
+    modalTip1: "Все накопления идут к ближайшей цели. Если новая цель раньше — она станет первичной.",
+    modalTip2: "Указывайте реалистичную стоимость — завышение снижает мотивацию.",
+    modalTip3: "Перетаскивайте карточки для ручной сортировки внутри группы.",
+    modalIndexationTitle: "Индексация стоимости",
+    modalBaseIndexation: "Базовая индексация",
+    modalBaseIndexationDesc: "Задайте ожидаемый процент роста стоимости цели",
   },
   cashflow: {
     income: "Доходы",
@@ -562,6 +594,38 @@ export const en = {
     totalGoalsCountFew: "{{count}} goals",
     typeOnetime: "One-time",
     typePeriodic: "Periodic",
+    accumulationBadge: "ACCUMULATION",
+    queueBadge: "QUEUE",
+    completedBadge: "COMPLETED",
+    activeGoalPrefix: "ACTIVE:",
+    activeGoalInfo: "Savings are directed to '{{name}}' ({{year}}). Subsequent goals are funded only after the previous one is closed.",
+    yearAccumulationInfo: "{{year}} — active goals. All savings are directed here.",
+    yearCompletedInfo: "{{year}} — goals are funded.",
+    yearQueueInfo: "{{year}} — waiting. Funding will begin after the current goal is closed.",
+    sortDefault: "Default",
+    sortCostDesc: "By cost (descending)",
+    sortYearAsc: "By year (nearest)",
+    modalInstructionTitle: "Instructions",
+    modalInstructionDesc: "Define a financial goal — its cost, term, and expected indexation. Finlight will calculate reachability automatically.",
+    modalStep1Title: "Name",
+    modalStep1Desc: "Specify a clear name: 'Apartment', 'Car', 'Children's education', etc.",
+    modalStep2Title: "Cost and currency",
+    modalStep2Desc: "Enter the current cost of the goal. Currency is converted automatically at the current rate.",
+    modalStep3Title: "Goal type",
+    modalStep3Desc: "One-time — major purchase, relocation. Yearly — vacation, insurance, education.",
+    modalStep4Title: "Goal icon",
+    modalStep4Desc: "Choose a suitable icon to visually distinguish the goal in the list and charts.",
+    modalStep5Title: "Year and savings",
+    modalStep5Desc: "Specify the target year and the amount of funds already saved — this will increase forecast accuracy.",
+    modalStep6Title: "Indexation",
+    modalStep6Desc: "Choose inflation indexation or set your own percentage of goal cost growth.",
+    modalTipsTitle: "Tips",
+    modalTip1: "All savings go to the nearest goal. If a new goal is earlier — it becomes primary.",
+    modalTip2: "Specify a realistic cost — overestimation reduces motivation.",
+    modalTip3: "Drag cards for manual sorting within a group.",
+    modalIndexationTitle: "Cost indexation",
+    modalBaseIndexation: "Base indexation",
+    modalBaseIndexationDesc: "Set the expected percentage of goal cost growth",
   },
   cashflow: {
     income: "Income",
@@ -681,11 +745,9 @@ export const locales = ["ru", "en"] as const;
 
 export type Locale = (typeof locales)[number];
 
-type Primitive = string | number | boolean | null | undefined;
+
 type LeafPaths<T, Prefix extends string = ""> = {
-  [K in keyof T & string]: T[K] extends Primitive
-    ? `${Prefix}${K}`
-    : T[K] extends Record<string, unknown>
+  [K in keyof T & string]: T[K] extends object
     ? LeafPaths<T[K], `${Prefix}${K}.`>
     : never;
 }[keyof T & string];

@@ -39,9 +39,28 @@ export function GoalsPage() {
 
   if (sortOrder === "cost") {
     filteredGoals = [...filteredGoals].sort((a, b) => b.cost - a.cost);
-  } else if (sortOrder === "year") {
-    filteredGoals = [...filteredGoals].sort((a, b) => a.targetYear - b.targetYear);
+  } else if (sortOrder === "year" || sortOrder === "default") {
+    // Default sorting is by year, then by cost descending
+    filteredGoals = [...filteredGoals].sort((a, b) => {
+      if (a.targetYear !== b.targetYear) return a.targetYear - b.targetYear;
+      return b.cost - a.cost;
+    });
   }
+
+  // Active Goal Logic
+  const activeGoal = [...goals]
+    .sort((a, b) => a.targetYear - b.targetYear)
+    .find(g => Math.round((g.saved / g.cost) * 100) < 100) || goals[0];
+  
+  // Group by year
+  const groupedGoals = filteredGoals.reduce((acc, goal) => {
+    const year = goal.targetYear;
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(goal);
+    return acc;
+  }, {} as Record<number, Goal[]>);
+
+  const sortedYears = Object.keys(groupedGoals).map(Number).sort((a, b) => a - b);
   
   const handleEdit = (goal: Goal) => {
     setEditingItem(goal);
@@ -122,10 +141,46 @@ export function GoalsPage() {
             {t(goals.length === 1 ? "goals.totalGoalsCountOne" : goals.length < 5 ? "goals.totalGoalsCountFew" : "goals.totalGoalsCount", { count: String(goals.length) })}
           </div>
 
+          {activeGoal && (
+            <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 py-3 text-sm text-[var(--fp-color-foreground)]">
+              <span className="font-semibold text-[var(--fp-color-muted-foreground)] tracking-wide text-xs">{t("goals.activeGoalPrefix")}</span>
+              <span className="font-semibold">{activeGoal.name} ({activeGoal.targetYear})</span>
+            </div>
+          )}
+
           <Button variant="secondary" className="px-5 py-3 h-auto ml-auto rounded-full font-medium">
             <Download className="size-4 mr-2" />
             {t("goals.export")}
           </Button>
+        </div>
+      )}
+
+      {/* Active Goal Timeline Block */}
+      {goals.length > 0 && activeGoal && (
+        <div className="flex flex-col gap-4 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-6">
+          <div className="flex items-center gap-4 text-sm">
+            {sortedYears.slice(0, 3).map((year, i, arr) => (
+              <div key={year} className="flex items-center gap-4">
+                <div className="flex flex-col gap-1 text-center">
+                  <span className={cn("font-bold", activeGoal.targetYear === year ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>
+                    {year}
+                  </span>
+                  <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)]">
+                    {groupedGoals[year].length} цели
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="h-px w-16 bg-[var(--fp-color-border)] relative">
+                    <div className="absolute right-0 top-1/2 -mt-[3px] border-[3px] border-transparent border-l-[var(--fp-color-border)]" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-[var(--fp-color-muted-foreground)] flex items-start gap-2 bg-[var(--fp-color-background)] p-3 rounded-lg">
+            <span className="mt-0.5 opacity-70">▹</span>
+            {t("goals.activeGoalInfo", { name: activeGoal.name, year: activeGoal.targetYear })}
+          </p>
         </div>
       )}
 
@@ -194,21 +249,21 @@ export function GoalsPage() {
                   className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
                   onClick={() => setSortOrder("default")}
                 >
-                  <span className="flex-1">По умолчанию</span>
+                  <span className="flex-1">{t("goals.sortDefault")}</span>
                   {sortOrder === "default" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item 
                   className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
                   onClick={() => setSortOrder("cost")}
                 >
-                  <span className="flex-1">По стоимости (убывание)</span>
+                  <span className="flex-1">{t("goals.sortCostDesc")}</span>
                   {sortOrder === "cost" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
                 </DropdownMenu.Item>
                 <DropdownMenu.Item 
                   className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--fp-color-foreground)] outline-none transition-colors focus:bg-[var(--fp-color-surface-hover)]"
                   onClick={() => setSortOrder("year")}
                 >
-                  <span className="flex-1">По году (ближайшие)</span>
+                  <span className="flex-1">{t("goals.sortYearAsc")}</span>
                   {sortOrder === "year" && <CheckCircle2 className="size-4 text-[var(--fp-color-primary)]" />}
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
@@ -221,8 +276,8 @@ export function GoalsPage() {
       {goals.length > 0 ? (
         filteredGoals.length > 0 ? (
           <div className="flex flex-col gap-0">
-            {/* Table Header */}
-            <div className="flex items-center gap-4 px-4 py-2 text-xs font-semibold text-[var(--fp-color-muted-foreground)]">
+            {/* Grid Header */}
+            <div className="flex items-center gap-4 px-4 py-2 text-xs font-semibold text-[var(--fp-color-muted-foreground)] hidden">
               <div className="w-[30%] min-w-[200px]">{t("goals.colName")}</div>
               <div className="w-[30%] min-w-[200px]">{t("goals.colCost")}</div>
               <div className="w-[20%] min-w-[120px]">{t("goals.colType")}</div>
@@ -230,14 +285,64 @@ export function GoalsPage() {
             </div>
             
             {/* List */}
-            <div className="flex flex-col gap-3">
-              {filteredGoals.map((goal) => (
-                <GoalListItem 
-                  key={goal.id} 
-                  goal={goal} 
-                  onClick={() => handleEdit(goal)} 
-                />
-              ))}
+            <div className="flex flex-col gap-6">
+              {sortedYears.map((year) => {
+                const yearGoals = groupedGoals[year];
+                const yearCost = yearGoals.reduce((sum, g) => sum + g.cost, 0);
+                const yearSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
+                const yearProgress = yearCost > 0 ? Math.min(100, Math.round((yearSaved / yearCost) * 100)) : 0;
+                const isAccumulation = activeGoal?.targetYear === year;
+                const isCompleted = activeGoal ? activeGoal.targetYear > year : true;
+
+                return (
+                  <div key={year} className="flex flex-col gap-3">
+                    {/* Year Group Header */}
+                    <div className="flex flex-col gap-2 rounded-2xl bg-[var(--fp-color-surface)] p-4 border border-[var(--fp-color-border)]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-2xl font-bold text-[var(--fp-color-foreground)]">{year}</h2>
+                          {isAccumulation ? (
+                            <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-2 py-0.5 text-[10px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]" className="uppercase">{t("goals.accumulationBadge")}</span>
+                          ) : isCompleted ? (
+                            <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600" className="uppercase">{t("goals.completedBadge")}</span>
+                          ) : (
+                            <span className="rounded bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sky-600" className="uppercase">{t("goals.queueBadge")}</span>
+                          )}
+                          <span className="text-sm font-medium text-[var(--fp-color-muted-foreground)]">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 w-[40%] min-w-[250px] max-w-[400px]">
+                          <span className="text-sm font-bold text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(yearCost)}</span>
+                          <div className="h-1.5 w-full flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)]">
+                            <div className="h-full bg-[var(--fp-color-foreground)] transition-all" style={{ width: `${yearProgress}%` }} />
+                          </div>
+                          <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)] w-8 text-right">{yearProgress}%</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[var(--fp-color-muted-foreground)]">
+                        {isAccumulation 
+                          ? t("goals.yearAccumulationInfo", { year: String(year) }) 
+                          : isCompleted
+                          ? t("goals.yearCompletedInfo", { year: String(year) })
+                          : t("goals.yearQueueInfo", { year: String(year) })}
+                      </p>
+                    </div>
+
+                    {/* Goals List */}
+                    <div className="flex flex-col gap-2">
+                      {yearGoals.map((goal) => (
+                        <GoalListItem 
+                          key={goal.id} 
+                          goal={goal} 
+                          isAccumulation={isAccumulation}
+                          isQueue={!isCompleted && !isAccumulation}
+                          onClick={() => handleEdit(goal)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (

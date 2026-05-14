@@ -83,9 +83,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDrawerOpen(true);
   };
 
-  const handleToggleItem = (id: string, enabled: boolean) => {
-    updateCashflow.mutate({ id, patch: { enabled } });
-  };
+
 
   const handleSubmit = (data: Partial<Cashflow>) => {
     const frequency = data.frequency || "monthly";
@@ -311,7 +309,6 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
                       item={item}
                       compact={isCompact}
                       onClick={() => handleEditItem(item)}
-                      onToggle={(enabled) => handleToggleItem(item.id, enabled)}
                     />
                   ))}
                 </div>

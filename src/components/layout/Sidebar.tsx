@@ -74,7 +74,7 @@ function FinPlanLogo({ expanded }: { expanded: boolean }) {
       {expanded && (
         <img
           className="h-10 w-[140px] object-contain max-[760px]:hidden"
-          src="/brand/finplan-wordmark-on-dark.svg"
+          src={`${import.meta.env.BASE_URL}brand/finplan-wordmark-on-dark.svg`}
           width="162"
           height="64"
           alt="FinPlan"
@@ -84,7 +84,7 @@ function FinPlanLogo({ expanded }: { expanded: boolean }) {
       {!expanded && (
         <img
           className="size-10 shrink-0 object-contain max-[760px]:size-8"
-          src="/brand/finplan-app-icon.svg"
+          src={`${import.meta.env.BASE_URL}brand/finplan-app-icon.svg`}
           width="40"
           height="40"
           alt="FinPlan"
