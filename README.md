@@ -40,6 +40,20 @@ When `VITE_FINGUIDE_AUTH_ENABLED=true`:
 
 Hardcoded demo owner/profile fallback must not be rendered during auth restore.
 
+## FinPlan redesign roadmap
+
+Frontend issue [#7](https://github.com/svoronkov-les13/finguide-web/issues/7) tracks applying the new FinPlan Figma direction. Treat it as a staged design-system migration, not a one-shot rewrite.
+
+Implementation order:
+
+1. Design tokens: colors, typography, radius, shadows and spacing.
+2. App shell: background, sidebar, topbar, page layout and card surfaces.
+3. Shared UI primitives: Button, Input, Select, Tabs, Card, Badge, Dialog and Tooltip.
+4. Dashboard desktop target with visual before/after screenshots.
+5. Page migrations: onboarding/common data, incomes/expenses, goals/scenario tables, tracker, account/settings, FAQ/help modals.
+
+Backend/API gaps discovered during migration should become explicit backend follow-up issues instead of frontend-only mock fields.
+
 ## Current backend integration
 
 Current deploy uses the real backend, not the legacy mock, for persisted plan reads and financial item mutations:
