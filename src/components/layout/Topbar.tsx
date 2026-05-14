@@ -64,12 +64,12 @@ export function Topbar() {
             
             <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-muted-foreground)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)] focus:bg-[var(--fp-color-surface-hover)] focus:text-[var(--fp-color-foreground)]">
               <Settings className="size-4 shrink-0" />
-              <span>{t("topbar.managePlans", "Управление планами")}</span>
+              <span>{t("topbar.managePlans")}</span>
             </DropdownMenu.Item>
             
             <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-primary)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]">
               <Plus className="size-4 shrink-0" />
-              <span className="font-medium">{t("topbar.createPlan", "Создать новый план")}</span>
+              <span className="font-medium">{t("topbar.createPlan")}</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

@@ -683,9 +683,11 @@ export type Locale = (typeof locales)[number];
 
 type Primitive = string | number | boolean | null | undefined;
 type LeafPaths<T, Prefix extends string = ""> = {
-  [K in keyof T & string]: T[K] extends Record<string, Primitive>
+  [K in keyof T & string]: T[K] extends Primitive
+    ? `${Prefix}${K}`
+    : T[K] extends Record<string, unknown>
     ? LeafPaths<T[K], `${Prefix}${K}.`>
-    : `${Prefix}${K}`;
+    : never;
 }[keyof T & string];
 
 export type TranslationKey = LeafPaths<typeof ru>;

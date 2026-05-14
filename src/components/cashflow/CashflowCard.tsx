@@ -7,10 +7,12 @@ import { useI18n } from "@/i18n/I18nProvider";
 export function CashflowCard({
   item,
   onClick,
+  onToggle,
   compact,
 }: {
   item: Cashflow;
   onClick: () => void;
+  onToggle?: (enabled: boolean) => void;
   compact?: boolean;
 }) {
   const { t } = useI18n();
@@ -70,6 +72,18 @@ export function CashflowCard({
       )}
 
       {/* Chevron */}
+      {onToggle && (
+        <button
+          type="button"
+          className="shrink-0 rounded-full border border-[var(--fp-color-border)] px-2 py-1 text-[10px] font-medium text-[var(--fp-color-muted-foreground)] transition hover:text-[var(--fp-color-foreground)]"
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle(!item.enabled);
+          }}
+        >
+          {item.enabled ? "On" : "Off"}
+        </button>
+      )}
       <ChevronDown className="size-4 shrink-0 text-[var(--fp-color-muted-foreground)] transition-transform group-hover:translate-y-0.5" />
     </div>
   );
