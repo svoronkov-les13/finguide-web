@@ -21,25 +21,19 @@ export function GoalsTable() {
         <div className="flex items-center gap-4 text-xs text-[var(--fp-color-muted-foreground)] max-[760px]:mt-2">
           <span>● Итого: {formatRub(total, { compact: true })}</span>
           <span>
-            <span className="text-[var(--fp-color-teal)]">● {reachable}</span> достижимы
-            <span className="ml-2 text-[var(--fp-color-coral)]">● 0</span> под угрозой
+            <span className="text-[var(--fp-color-teal)]">● {reachable} достижимы</span>
+            <span className="ml-2 text-[var(--fp-color-coral)]">● 0 под угрозой</span>
           </span>
           <span>{reachable} из {goals.length} достижимы</span>
           <button className="font-bold text-[var(--fp-color-accent-gold)]" type="button">Управление →</button>
         </div>
       </div>
-      <Card className="scrollbar-thin overflow-x-auto">
-        <div className="min-w-[760px]">
-          <div className="table-header grid grid-cols-[1.45fr_90px_150px_180px_130px] gap-3 border-b border-[var(--fp-color-border)] px-5 py-3 text-[var(--fp-color-label)]">
-            <span>Цель</span><span className="text-right">Год</span><span className="text-right">Стоимость</span><span>Накоплено</span><span className="text-right">Статус</span>
+      <Card className="scrollbar-thin overflow-x-auto border-none shadow-none mt-2">
+        <div className="min-w-[900px]">
+          <div className="table-header grid grid-cols-[1.5fr_1.8fr_120px_140px_160px_120px] gap-4 border-b border-[var(--fp-color-border)] px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
+            <span>Цель</span><span><span className="text-[var(--fp-color-foreground)]"><Icons.Globe className="inline size-3 mr-1" />Итого: {formatRub(total, { compact: true })}</span> <span className="text-[var(--fp-color-teal)] ml-2">● {reachable}</span> <span className="text-[var(--fp-color-coral)]">● 0</span></span><span className="text-center">Год</span><span className="text-right">Стоимость</span><span>Накоплено</span><span className="text-right">Статус</span>
           </div>
           {goals.map((goal) => <GoalRow key={goal.id} goal={goal} />)}
-          <div className="flex justify-between border-t border-[var(--fp-color-border)] px-5 py-3 text-xs text-[var(--fp-color-muted-foreground)]">
-            <span>Итого: {formatRub(total, { compact: true })}</span>
-            <span>
-              <b className="text-[var(--fp-color-teal)]">{goals.filter((goal) => goal.reachable).length}</b> достижимы · <b className="text-[var(--fp-color-coral)]">0</b> рисков
-            </span>
-          </div>
         </div>
       </Card>
     </section>
@@ -50,29 +44,32 @@ function GoalRow({ goal }: { goal: Goal }) {
   const Icon = iconMap[goal.icon] ?? Icons.Target;
   const progress = Math.min(100, Math.round((goal.saved / Math.max(goal.cost, 1)) * 100));
   return (
-    <div className="grid grid-cols-[1.45fr_90px_150px_180px_130px] items-center gap-3 border-b border-[var(--fp-color-teal)]/25 px-5 py-3 text-xs last:border-b-0">
+    <div className="grid grid-cols-[1.5fr_1.8fr_120px_140px_160px_120px] items-center gap-4 border-b border-[var(--fp-color-teal)]/15 px-2 py-4 text-sm last:border-b-0">
       <div className="flex min-w-0 items-center gap-2.5 font-semibold">
         <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--fp-color-teal)]/35 bg-[var(--fp-color-teal-soft)] text-[var(--fp-color-teal)]">
           <Icon className="size-3.5" />
         </span>
         <span className="truncate">{goal.name}</span>
       </div>
-      <div className="text-right text-[var(--fp-color-muted-foreground)]">
-        <div className="font-semibold text-[var(--fp-color-foreground)]/75">{goal.targetYear}</div>
-        <div className="text-[10px]">через {goal.targetYear - 2026} л.</div>
+      <div className="min-w-0 pr-4 flex flex-col justify-center">
+        <div className="flex items-baseline justify-between mb-1">
+          <span className="font-semibold text-[13px]">{formatRub(goal.saved, { compact: false })} <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal">/ {formatRub(goal.cost, { compact: true })}</span></span>
+          <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-medium">{progress}%</span>
+        </div>
+        <ProgressBar value={progress} size="sm" variant={progress > 0 ? "success" : "default"} className="h-1.5" />
+      </div>
+      <div className="text-center text-[var(--fp-color-muted-foreground)]">
+        <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{goal.targetYear}</div>
+        <div className="text-[10px]">через {goal.targetYear - 2026} год</div>
       </div>
       <div className="text-right">
-        <div className="font-semibold">{formatRub(goal.cost, { compact: true })}</div>
+        <div className="font-semibold text-[13px]">{formatRub(goal.cost, { compact: true })}</div>
         <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">+{Math.round(goal.growth * 100)}%/год</div>
       </div>
-      <div className="min-w-0">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="font-semibold">{formatRub(goal.saved, { compact: true })}</span>
-          <span className="progress-nums text-[var(--fp-color-muted-foreground)]">{progress}%</span>
-        </div>
-        <ProgressBar className="mt-1.5" value={progress} size="sm" variant="success" />
+      <div className="font-semibold text-[13px]">
+        {formatRub(goal.saved, { compact: false })}
       </div>
-      <div className="flex justify-end"><Badge variant={goal.reachable ? "success" : "danger"}>{goal.reachable ? "Достижима" : "Риск"}</Badge></div>
+      <div className="flex justify-end"><Badge variant={goal.reachable ? "success" : "danger"} className="bg-transparent border-none text-[var(--fp-color-teal)] shadow-none px-0 gap-1 font-medium"><Icons.CheckCircle2 className="size-3.5" />{goal.reachable ? "Достижима" : "Риск"}</Badge></div>
     </div>
   );
 }

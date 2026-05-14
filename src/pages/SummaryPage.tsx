@@ -1,145 +1,384 @@
-import { Download, FileChartColumnIncreasing, RotateCcw, ShieldAlert } from "lucide-react";
-import { createPlanWorkbookWithExcelJs, createPlanWorkbookWithSheetJs } from "@/api/exportPlan";
-import { usePlanQuery, useResetPlanMutation } from "@/api/planQueries";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  FileChartColumnIncreasing, ChevronDown, ChevronUp, Edit3,
+  LayoutDashboard, Target, TrendingUp, ExternalLink,
+} from "lucide-react";
+import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatUsd } from "@/lib/utils";
+import { formatRub, formatPercent } from "@/lib/utils";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { Cashflow, Goal } from "@/types/finance";
 
 export function SummaryPage() {
   const { data: plan } = usePlanQuery();
-  const resetPlan = useResetPlanMutation();
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  const navigate = useNavigate();
+  const { t } = useI18n();
 
-  const current = plan.forecast[2] ?? plan.forecast[0];
-  const final = plan.forecast.at(-1)!;
-  const exportSheetJs = () => downloadXlsx(createPlanWorkbookWithSheetJs(plan), "finguide-plan-sheetjs.xlsx");
-  const exportExcelJs = async () => downloadXlsx(await createPlanWorkbookWithExcelJs(plan), "finguide-plan-exceljs.xlsx");
+  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+
+  const currentYear = new Date().getFullYear();
+  const currentForecast = plan.forecast.find(p => p.year === currentYear) || plan.forecast[0];
+
+  const annualIncome = currentForecast?.income || 0;
+  const annualExpenses = Math.abs(currentForecast?.expenses || 0);
+  const annualGoals = Math.abs(currentForecast?.goals || 0);
+
+  const balance = annualIncome - annualExpenses;
+  const savingsRate = annualIncome > 0 ? (balance / annualIncome) * 100 : 0;
+  const pensionAvailable = balance - annualGoals;
+
+  const goalsTotal = plan.goals.reduce((sum, g) => sum + g.cost, 0);
+  const goalsSaved = plan.goals.reduce((sum, g) => sum + g.saved, 0);
+  const goalsPercent = goalsTotal > 0 ? (goalsSaved / goalsTotal) * 100 : 0;
+
+  const incomes = plan.cashflows.filter(c => c.type === "income");
+  const expenses = plan.cashflows.filter(c => c.type === "expense");
 
   return (
-    <div className="grid max-w-[1256px] gap-6">
-      <header className="flex items-start justify-between gap-5 max-[760px]:block">
+    <div className="grid max-w-[1000px] gap-6 pb-12">
+      {/* Header */}
+      <header className="flex items-start justify-between gap-5 flex-wrap">
         <div className="flex min-w-0 items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-            <FileChartColumnIncreasing className="size-5" />
+          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] shadow-sm">
+            <FileChartColumnIncreasing className="size-5 text-[var(--fp-color-foreground)]" />
           </span>
           <div>
-            <h1 className="page-title">Сводка</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Доходы, расходы, цели, накопления и ключевые риски</p>
+            <h1 className="text-[28px] font-bold tracking-tight">{t("summary.title")}</h1>
+            <p className="mt-1 text-[14px] text-[var(--fp-color-label)]">{t("summary.subtitle")}</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 max-[760px]:mt-4">
-          <Button variant="secondary" onClick={exportSheetJs}>
-            <Download className="size-4" /> SheetJS
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="secondary"
+            className="h-10 gap-2"
+            onClick={() => navigate({ to: '/income' as any })}
+          >
+            <Edit3 className="size-4" /> {t("summary.toEdit")}
           </Button>
-          <Button variant="secondary" onClick={() => void exportExcelJs()}>
-            <Download className="size-4" /> ExcelJS
-          </Button>
-          <Button variant="danger" onClick={() => resetPlan.mutate()}>
-            <RotateCcw className="size-4" /> Сбросить
+          <Button
+            className="h-10 gap-2"
+            onClick={() => navigate({ to: '/dashboard' as any })}
+          >
+            <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
           </Button>
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,800px)_280px]">
-        <div className="grid gap-5">
-          <div className="grid gap-3 md:grid-cols-4">
-            <MetricCard label="Доходы сейчас" value={formatUsd(current.income, { compact: true })} />
-            <MetricCard label="Расходы сейчас" value={formatUsd(Math.abs(current.expenses), { compact: true })} />
-            <MetricCard label="Накопления сейчас" value={formatUsd(current.capital, { compact: true })} />
-            <MetricCard label={`Капитал ${final.year}`} value={formatUsd(final.capital, { compact: true })} />
+      {/* Balance + Key Insights */}
+      <div className="grid gap-5 md:grid-cols-2">
+        <Card className="p-6 rounded-[20px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm flex flex-col justify-between">
+          <div>
+            <h2 className="text-[17px] font-semibold mb-1">{t("summary.balance")}</h2>
+            <p className="text-[13px] text-[var(--fp-color-label)] mb-6">{t("summary.balanceSubtitle")}</p>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className={`text-[42px] font-bold tracking-tight leading-none ${balance >= 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]"}`}>
+                {balance > 0 ? "+" : ""}{formatRub(balance)}
+              </span>
+              <span className="text-[15px] font-medium text-[var(--fp-color-label)]">{t("summary.perYear")}</span>
+            </div>
+            <div className="text-[13px] font-medium text-[var(--fp-color-label)]">
+              ср. {balance > 0 ? "+" : ""}{formatRub(balance / 12)}{t("summary.perMonth")}
+            </div>
           </div>
+          <div className={`mt-6 text-[13px] p-4 rounded-[14px] font-medium leading-relaxed ${balance >= 0 ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)]"}`}>
+            {balance >= 0 ? t("summary.positiveBalanceTip") : t("summary.negativeBalanceTip")}
+          </div>
+        </Card>
 
-          <Card className="overflow-hidden">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="font-semibold">Рекомендации</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Сводные действия по текущей модели</p>
-            </div>
-            <div className="grid gap-3 p-5 md:grid-cols-3">
-              <Recommendation>Ускорить формирование финансовой подушки до 2027 года.</Recommendation>
-              <Recommendation>Проверить ипотечные расходы при пессимистичном сценарии.</Recommendation>
-              <Recommendation>Сохранить плановый уровень доходности инвестиций не ниже 6%.</Recommendation>
-            </div>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <div className="grid grid-cols-[1fr_160px_160px_160px] gap-3 border-b border-border px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-label max-[760px]:grid-cols-1">
-              <span>Раздел</span><span>Сейчас</span><span>Финал</span><span>Статус</span>
-            </div>
-            <SummaryLine label="Доходы" now={formatUsd(current.income, { compact: true })} final={formatUsd(final.income, { compact: true })} status="Стабильно" />
-            <SummaryLine label="Расходы" now={formatUsd(Math.abs(current.expenses), { compact: true })} final={formatUsd(Math.abs(final.expenses), { compact: true })} status="Контроль" />
-            <SummaryLine label="Цели" now={formatUsd(Math.abs(current.goals), { compact: true })} final={formatUsd(Math.abs(final.goals), { compact: true })} status="План" />
-          </Card>
-        </div>
-
-        <aside className="grid content-start gap-5 text-sm text-muted-foreground">
-          <Card className="p-5">
-            <div className="mb-4 flex items-center gap-2 font-semibold text-foreground">
-              <ShieldAlert className="size-4 text-muted-foreground" />
-              Контроль рисков
-            </div>
-            <SummaryRow label="Health score" value={`${plan.dashboardSnapshot?.healthScore ?? 0}/100`} />
-            <SummaryRow label="Сценарий" value={plan.scenarios.find((scenario) => scenario.id === plan.activeScenario)?.name ?? "Базовый"} />
-            <SummaryRow label="Целей" value={String(plan.goals.length)} />
-          </Card>
-          <HelpBlock title="Экспорт">Экспорт остаётся клиентским: SheetJS и ExcelJS формируют XLSX из текущего `FinancialPlan` snapshot.</HelpBlock>
-          <HelpBlock title="Backend">Import/export endpoints есть в OpenAPI шире real Springdoc, поэтому UI не зависит от них для базовой выгрузки.</HelpBlock>
-        </aside>
+        <Card className="p-6 rounded-[20px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
+          <h2 className="text-[17px] font-semibold mb-5">{t("summary.keyInsights")}</h2>
+          <ul className="grid gap-4 text-[14px] leading-relaxed text-[var(--fp-color-foreground)]">
+            <li className="flex gap-3 items-start">
+              <span className="mt-1.5 size-1.5 rounded-full bg-[var(--fp-color-teal)] shrink-0" />
+              <span>
+                {t("summary.insightSavingsRate")}{" "}
+                <strong className="text-[var(--fp-color-teal)]">{formatPercent(savingsRate / 100)}</strong>{" "}
+                — {savingsRate >= 20 ? t("summary.excellent") : t("summary.shouldIncrease")}.
+              </span>
+            </li>
+            <li className="flex gap-3 items-start">
+              <span className="mt-1.5 size-1.5 rounded-full bg-[var(--fp-color-teal)] shrink-0" />
+              <span>
+                {t("summary.insightGoals")}{" "}
+                <strong>~{formatRub(annualGoals)}/{t("summary.yr")}</strong>{" "}
+                ({t("summary.avg")} {formatRub(annualGoals / 12)}/{t("summary.mo")}),{" "}
+                {t("summary.insightPension")}{" "}
+                <strong>{formatRub(pensionAvailable)}/{t("summary.yr")}</strong>{" "}
+                ({t("summary.avg")} {formatRub(pensionAvailable / 12)}/{t("summary.mo")}).
+              </span>
+            </li>
+            <li className="flex gap-3 items-start">
+              <span className="mt-1.5 size-1.5 rounded-full bg-[var(--fp-color-teal)] shrink-0" />
+              <span>
+                {t("summary.insightGoalsSaved")}{" "}
+                <strong className="text-[var(--fp-color-teal)]">{formatRub(goalsSaved, { compact: true })}</strong>{" "}
+                {t("summary.outOf")}{" "}
+                <strong>{formatRub(goalsTotal, { compact: true })}</strong>{" "}
+                ({Math.round(goalsPercent)}%).
+              </span>
+            </li>
+          </ul>
+        </Card>
       </div>
+
+      {/* Collapsible tables */}
+      <div className="grid gap-4">
+        <CashflowTable
+          title={t("summary.income")}
+          count={incomes.length}
+          total={annualIncome}
+          items={incomes}
+          editHref="/income"
+          t={t}
+        />
+        <CashflowTable
+          title={t("summary.expenses")}
+          count={expenses.length}
+          total={annualExpenses}
+          items={expenses}
+          editHref="/expenses"
+          t={t}
+        />
+        <GoalsTable
+          title={t("summary.goals")}
+          count={plan.goals.length}
+          total={annualGoals}
+          items={plan.goals}
+          goalsSaved={goalsSaved}
+          goalsTotal={goalsTotal}
+          goalsPercent={goalsPercent}
+          editHref="/goals"
+          t={t}
+        />
+      </div>
+
+      {/* Pension mini card */}
+      <Card className="p-6 rounded-[20px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-[17px] font-semibold flex items-center gap-2 mb-1">
+              <TrendingUp className="size-5 text-[var(--fp-color-teal)]" />
+              {t("summary.pensionPlan")}
+            </h2>
+            <p className="text-[13px] text-[var(--fp-color-label)]">{t("summary.pensionSubtitle")}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-[12px] text-[var(--fp-color-label)] mb-1">{t("summary.forecastCapital")}</div>
+            <div className="text-[24px] font-bold">{formatRub(plan.dashboardSnapshot?.pensionCapitalRub || 0, { compact: true })}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pt-5 border-t border-[var(--fp-color-border)]">
+          {[
+            { label: t("summary.availableForPension"), value: `${formatRub(pensionAvailable, { compact: true })} / ${t("summary.yr")}` },
+            { label: t("summary.retirementAt"), value: `${plan.settings.retirementAge} ${t("summary.years")}` },
+            { label: t("summary.desiredExpenses"), value: `${formatRub(plan.settings.targetMonthlySpend)} / ${t("summary.mo")}` },
+            { label: t("summary.returnInflation"), value: `${formatPercent(plan.settings.investmentReturn)} / ${formatPercent(plan.settings.inflation)}` },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--fp-color-label)] mb-1">{label}</div>
+              <div className="font-semibold text-[15px]">{value}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+function CashflowTable({
+  title, count, total, items, editHref, t,
+}: {
+  title: string; count: number; total: number; items: Cashflow[]; editHref: string;
+  t: ReturnType<typeof import("@/i18n/I18nProvider")["useI18n"]>["t"];
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const navigate = useNavigate();
+
+  const freqLabel = (f: Cashflow["frequency"]) => {
+    if (f === "monthly") return t("summary.monthly");
+    if (f === "yearly") return t("summary.yearly");
+    return t("summary.onetime");
+  };
+
   return (
-    <Card className="p-5">
-      <div className="label-caps">{label}</div>
-      <div className="mt-3 text-2xl font-bold">{value}</div>
+    <Card className="overflow-hidden rounded-[20px] border-[var(--fp-color-border)] shadow-sm">
+      <div
+        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-[var(--fp-color-surface-hover)] transition-colors"
+        onClick={() => setIsOpen(o => !o)}
+      >
+        <div className="flex items-center gap-3">
+          <h3 className="text-[16px] font-semibold">{title}</h3>
+          <span className="text-[13px] text-[var(--fp-color-label)]">{count} {t("summary.entries")}</span>
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="text-right hidden sm:block">
+            <span className="text-[13px] text-[var(--fp-color-label)] mr-2">{t("summary.total")}</span>
+            <span className="font-bold text-[15px]">{formatRub(total)}</span>
+            <span className="text-[13px] text-[var(--fp-color-label)]"> {t("summary.perYear")}</span>
+            <span className="text-[13px] text-[var(--fp-color-label)] ml-3">{t("summary.avg")} {formatRub(total / 12)}{t("summary.perMonth")}</span>
+          </div>
+          {isOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="border-t border-[var(--fp-color-border)]">
+          {/* Column headers */}
+          <div className="grid grid-cols-[2fr_1fr_auto_2fr_1fr_auto] gap-4 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--fp-color-label)] bg-[var(--fp-color-background)]">
+            <div>{t("summary.colName")}</div>
+            <div>{t("summary.colType")}</div>
+            <div className="text-right">{t("summary.colAmount")}</div>
+            <div>{t("summary.colPeriod")}</div>
+            <div>{t("summary.colGrowth")}</div>
+            <div />
+          </div>
+          <div className="divide-y divide-[var(--fp-color-border)]">
+            {items.map(item => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[2fr_1fr_auto_2fr_1fr_auto] gap-4 px-6 py-3.5 items-center text-[14px] hover:bg-[var(--fp-color-surface-hover)] transition-colors group"
+              >
+                <div className="font-medium truncate">{item.name}</div>
+                <div className="text-[var(--fp-color-label)] text-[13px]">{freqLabel(item.frequency)}</div>
+                <div className="text-right font-semibold">{formatRub(item.amount)}</div>
+                <div className="text-[var(--fp-color-label)] text-[13px]">
+                  {item.startYear} — {item.endYear ?? t("summary.indefinite")}
+                </div>
+                <div className={`text-[13px] font-medium ${item.growth > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-label)]"}`}>
+                  {item.growth > 0 ? "+" : ""}{Math.round(item.growth * 100)}%
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as any }); }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"
+                  title={t("summary.edit")}
+                >
+                  <ExternalLink className="size-4" />
+                </button>
+              </div>
+            ))}
+            {items.length === 0 && (
+              <div className="px-6 py-8 text-center text-[14px] text-[var(--fp-color-label)]">{t("summary.noEntries")}</div>
+            )}
+          </div>
+          <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--fp-color-border)]">
+            <button
+              onClick={() => navigate({ to: editHref as any })}
+              className="text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] flex items-center gap-1.5 transition-colors"
+            >
+              <Edit3 className="size-3.5" /> {t("summary.editSection")}
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-[13px] text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] transition-colors"
+            >
+              {t("summary.collapse")}
+            </button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
 
-function Recommendation({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-[22px] border border-border bg-surface/35 p-4 text-sm leading-5 text-muted-foreground">{children}</div>;
-}
+function GoalsTable({
+  title, count, total, items, goalsSaved, goalsTotal, goalsPercent, editHref, t,
+}: {
+  title: string; count: number; total: number; items: Goal[];
+  goalsSaved: number; goalsTotal: number; goalsPercent: number; editHref: string;
+  t: ReturnType<typeof import("@/i18n/I18nProvider")["useI18n"]>["t"];
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  const navigate = useNavigate();
 
-function SummaryLine({ label, now, final, status }: { label: string; now: string; final: string; status: string }) {
   return (
-    <div className="grid grid-cols-[1fr_160px_160px_160px] gap-3 border-b border-border/70 px-5 py-4 text-sm last:border-b-0 max-[760px]:grid-cols-1">
-      <span className="font-semibold">{label}</span>
-      <span>{now}</span>
-      <span>{final}</span>
-      <span className="text-[var(--fp-color-teal)]">{status}</span>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border/70 py-2 last:border-b-0">
-      <dt>{label}</dt>
-      <dd className="text-foreground">{value}</dd>
-    </div>
-  );
-}
-
-function HelpBlock({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[14px_1fr] gap-3">
-      <span className="pt-0.5">→</span>
-      <div>
-        <div className="font-semibold text-foreground">{title}</div>
-        <p className="mt-1 leading-5">{children}</p>
+    <Card className="overflow-hidden rounded-[20px] border-[var(--fp-color-border)] shadow-sm">
+      <div
+        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-[var(--fp-color-surface-hover)] transition-colors"
+        onClick={() => setIsOpen(o => !o)}
+      >
+        <div className="flex items-center gap-3">
+          <h3 className="text-[16px] font-semibold">{title}</h3>
+          <span className="text-[13px] text-[var(--fp-color-label)]">{count} {t("summary.entries")}</span>
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="text-right hidden sm:block">
+            <span className="text-[13px] text-[var(--fp-color-label)] mr-2">{t("summary.total")}</span>
+            <span className="font-bold text-[15px]">{formatRub(total)}</span>
+            <span className="text-[13px] text-[var(--fp-color-label)]"> {t("summary.perYear")}</span>
+          </div>
+          {isOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
+        </div>
       </div>
-    </div>
-  );
-}
 
-function downloadXlsx(data: BlobPart, filename: string) {
-  const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+      {isOpen && (
+        <div className="border-t border-[var(--fp-color-border)]">
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--fp-color-label)] bg-[var(--fp-color-background)]">
+            <div>{t("summary.colName")}</div>
+            <div className="text-right">{t("summary.colCost")}</div>
+            <div className="text-center">{t("summary.colTargetYear")}</div>
+            <div className="text-right">{t("summary.colIndexation")}</div>
+            <div />
+          </div>
+          <div className="divide-y divide-[var(--fp-color-border)]">
+            {items.map(item => {
+              const pct = item.cost > 0 ? Math.min(100, Math.round((item.saved / item.cost) * 100)) : 0;
+              return (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 items-center text-[14px] hover:bg-[var(--fp-color-surface-hover)] transition-colors group"
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className={`size-2 rounded-full shrink-0 ${item.reachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]"}`} />
+                    {item.name}
+                    <span className="text-[12px] text-[var(--fp-color-label)] font-normal">({pct}%)</span>
+                  </div>
+                  <div className="text-right font-semibold">{formatRub(item.cost)}</div>
+                  <div className="text-center text-[var(--fp-color-label)] text-[13px]">{item.targetYear}</div>
+                  <div className="text-right text-[13px] font-medium text-[var(--fp-color-teal)]">
+                    +{Math.round(item.growth * 100)}% {t("summary.perYearShort")}
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as any }); }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"
+                  >
+                    <ExternalLink className="size-4" />
+                  </button>
+                </div>
+              );
+            })}
+            {items.length === 0 && (
+              <div className="px-6 py-8 text-center text-[14px] text-[var(--fp-color-label)]">{t("summary.noEntries")}</div>
+            )}
+          </div>
+          <div className="px-6 py-3.5 bg-[var(--fp-color-background)] border-t border-[var(--fp-color-border)] flex items-center justify-between text-[13px]">
+            <div className="font-semibold">{t("summary.currentEstimate")}</div>
+            <div className="flex items-center gap-3">
+              <span className="text-[var(--fp-color-label)]">
+                {t("summary.saved")}: {formatRub(goalsSaved, { compact: true })} ({Math.round(goalsPercent)}%)
+              </span>
+              <span className="font-bold text-[15px]">{formatRub(goalsTotal, { compact: true })}</span>
+            </div>
+          </div>
+          <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--fp-color-border)]">
+            <button
+              onClick={() => navigate({ to: editHref as any })}
+              className="text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] flex items-center gap-1.5 transition-colors"
+            >
+              <Target className="size-3.5" /> {t("summary.editSection")}
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-[13px] text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] transition-colors"
+            >
+              {t("summary.collapse")}
+            </button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
 }

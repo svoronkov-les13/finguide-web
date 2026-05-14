@@ -3,9 +3,9 @@ import { Eye, Lightbulb, Maximize2, Search, X, ZoomIn } from "lucide-react";
 import {
   Area,
   Bar,
+  Brush,
   CartesianGrid,
   ComposedChart,
-  Legend,
   Line,
   ReferenceLine,
   ResponsiveContainer,
@@ -52,7 +52,7 @@ export function ForecastChart() {
           return {
             ...point,
             expensesAbs: Math.abs(point.expenses),
-            goalsAbs: Math.abs(point.goals),
+            goalsAbs: (Math.abs(point.goals) * DISPLAY_USD_TO_RUB) / 1_000_000,
             capitalRubMln,
             capitalOptimisticRubMln: capitalRubMln * Math.pow(1.08, yearsFromStart),
             capitalPessimisticRubMln: capitalRubMln * Math.pow(0.94, yearsFromStart),
@@ -64,7 +64,7 @@ export function ForecastChart() {
   );
   const chartPeak = Math.max(...data.map((point) => point.capitalRubMln), 0);
 
-  if (!plan) return <Card className="h-[620px] max-w-[1122px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+  if (!plan) return <Card className="h-[800px] max-w-[1122px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
 
   return (
     <Card className="max-w-[1122px] p-4">
@@ -108,78 +108,109 @@ export function ForecastChart() {
       )}
 
       <div className="scrollbar-thin mt-3 overflow-x-auto">
-        <div className="relative h-[440px] min-w-[820px]">
-          <div className="absolute right-10 top-7 z-10 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/80 px-3 py-1 text-[11px] font-bold text-[var(--fp-color-muted-foreground)] shadow-[var(--fp-shadow-soft)]">
-            {t("chart.pensionMarker")}
-          </div>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 18, right: 22, left: 0, bottom: 8 }}>
-              <defs>
-                <linearGradient id="capitalFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={CHART_COLORS.capitalFill1} stopOpacity={0.62} />
-                  <stop offset="100%" stopColor={CHART_COLORS.capitalFill2} stopOpacity={0.1} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="year" tickLine={false} axisLine={false} interval={0} tick={{ fontSize: 12 }} />
-              <YAxis
-                domain={[0, CHART_TOP_RUB_MLN]}
-                ticks={[0, 250, 500, CHART_TOP_RUB_MLN]}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => (value === CHART_TOP_RUB_MLN ? "млн ₽953" : value === 0 ? "0.0" : String(value))}
-                tick={{ fontSize: 12 }}
-                width={58}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const row = payload[0].payload as (typeof data)[number];
-                  return (
-                    <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)]">
-                      <div className="mb-2 font-bold">{label} · {row.age} лет</div>
-                      <div>{t("chart.capitalTooltip")}: {formatRub(row.capitalRubMln * 1_000_000, { compact: true })}</div>
-                      <div>{t("chart.income")}: {formatRub(row.incomeRubMln * 1_000_000, { compact: true })}</div>
-                      <div>{t("chart.expenses")}: {formatRub(row.expensesRubMln * 1_000_000, { compact: true })}</div>
-                    </div>
-                  );
-                }}
-              />
-              <Legend wrapperStyle={{ display: "none" }} />
-              <ReferenceLine x={2027} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
-              <ReferenceLine x={2028} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
-              <ReferenceLine x={2029} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
-              <ReferenceLine x={2054} label={{ value: "60", position: "top", fontSize: 10 }} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
-              <Bar isAnimationActive={false} dataKey="incomeRubMln" barSize={16} radius={[5, 5, 0, 0]} fill={CHART_COLORS.income} fillOpacity={0.92} name="Доходы" />
-              <Bar isAnimationActive={false} dataKey="expensesRubMln" barSize={16} radius={[5, 5, 0, 0]} fill={CHART_COLORS.expenses} fillOpacity={0.9} name="Расходы" />
-              <Area
-                isAnimationActive={false}
-                type="monotone"
-                dataKey="capitalRubMln"
-                stroke="#1a141b"
-                strokeWidth={3}
-                fill="url(#capitalFill)"
-                name="Накопления"
-              />
-              <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Оптимистичный" />
-              <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Пессимистичный" />
-              <ReferenceLine y={Math.min(chartPeak, CHART_TOP_RUB_MLN)} stroke="rgba(26,20,27,0.1)" strokeDasharray="4 6" />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+          <div className="flex flex-col h-[540px] min-w-[820px]">
+            <div className="absolute right-10 top-7 z-10 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/80 px-3 py-1 text-[11px] font-bold text-[var(--fp-color-muted-foreground)] shadow-[var(--fp-shadow-soft)]">
+              {t("chart.pensionMarker")}
+            </div>
+            
+            {/* Top Chart: Capital (Line/Area) */}
+            <div className="h-[300px] w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={data} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="capitalFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={CHART_COLORS.capitalFill1} stopOpacity={0.62} />
+                      <stop offset="100%" stopColor={CHART_COLORS.capitalFill2} stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="year" tickLine={false} axisLine={false} minTickGap={20} tick={false} />
+                  <YAxis
+                    domain={[0, CHART_TOP_RUB_MLN]}
+                    ticks={[0, 250, 500, CHART_TOP_RUB_MLN]}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => (value === CHART_TOP_RUB_MLN ? "млн ₽953" : value === 0 ? "0.0" : String(value))}
+                    tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
+                    width={58}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0].payload as (typeof data)[number];
+                      return (
+                        <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)]">
+                          <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">{label} год · {row.age} лет</div>
+                          <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">Накопления</div>
+                          <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2 border-l-2 border-[var(--fp-color-border)] pl-2">
+                            <span className="text-[var(--fp-color-pessimistic)] text-[var(--fp-color-muted-foreground)]">— Пессимистичный</span><span className="font-semibold">{formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}</span>
+                            <span className="text-[var(--fp-color-optimistic)] text-[var(--fp-color-teal)]">-- Оптимистичный</span><span className="font-semibold">{formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}</span>
+                            <span className="text-[var(--fp-color-foreground)] font-medium">— Базовый</span><span className="font-semibold">{formatRub(row.capitalRubMln * 1_000_000, { compact: true })}</span>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine x={2054} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
+                  <Area isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke="#1a141b" strokeWidth={3} fill="url(#capitalFill)" name="Накопления" />
+                  <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Оптимистичный" />
+                  <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Пессимистичный" />
+                  <ReferenceLine y={Math.min(chartPeak, CHART_TOP_RUB_MLN)} stroke="rgba(26,20,27,0.1)" strokeDasharray="4 6" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
 
-      {/* Range slider track */}
-      <div className="mt-2 h-6 rounded-full bg-[var(--fp-color-border-track)]/30 p-0.5">
-        <div className="h-5 w-2 rounded-full border border-[var(--fp-color-foreground)]/25 bg-[var(--fp-color-muted)]" />
+            {/* Bottom Chart: Flows (Bars) */}
+            <div className="h-[240px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={data} syncId="finance" margin={{ top: 10, right: 22, left: 0, bottom: 8 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="year" tickLine={false} axisLine={false} minTickGap={20} tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }} />
+                  <YAxis
+                    domain={[0, 'auto']}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => value === 0 ? "0.0" : String(value)}
+                    tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
+                    width={58}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'var(--fp-color-surface-hover)' }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0].payload as (typeof data)[number];
+                      return (
+                        <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)]">
+                          <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">{row.age} лет ({label} г.)</div>
+                          <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">Потоки</div>
+                          <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2">
+                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{background: CHART_COLORS.income}} />Доходы</span><span className="font-semibold">{formatRub(row.incomeRubMln * 1_000_000, { compact: true })}</span>
+                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{background: CHART_COLORS.expenses}} />Расходы</span><span className="font-semibold">{formatRub(row.expensesRubMln * 1_000_000, { compact: true })}</span>
+                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{background: CHART_COLORS.goals}} />Цели</span><span className="font-semibold">{formatRub(row.goalsAbs * 1_000_000, { compact: true })}</span>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine x={2054} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
+                  <Bar isAnimationActive={false} dataKey="incomeRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.income} fillOpacity={0.92} name="Доходы" />
+                  <Bar isAnimationActive={false} dataKey="expensesRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.expenses} fillOpacity={0.9} name="Расходы" />
+                  <Bar isAnimationActive={false} dataKey="goalsAbs" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.goals} fillOpacity={0.9} name="Цели" />
+                  <Brush dataKey="year" height={24} stroke="var(--fp-color-border)" fill="var(--fp-color-surface-hover)" travellerWidth={10} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
       </div>
 
       {/* Scale hint */}
-      <div className="mt-3 flex items-center gap-3 rounded-[var(--fp-radius-2xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/40 px-4 py-2.5">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-muted)]">↔</span>
+      <div className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 px-4 py-3 shadow-sm">
+        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--fp-color-muted)] text-[var(--fp-color-foreground)]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
+        </div>
         <div>
-          <div className="text-sm font-bold">{t("chart.scaleTitle")}</div>
-          <div className="text-sm text-[var(--fp-color-muted-foreground)]">{t("chart.scaleDescription")}</div>
+          <div className="text-sm font-semibold">{t("chart.scaleTitle")}</div>
+          <div className="text-xs text-[var(--fp-color-muted-foreground)]">Двигайте ползунки внизу графика для приближения к нужному периоду.</div>
         </div>
       </div>
     </Card>
