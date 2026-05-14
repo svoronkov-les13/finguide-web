@@ -58,6 +58,58 @@ export function getOidcAuthorizationHeader() {
   return `${session?.tokenType || "Bearer"} ${session?.accessToken}`;
 }
 
+let refreshPromise: Promise<AuthSession | undefined> | null = null;
+
+export async function refreshAuthSession(): Promise<AuthSession | undefined> {
+  if (refreshPromise) return refreshPromise;
+  
+  refreshPromise = (async () => {
+    try {
+      const session = getStoredAuthSession();
+      if (!session?.refreshToken) {
+        return undefined;
+      }
+
+      const body = new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: oidcClientId,
+        refresh_token: session.refreshToken,
+      });
+
+      const response = await fetch(`${oidcIssuerUrl}/protocol/openid-connect/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+
+      if (!response.ok) {
+        clearAuthSession();
+        return undefined;
+      }
+
+      const token = (await response.json()) as TokenResponse;
+      return storeTokenResponse(token);
+    } catch {
+      return undefined;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
+}
+
+export async function getValidOidcAuthorizationHeader(): Promise<string | undefined> {
+  let session = getStoredAuthSession();
+  
+  if (session && !hasValidAuthSession(session) && session.refreshToken) {
+    session = await refreshAuthSession();
+  }
+
+  if (!hasValidAuthSession(session)) return undefined;
+  return `${session?.tokenType || "Bearer"} ${session?.accessToken}`;
+}
+
 export async function beginOidcLogin(returnTo = currentAppPath()) {
   const verifier = base64Url(randomBytes(64));
   const challenge = await sha256Base64Url(verifier);

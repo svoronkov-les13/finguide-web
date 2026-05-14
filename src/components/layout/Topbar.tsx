@@ -11,7 +11,7 @@ export function Topbar() {
   const auth = useAuth();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { data: plan, isPending: planPending } = usePlanQuery();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const route = useMemo(() => [...navigation, ...tools, ...systemRoutes].find((item) => item.href === pathname), [pathname]);
   const group = useMemo(() => {
     if (navigation.some((item) => item.href === pathname)) return { key: "groups.navigation", href: "/dashboard" };
@@ -91,6 +91,23 @@ export function Topbar() {
               align="end"
               className="z-[var(--fp-z-topbar)] mt-2 min-w-48 overflow-hidden rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-1.5 shadow-[var(--fp-shadow-card)]"
             >
+              <DropdownMenu.Item
+                onClick={() => setLocale("ru")}
+                className="flex cursor-pointer items-center justify-between gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"
+              >
+                <span>{t("common.russian")}</span>
+                {locale === "ru" && <Check className="size-4 shrink-0 text-[var(--fp-color-primary)]" />}
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onClick={() => setLocale("en")}
+                className="flex cursor-pointer items-center justify-between gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"
+              >
+                <span>{t("common.english")}</span>
+                {locale === "en" && <Check className="size-4 shrink-0 text-[var(--fp-color-primary)]" />}
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Separator className="my-1 h-px bg-[var(--fp-color-border)]" />
+
               <DropdownMenu.Item
                 onClick={() => auth.logout()}
                 className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm text-red-500 outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"

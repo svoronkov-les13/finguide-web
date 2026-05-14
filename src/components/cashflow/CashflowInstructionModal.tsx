@@ -1,7 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, BookOpen } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
-import type { TranslationKey } from "@/i18n/messages";
 
 interface CashflowInstructionModalProps {
   open: boolean;
@@ -11,9 +10,7 @@ interface CashflowInstructionModalProps {
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
 
-function stepTitleKey(key: (typeof STEP_KEYS)[number], type: CashflowInstructionModalProps["type"]): TranslationKey {
-  return key === "stepType" ? `cashflow.${key}_${type}` : `cashflow.${key}`;
-}
+
 
 export function CashflowInstructionModal({ open, onOpenChange, type }: CashflowInstructionModalProps) {
   const { t } = useI18n();
@@ -53,10 +50,10 @@ export function CashflowInstructionModal({ open, onOpenChange, type }: CashflowI
                     </span>
                     <div>
                       <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
-                        {t(stepTitleKey(key, type))}
+                        {t((key === "stepType" ? `cashflow.stepType_${type}` : `cashflow.${key}`) as Parameters<typeof t>[0])}
                       </div>
                       <div className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                        {t(`cashflow.${key}Desc_${type}`)}
+                        {t(`cashflow.${key}Desc_${type}` as Parameters<typeof t>[0])}
                       </div>
                     </div>
                   </div>

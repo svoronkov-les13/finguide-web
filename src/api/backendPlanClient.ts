@@ -16,7 +16,7 @@ import {
   postPlansPlanIdGoals,
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
-import { getOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
+import { getValidOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
 import { calculateForecast } from "@/engine/calculateForecast";
 import { demoBearerToken } from "@/shared/api/baseUrl";
 import type {
@@ -42,8 +42,8 @@ let activeScenario: ScenarioId = "base";
 let lastPlanState: PlanState | undefined;
 let lastFinancialPlan: FinancialPlan | undefined;
 
-function requestOptions(): RequestInit {
-  const authorization = oidcAuthEnabled ? getOidcAuthorizationHeader() : demoBearerToken ? `Bearer ${demoBearerToken}` : undefined;
+async function requestOptions(): Promise<RequestInit> {
+  const authorization = oidcAuthEnabled ? await getValidOidcAuthorizationHeader() : demoBearerToken ? `Bearer ${demoBearerToken}` : undefined;
   return {
     headers: {
       Accept: "application/json",
@@ -66,16 +66,16 @@ function unwrapData<T>(response: ApiResponse, operation: string): T {
 }
 
 async function readBackendPlan() {
-  const planState = unwrapData<PlanState>(await getPlansCurrent(requestOptions()), "GET /plans/current");
+  const planState = unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
   const planId = planState.id;
 
   const [dashboard, cashflow, health, scenarios] = await Promise.all([
-    getPlansPlanIdDashboard(planId, requestOptions()).then((response) => unwrapData<DashboardMetrics>(response, "GET /dashboard")),
-    getPlansPlanIdAnalyticsCashflow(planId, undefined, requestOptions()).then((response) =>
+    getPlansPlanIdDashboard(planId, await requestOptions()).then((response) => unwrapData<DashboardMetrics>(response, "GET /dashboard")),
+    getPlansPlanIdAnalyticsCashflow(planId, undefined, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
-    getPlansPlanIdAnalyticsHealth(planId, requestOptions()).then((response) => unwrapData<HealthScore>(response, "GET /analytics/health")),
-    getScenarios(requestOptions()).then((response) => unwrapData<ApiScenario[]>(response, "GET /scenarios")),
+    getPlansPlanIdAnalyticsHealth(planId, await requestOptions()).then((response) => unwrapData<HealthScore>(response, "GET /analytics/health")),
+    getScenarios(await requestOptions()).then((response) => unwrapData<ApiScenario[]>(response, "GET /scenarios")),
   ]);
 
   lastPlanState = planState;
@@ -212,6 +212,7 @@ function mapGoal(goal: ApiGoal, lastForecastYear: number): Goal {
     saved: goal.savedAmount,
     growth: goal.growthPct / 100,
     reachable: goal.savedAmount >= goal.currentCost || goal.targetYear <= lastForecastYear,
+    type: goal.type === "recurring" ? "periodic" : "onetime",
   };
 }
 
@@ -305,9 +306,7 @@ function toUiFrequency(frequency: string): Cashflow["frequency"] {
   return frequency === "monthly" ? "monthly" : "yearly";
 }
 
-function toApiFrequency(frequency: Cashflow["frequency"]) {
-  return frequency === "onetime" ? "one_time" : frequency;
-}
+
 
 function toUiCurrency(currency: string): Cashflow["currency"] {
   return currency === "USD" ? "USD" : "RUB";
@@ -339,7 +338,7 @@ function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
     name: input.name,
     amount: input.amount,
     currency: input.currency,
-    frequency: toApiFrequency(input.frequency),
+    frequency: input.frequency === "onetime" ? "one_time" : input.frequency,
     growthType: "manual",
     growthPct: input.growth * 100,
     startDate: startDateFromYear(input.startYear),
@@ -366,7 +365,7 @@ function baseGoalFromGoal(input: Goal, priority: number): ApiGoal {
     savedAmount: input.saved,
     currency: "RUB",
     targetYear: input.targetYear,
-    type: "one_time",
+    type: input.type === "periodic" ? "recurring" : "one_time",
     growthType: "manual",
     growthPct: input.growth * 100,
     priority,
@@ -397,7 +396,7 @@ export const backendPlanClient = {
 
   async updateSettings(patch: EditablePlanPatch) {
     const planId = currentPlanId();
-    const current = lastPlanState ?? unwrapData<PlanState>(await getPlansCurrent(requestOptions()), "GET /plans/current");
+    const current = lastPlanState ?? unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
     const currentAssumptions = current.modelAssumptions;
 
     if (currentAssumptions) {
@@ -412,7 +411,7 @@ export const backendPlanClient = {
           investmentReturnPct: patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : currentAssumptions.investmentReturnPct,
           inflationSchedule: currentAssumptions.inflationSchedule,
         },
-        requestOptions(),
+        await requestOptions(),
       );
     }
 
@@ -426,7 +425,7 @@ export const backendPlanClient = {
         expectedReturnPct: patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : current.pension.expectedReturnPct,
         inflationPct: patch.inflation !== undefined ? patch.inflation * 100 : current.pension.inflationPct,
       },
-      requestOptions(),
+      await requestOptions(),
     );
 
     return readBackendPlan();
@@ -439,12 +438,11 @@ export const backendPlanClient = {
     const next = { ...current, ...patch };
 
     if (next.type === "income") {
-      await patchPlansPlanIdIncomesId(planId, id, baseIncomeFromCashflow(next), requestOptions());
+      await patchPlansPlanIdIncomesId(planId, id, baseIncomeFromCashflow(next), await requestOptions());
     } else if (next.type === "expense") {
-      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next), requestOptions());
+      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next), await requestOptions());
     } else {
-      const currentGoal = findGoal(id);
-      await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...currentGoal, id, name: next.name, targetYear: next.endYear ?? currentGoal?.targetYear ?? next.startYear, cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), requestOptions());
+      await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...findGoal(id), id, name: next.name, targetYear: next.endYear ?? new Date().getFullYear(), cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), await requestOptions());
     }
 
     return readBackendPlan();
@@ -455,11 +453,11 @@ export const backendPlanClient = {
     const cashflow = { ...input, id: `${input.type}-${Date.now()}` };
 
     if (cashflow.type === "income") {
-      await postPlansPlanIdIncomes(planId, baseIncomeFromCashflow(cashflow), requestOptions());
+      await postPlansPlanIdIncomes(planId, baseIncomeFromCashflow(cashflow), await requestOptions());
     } else if (cashflow.type === "expense") {
-      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow), requestOptions());
+      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow), await requestOptions());
     } else {
-      await postPlansPlanIdGoals(planId, baseGoalFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear ?? cashflow.startYear, cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), requestOptions());
+      await postPlansPlanIdGoals(planId, baseGoalFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear ?? new Date().getFullYear(), cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), await requestOptions());
     }
 
     return readBackendPlan();
@@ -488,11 +486,11 @@ export const backendPlanClient = {
     if (!current) throw new Error(`Cashflow ${id} was not found`);
 
     if (current.type === "income") {
-      await deletePlansPlanIdIncomesId(planId, id, requestOptions());
+      await deletePlansPlanIdIncomesId(planId, id, await requestOptions());
     } else if (current.type === "expense") {
-      await deletePlansPlanIdExpensesId(planId, id, requestOptions());
+      await deletePlansPlanIdExpensesId(planId, id, await requestOptions());
     } else {
-      await deletePlansPlanIdGoalsId(planId, id, requestOptions());
+      await deletePlansPlanIdGoalsId(planId, id, await requestOptions());
     }
 
     return readBackendPlan();
@@ -503,18 +501,18 @@ export const backendPlanClient = {
     const current = findGoal(id);
     if (!current) throw new Error(`Goal ${id} was not found`);
     const priority = (lastFinancialPlan?.goals.findIndex((goal) => goal.id === id) ?? 0) + 1;
-    await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...current, ...patch }, priority), requestOptions());
+    await patchPlansPlanIdGoalsId(planId, id, baseGoalFromGoal({ ...current, ...patch }, priority), await requestOptions());
     return readBackendPlan();
   },
 
   async addGoal(input: Omit<Goal, "id">) {
     const planId = currentPlanId();
-    await postPlansPlanIdGoals(planId, baseGoalFromGoal({ ...input, id: `goal-${Date.now()}` }, (lastFinancialPlan?.goals.length ?? 0) + 1), requestOptions());
+    await postPlansPlanIdGoals(planId, baseGoalFromGoal({ ...input, id: `goal-${Date.now()}` }, (lastFinancialPlan?.goals.length ?? 0) + 1), await requestOptions());
     return readBackendPlan();
   },
 
   async deleteGoal(id: string) {
-    await deletePlansPlanIdGoalsId(currentPlanId(), id, requestOptions());
+    await deletePlansPlanIdGoalsId(currentPlanId(), id, await requestOptions());
     return readBackendPlan();
   },
 

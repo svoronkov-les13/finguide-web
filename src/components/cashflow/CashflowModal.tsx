@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Check, BookOpen, Lightbulb, Trash2, ChevronDown } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import type { Cashflow } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,13 +9,12 @@ import { Switch } from "@/components/ui/switch";
 import { usePlanQuery } from "@/api/planQueries";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import type { TranslationKey } from "@/i18n/messages";
 
 interface CashflowFormData {
   id?: string;
   name: string;
   amount: number;
-  currency: Cashflow["currency"];
+  currency: "USD" | "RUB";
   category: string;
   startYear: number;
   endYear: number | null;
@@ -29,9 +28,7 @@ interface CashflowFormData {
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
 
-function stepTitleKey(key: (typeof STEP_KEYS)[number], type: "income" | "expense"): TranslationKey {
-  return key === "stepType" ? `cashflow.${key}_${type}` : `cashflow.${key}`;
-}
+
 
 export function CashflowModal({
   open,
@@ -62,7 +59,7 @@ export function CashflowModal({
     name: "growthRanges",
   });
 
-  const growthType = form.watch("growthType");
+  const growthType = useWatch({ control: form.control, name: "growthType" });
 
   useEffect(() => {
     if (open) {
@@ -97,9 +94,12 @@ export function CashflowModal({
     form.setValue("frequency", freq);
   };
 
-  const isMonthly = form.watch("frequency") === "monthly";
-  const isYearly = form.watch("frequency") === "yearly";
-  const isOnetime = form.watch("frequency") === "onetime";
+  const frequencyValue = useWatch({ control: form.control, name: "frequency" });
+  const isMonthly = frequencyValue === "monthly";
+  const isYearly = frequencyValue === "yearly";
+  const isOnetime = frequencyValue === "onetime";
+
+  const growthRangesValues = useWatch({ control: form.control, name: "growthRanges" });
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -319,7 +319,7 @@ export function CashflowModal({
                                   <input
                                     type="radio"
                                     className="size-4 accent-[var(--fp-color-foreground)]"
-                                    checked={!form.watch(`growthRanges.${index}.endYear`)}
+                                    checked={!growthRangesValues?.[index]?.endYear}
                                     onChange={() => form.setValue(`growthRanges.${index}.endYear`, null)}
                                   />
                                   <span className="text-sm text-[var(--fp-color-foreground)]">{t("cashflow.rangeIndefinite")}</span>
@@ -408,10 +408,10 @@ export function CashflowModal({
                     </span>
                     <div>
                       <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
-                        {t(stepTitleKey(key, type))}
+                        {t((key === "stepType" ? `cashflow.stepType_${type}` : `cashflow.${key}`) as Parameters<typeof t>[0])}
                       </div>
                       <div className="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                        {t(`cashflow.${key}Desc_${type}`)}
+                        {t(`cashflow.${key}Desc_${type}` as Parameters<typeof t>[0])}
                       </div>
                     </div>
                   </div>
