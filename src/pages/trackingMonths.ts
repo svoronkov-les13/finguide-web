@@ -29,3 +29,7 @@ export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx
         : "pending") as MonthStatus,
   }));
 }
+
+export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
+  return status !== "pending";
+}
