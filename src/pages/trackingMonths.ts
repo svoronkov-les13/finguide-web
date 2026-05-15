@@ -33,3 +33,7 @@ export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx
 export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
   return status !== "pending";
 }
+
+export function monthFormTarget({ allGoalsTarget, nearestGoalTarget }: { allGoalsTarget: number; nearestGoalTarget: number }) {
+  return nearestGoalTarget > 0 ? nearestGoalTarget : allGoalsTarget;
+}

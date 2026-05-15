@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, MONTH_NAMES_RU, MONTH_NAMES_SHORT, shouldShowEmptyAmountPlaceholder, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, MONTH_NAMES_SHORT, shouldShowEmptyAmountPlaceholder, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Month Form (inline panel) ────────────────────────────────────────────────
@@ -172,6 +172,7 @@ export function TrackingPage() {
   const activeGoal = trackingActiveGoal(plan?.goals);
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
+  const trackerMonthTarget = monthFormTarget({ allGoalsTarget: monthlyTarget, nearestGoalTarget });
   const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
 
   // Build month grid from backend data + defaults
@@ -406,7 +407,7 @@ export function TrackingPage() {
         <MonthForm
           month={selectedMonth}
           monthKey={monthKey(selectedMonth.id)}
-          monthlyTarget={monthlyTarget}
+          monthlyTarget={trackerMonthTarget}
           plan={plan}
           onClose={() => setSelectedMonthId(null)}
           t={t}
