@@ -9,6 +9,7 @@ import type { Goal } from "@/types/finance";
 import { GoalListItem } from "@/components/goals/GoalListItem";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
+import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
 
 export function GoalsPage() {
@@ -28,11 +29,8 @@ export function GoalsPage() {
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
 
   const goals = plan.goals ?? [];
-  const goalDisplayCost = (goal: Goal) => goal.projectedCost ?? goal.cost;
-  const goalDisplaySaved = (goal: Goal) => goal.projectedSaved ?? goal.saved;
-  const goalDisplayProgress = (goal: Goal) => goal.projectedProgressPct ?? Math.min(100, Math.round((goalDisplaySaved(goal) / goalDisplayCost(goal)) * 100));
-  const totalCost = goals.reduce((sum, goal) => sum + goalDisplayCost(goal), 0);
-  const totalSaved = goals.reduce((sum, goal) => sum + goalDisplaySaved(goal), 0);
+  const totalCost = goals.reduce((sum, goal) => sum + goalProgress(goal).cost, 0);
+  const totalSaved = goals.reduce((sum, goal) => sum + goalProgress(goal).saved, 0);
   const accumulatedPercent = totalCost > 0 ? Math.min(100, Math.round((totalSaved / totalCost) * 100)) : 0;
   
   const filteredGoals = goals.filter((goal) => {
@@ -43,7 +41,7 @@ export function GoalsPage() {
 
   const activeGoal = [...goals]
     .sort((a, b) => a.targetYear - b.targetYear)
-    .find(g => goalDisplayProgress(g) < 100) || goals[0];
+    .find(g => goalProgress(g).percent < 100) || goals[0];
 
   // Group by year first
   const groupedGoals = filteredGoals.reduce((acc, goal) => {

@@ -1,6 +1,7 @@
-import { Edit2, Lock, Target, GripVertical, TrendingUp } from "lucide-react";
+import { CheckCircle2, Edit2, Lock, Target, GripVertical, TrendingUp } from "lucide-react";
 import type { Goal } from "@/types/finance";
 import { formatRub } from "@/lib/utils";
+import { goalProgress } from "@/components/goals/goalProgress";
 
 interface GoalListItemProps {
   goal: Goal;
@@ -10,9 +11,7 @@ interface GoalListItemProps {
 }
 
 export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalListItemProps) {
-  const displayCost = goal.projectedCost ?? goal.cost;
-  const displaySaved = goal.projectedSaved ?? goal.saved;
-  const progress = goal.projectedProgressPct ?? Math.min(100, Math.round((displaySaved / displayCost) * 100));
+  const progress = goalProgress(goal);
   const isPeriodic = goal.type === "periodic";
 
   return (
@@ -27,8 +26,11 @@ export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalLis
       
       <div className="flex flex-col min-w-[200px] flex-1">
         <div className="flex items-center gap-2">
-          <h3 className="font-medium text-[var(--fp-color-foreground)]">{goal.name}</h3>
-          {isAccumulation && (
+          <h3 className="truncate transition-colors duration-200 text-[var(--text-heading)]" style={{ fontSize: "13px", fontWeight: 500 }}>{goal.name}</h3>
+          {progress.achieved && (
+            <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600"><CheckCircle2 className="size-3" />Достигнуто</span>
+          )}
+          {!progress.achieved && isAccumulation && (
             <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]">НАКОПЛЕНИЕ</span>
           )}
           {isQueue && (
@@ -41,12 +43,12 @@ export function GoalListItem({ goal, isAccumulation, isQueue, onClick }: GoalLis
       </div>
 
       <div className="flex w-[40%] min-w-[250px] max-w-[400px] items-center gap-4">
-         <span className="font-semibold text-sm text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(displayCost)}</span>
+         <span className="font-semibold text-sm text-[var(--fp-color-foreground)] whitespace-nowrap">{formatRub(progress.cost)}</span>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
-           <div className="h-full bg-[var(--fp-color-foreground)] transition-all" style={{ width: `${progress}%` }} />
+           <div className={`h-full transition-all ${progress.achieved ? "bg-emerald-500" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
          </div>
          <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)] w-8 text-right">
-           {progress > 0 ? `${progress}%` : "—"}
+           {progress.percent > 0 ? `${progress.percent}%` : "—"}
          </span>
       </div>
 

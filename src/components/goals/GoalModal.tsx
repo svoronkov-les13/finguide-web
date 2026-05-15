@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n/I18nProvider";
 import * as Icons from "lucide-react";
 
+const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
+
 interface GoalFormData {
   id?: string;
   name: string;
@@ -168,7 +170,7 @@ export function GoalModal({
                         "Home", "Car", "Plane", "GraduationCap", "Heart", "Clock", "Briefcase", "Diamond",
                         "Shield", "Umbrella", "Gift", "Camera", "Laptop", "Palette", "Scissors", "Mountain"
                       ].map((iconName) => {
-                        const Icon = (Icons as unknown as Record<string, React.ElementType>)[iconName] || Icons.Target;
+                        const Icon = iconMap[iconName] ?? Icons.Target;
                         const isSelected = iconValue === iconName;
                         return (
                           <button

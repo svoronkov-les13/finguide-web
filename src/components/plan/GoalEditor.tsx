@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react";
 import type { ReactNode } from "react";
+import { goalProgress } from "@/components/goals/goalProgress";
 import { SurfaceRow } from "@/components/plan/DataPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,7 @@ export function GoalEditor({ goals, onUpdate, onDelete }: GoalEditorProps) {
 
 function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (id: string, patch: Partial<Goal>) => void; onDelete: (id: string) => void }) {
   const Icon = iconMap[goal.icon] ?? Icons.Target;
-  const progress = Math.min(100, Math.round((goal.saved / goal.cost) * 100));
+  const progress = goalProgress(goal);
 
   return (
     <SurfaceRow className="bg-card/42">
@@ -46,10 +47,10 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
             <div className="font-semibold text-foreground">{formatRub(goal.saved, { compact: true })}</div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">из {formatRub(goal.cost, { compact: true })}</div>
           </div>
-          <div className="rounded-full border border-border/75 bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{progress}%</div>
+          <div className="rounded-full border border-border/75 bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{progress.percent}%</div>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${progress.percent}%` }} />
         </div>
       </div>
 

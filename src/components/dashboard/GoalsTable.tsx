@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
+import { goalProgress } from "@/components/goals/goalProgress";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -42,7 +43,8 @@ export function GoalsTable() {
 
 function GoalRow({ goal }: { goal: Goal }) {
   const Icon = iconMap[goal.icon] ?? Icons.Target;
-  const progress = Math.min(100, Math.round((goal.saved / Math.max(goal.cost, 1)) * 100));
+  const progress = goalProgress(goal);
+  const statusLabel = progress.achieved ? "Достигнуто" : goal.reachable ? "Достижима" : "Риск";
   return (
     <div className="grid grid-cols-[1.5fr_1.8fr_120px_140px_160px_120px] items-center gap-4 border-b border-[var(--fp-color-teal)]/15 px-2 py-4 text-sm last:border-b-0">
       <div className="flex min-w-0 items-center gap-2.5 font-semibold">
@@ -53,10 +55,10 @@ function GoalRow({ goal }: { goal: Goal }) {
       </div>
       <div className="min-w-0 pr-4 flex flex-col justify-center">
         <div className="flex items-baseline justify-between mb-1">
-          <span className="font-semibold text-[13px]">{formatRub(goal.saved, { compact: false })} <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal">/ {formatRub(goal.cost, { compact: true })}</span></span>
-          <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-medium">{progress}%</span>
+          <span className="font-semibold text-[13px]">{formatRub(progress.saved, { compact: false })} <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal">/ {formatRub(progress.cost, { compact: true })}</span></span>
+          <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-medium">{progress.percent}%</span>
         </div>
-        <ProgressBar value={progress} size="sm" variant={progress > 0 ? "success" : "default"} className="h-1.5" />
+        <ProgressBar value={progress.percent} size="sm" variant={progress.percent > 0 ? "success" : "default"} className="h-1.5" />
       </div>
       <div className="text-center text-[var(--fp-color-muted-foreground)]">
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{goal.targetYear}</div>
@@ -67,9 +69,9 @@ function GoalRow({ goal }: { goal: Goal }) {
         <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">+{Math.round(goal.growth * 100)}%/год</div>
       </div>
       <div className="font-semibold text-[13px]">
-        {formatRub(goal.saved, { compact: false })}
+        {formatRub(progress.saved, { compact: false })}
       </div>
-      <div className="flex justify-end"><Badge variant={goal.reachable ? "success" : "danger"} className="bg-transparent border-none text-[var(--fp-color-teal)] shadow-none px-0 gap-1 font-medium"><Icons.CheckCircle2 className="size-3.5" />{goal.reachable ? "Достижима" : "Риск"}</Badge></div>
+      <div className="flex justify-end"><Badge variant={goal.reachable ? "success" : "danger"} className="bg-transparent border-none text-[var(--fp-color-teal)] shadow-none px-0 gap-1 font-medium"><Icons.CheckCircle2 className="size-3.5" />{statusLabel}</Badge></div>
     </div>
   );
 }

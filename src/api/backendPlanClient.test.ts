@@ -44,7 +44,7 @@ describe("backendPlanClient tracker journal mapping", () => {
 
 
 describe("backendPlanClient goal progress mapping", () => {
-  it("uses projected allocation fields for goal progress", () => {
+  it("keeps projected allocation fields separate from contribution-backed saved amount", () => {
     const goal = goalFromApi({
       id: "goal-1",
       name: "Финансовая подушка",

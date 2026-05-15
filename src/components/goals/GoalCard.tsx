@@ -3,6 +3,7 @@ import type { Goal } from "@/types/finance";
 import { formatRub } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
+import { goalProgress } from "@/components/goals/goalProgress";
 import * as Icons from "lucide-react";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
@@ -19,9 +20,7 @@ export function GoalCard({
   const { t } = useI18n();
   const Icon = iconMap[item.icon] ?? Target;
   
-  const displayCost = item.projectedCost ?? item.cost;
-  const displaySaved = item.projectedSaved ?? item.saved;
-  const progress = item.projectedProgressPct ?? Math.min(100, Math.round((displaySaved / displayCost) * 100));
+  const progress = goalProgress(item);
 
   return (
     <div
@@ -60,15 +59,15 @@ export function GoalCard({
         {!compact && (
           <div className="mt-1 flex items-center justify-between text-[11px] text-[var(--fp-color-muted-foreground)]">
             <span>{t("goals.targetYear")}: {item.targetYear}</span>
-            <span>{progress}%</span>
+            <span>{progress.percent}%</span>
           </div>
         )}
         
         {!compact && (
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fp-color-muted)]">
             <div 
-              className={cn("h-full rounded-full", item.reachable ? "bg-emerald-500" : "bg-red-500")}
-              style={{ width: `${progress}%` }} 
+              className={cn("h-full rounded-full", progress.achieved || item.reachable ? "bg-emerald-500" : "bg-red-500")}
+              style={{ width: `${progress.percent}%` }}
             />
           </div>
         )}
@@ -81,7 +80,7 @@ export function GoalCard({
         </div>
         {!compact && (
           <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
-            {formatRub(displaySaved, { compact: true })} {t("goals.saved").toLowerCase()}
+            {formatRub(progress.saved, { compact: true })} {t("goals.saved").toLowerCase()}
           </div>
         )}
       </div>

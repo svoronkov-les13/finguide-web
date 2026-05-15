@@ -22,6 +22,7 @@
   --fp-color-background: #f6f5f1;
   --fp-color-card: #ffffff;
   --fp-color-foreground: #1a141e;
+  --text-heading: var(--fp-color-foreground);
 
   /* --- Accent colors --- */
   --fp-color-accent-gold: #DCC57F;
