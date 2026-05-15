@@ -44,14 +44,17 @@ describe("mutation cache updates", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
   });
 
-  it("writes returned monthly tracker rows directly for immediate calendar updates", () => {
+  it("writes returned monthly tracker rows and invalidates plan progress immediately", () => {
     const queryClient = {
       setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
     };
+    const planKey = ["financial-plan", "auth", "user-123"] as const;
     const rows = [{ month: "2026-05", status: "completed", amount: 150000, note: null }];
 
-    updateMonthlyTrackerCache(queryClient, rows as never);
+    updateMonthlyTrackerCache(queryClient, planKey, rows as never);
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, rows);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
   });
 });

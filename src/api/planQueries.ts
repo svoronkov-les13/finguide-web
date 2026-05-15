@@ -222,8 +222,9 @@ export function useDeleteContributionMutation() {
 
 export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
 
-export function updateMonthlyTrackerCache(queryClient: Pick<QueryClient, "setQueryData">, data: MonthlyTrackerEntry[]) {
+export function updateMonthlyTrackerCache(queryClient: CacheWriter, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
   queryClient.setQueryData(monthlyTrackerQueryKey, data);
+  queryClient.invalidateQueries({ queryKey });
 }
 
 export function useMonthlyTrackerQuery() {
@@ -240,9 +241,10 @@ export function useMonthlyTrackerQuery() {
 
 export function useSaveMonthlyTrackerMutation() {
   const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ planId, month, status, amount, note }: { planId: string; month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
       financialPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
-    onSuccess: (data) => updateMonthlyTrackerCache(queryClient, data),
+    onSuccess: (data) => updateMonthlyTrackerCache(queryClient, queryKey, data),
   });
 }
