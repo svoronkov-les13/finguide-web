@@ -48,11 +48,12 @@ interface MonthFormProps {
   month: MonthData;
   monthKey: string; // "YYYY-MM"
   monthlyTarget: number;
+  plan: import("@/types/finance").FinancialPlan;
   onClose: () => void;
   t: ReturnType<typeof useI18n>["t"];
 }
 
-function MonthForm({ month, monthKey, monthlyTarget, onClose, t }: MonthFormProps) {
+function MonthForm({ month, monthKey, monthlyTarget, plan, onClose, t }: MonthFormProps) {
   const saveMutation = useSaveMonthlyTrackerMutation();
   const [amount, setAmount] = useState<string>(String(month.amount ?? monthlyTarget));
   const [note, setNote] = useState<string>("");
@@ -62,7 +63,7 @@ function MonthForm({ month, monthKey, monthlyTarget, onClose, t }: MonthFormProp
 
   const submit = (status: MonthlyStatus) => {
     saveMutation.mutate(
-      { month: monthKey, status, amount: Number(amount) || null, note: note || null },
+      { planId: plan.planId!, month: monthKey, status, amount: Number(amount) || null, note: note || null },
       { onSuccess: onClose },
     );
   };
@@ -429,11 +430,12 @@ export function TrackingPage() {
       </div>
 
       {/* Month form (inline, below grid) */}
-      {selectedMonth && (
+      {selectedMonth && plan && (
         <MonthForm
           month={selectedMonth}
           monthKey={monthKey(selectedMonth.id)}
           monthlyTarget={monthlyTarget}
+          plan={plan}
           onClose={() => setSelectedMonthId(null)}
           t={t}
         />

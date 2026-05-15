@@ -95,6 +95,7 @@ export interface PlanSettings {
 }
 
 export interface FinancialPlan {
+  planId?: string;
   owner: {
     name: string;
     email: string;

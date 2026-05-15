@@ -64,10 +64,10 @@ export function ForecastChart() {
   );
   const chartPeak = Math.max(...data.map((point) => point.capitalRubMln), 0);
 
-  if (!plan) return <Card className="h-[800px] max-w-[1122px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+  if (!plan) return <Card className="h-[800px] w-full animate-pulse bg-[var(--fp-color-muted)]/60" />;
 
   return (
-    <Card className="max-w-[1122px] p-4">
+    <Card className="w-full p-4">
       <div className="flex items-start justify-between gap-4 max-[760px]:block">
         <div>
           <h2 className="section-title text-[var(--fp-text-md)]">{t("chart.title")}</h2>
@@ -196,7 +196,7 @@ export function ForecastChart() {
                   <Bar isAnimationActive={false} dataKey="incomeRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.income} fillOpacity={0.92} name="Доходы" />
                   <Bar isAnimationActive={false} dataKey="expensesRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.expenses} fillOpacity={0.9} name="Расходы" />
                   <Bar isAnimationActive={false} dataKey="goalsAbs" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.goals} fillOpacity={0.9} name="Цели" />
-                  <Brush dataKey="year" height={24} stroke="var(--fp-color-border)" fill="var(--fp-color-surface-hover)" travellerWidth={10} />
+                  <Brush dataKey="year" height={16} stroke="var(--fp-color-border-strong)" fill="var(--fp-color-surface)" travellerWidth={6} tickFormatter={() => ''} className="opacity-80" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -206,7 +206,7 @@ export function ForecastChart() {
       {/* Scale hint */}
       <div className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 px-4 py-3 shadow-sm">
         <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--fp-color-muted)] text-[var(--fp-color-foreground)]">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m8 3-4 4 4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
         </div>
         <div>
           <div className="text-sm font-semibold">{t("chart.scaleTitle")}</div>

@@ -138,6 +138,7 @@ function mapBackendPlan(input: {
   const forecast = cashflow.map(mapForecastPoint);
   const goals = planState.goals.map((goal) => goalFromApi(goal, forecast.at(-1)?.year ?? settings.startYear));
   const plan: FinancialPlan = {
+    planId: planState.id,
     owner: {
       name: planState.profile.name,
       email: planState.profile.email,
@@ -600,53 +601,48 @@ export const backendPlanClient = {
 
   // ─── Contributions ────────────────────────────────────────────────────────
 
-  async getContributions(): Promise<Contribution[]> {
-    const planId = currentPlanId();
+  async getContributions(planId: string): Promise<Contribution[]> {
     const raw = await backendJson<unknown[]>(`/plans/${planId}/contributions`, undefined, "GET /contributions");
     return raw.map(contributionFromApi);
   },
 
-  async addContribution(input: Omit<Contribution, "id">) {
-    const planId = currentPlanId();
+  async addContribution(planId: string, input: Omit<Contribution, "id">) {
     await backendJson<unknown>(`/plans/${planId}/contributions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(contributionToApi(input)),
     }, "POST /contributions");
-    return backendPlanClient.getContributions();
+    return backendPlanClient.getContributions(planId);
   },
 
-  async updateContribution(id: string, patch: Partial<Omit<Contribution, "id">>) {
-    const planId = currentPlanId();
+  async updateContribution(planId: string, id: string, patch: Partial<Omit<Contribution, "id">>) {
     await backendJson<unknown>(`/plans/${planId}/contributions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(contributionToApi(patch)),
     }, "PATCH /contributions/{id}");
-    return backendPlanClient.getContributions();
+    return backendPlanClient.getContributions(planId);
   },
 
-  async deleteContribution(id: string) {
-    await backendNoContent(`/plans/${currentPlanId()}/contributions/${id}`, { method: "DELETE" }, "DELETE /contributions/{id}");
-    return backendPlanClient.getContributions();
+  async deleteContribution(planId: string, id: string) {
+    await backendNoContent(`/plans/${planId}/contributions/${id}`, { method: "DELETE" }, "DELETE /contributions/{id}");
+    return backendPlanClient.getContributions(planId);
   },
 
   // ─── Monthly Tracker ──────────────────────────────────────────────────────
 
-  async getMonthlyTracker(): Promise<MonthlyTrackerEntry[]> {
-    const planId = currentPlanId();
+  async getMonthlyTracker(planId: string): Promise<MonthlyTrackerEntry[]> {
     const raw = await backendJson<unknown[]>(`/plans/${planId}/calendar/monthly-tracker`, undefined, "GET /monthly-tracker");
     return raw.map(monthlyTrackerFromApi);
   },
 
-  async saveMonthlyTrackerEntry(month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) {
-    const planId = currentPlanId();
+  async saveMonthlyTrackerEntry(planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) {
     await backendJson<unknown>(`/plans/${planId}/calendar/monthly-tracker`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ month, status, amount: amount ?? undefined, note: note ?? undefined }),
     }, "POST /monthly-tracker");
-    return backendPlanClient.getMonthlyTracker();
+    return backendPlanClient.getMonthlyTracker(planId);
   },
 };
 
