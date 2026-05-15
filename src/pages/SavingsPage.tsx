@@ -147,14 +147,11 @@ export function SavingsPage() {
   const goalMap = new Map(goals.map((g) => [g.id, g.name]));
 
   // Stats
-  const totalAmount = contributions.reduce((sum, c) => sum + (c.currency === "RUB" ? c.amount : c.amount), 0);
+  const totalAmount = goals.reduce((sum, g) => sum + g.saved, 0);
   const totalCost = goals.reduce((sum, g) => sum + g.cost, 0);
   const overallProgress = totalCost > 0 ? Math.round((totalAmount / totalCost) * 100) : 0;
   
-  const completedGoals = goals.filter(g => {
-    const goalSaved = contributions.filter(c => c.goalId === g.id).reduce((s, c) => s + c.amount, 0);
-    return goalSaved >= g.cost;
-  });
+  const completedGoals = goals.filter(g => g.saved >= g.cost);
   const inProgressGoals = goals.length - completedGoals.length;
 
   const openAdd = (goalId?: string) => { setTargetGoalId(goalId); setModal("add"); };
@@ -274,7 +271,7 @@ export function SavingsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 mb-8">
           {filteredGoals.map(g => {
-            const saved = contributions.filter(c => c.goalId === g.id).reduce((s, c) => s + c.amount, 0);
+            const saved = g.saved;
             const remaining = Math.max(0, g.cost - saved);
             const progress = g.cost > 0 ? Math.min(100, Math.round((saved / g.cost) * 100)) : 0;
             const isCompleted = saved >= g.cost;
