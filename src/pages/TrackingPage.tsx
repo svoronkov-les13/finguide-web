@@ -204,6 +204,7 @@ export function TrackingPage() {
 
   const activeGoal = plan?.goals.find((g) => !g.reachable) ?? plan?.goals[0];
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
+  const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
@@ -340,7 +341,12 @@ export function TrackingPage() {
         <div className="text-[12px] font-semibold uppercase tracking-wide text-[var(--fp-color-label)]">
           {t("tracking.monthlyNorm")} — {t("tracking.incomeMinusExpenses")}
         </div>
-        <div className="mt-2 text-[28px] font-bold text-[var(--fp-color-foreground)]">{formatRub(monthlyTarget)}</div>
+        <div className="mt-2 text-[28px] font-bold text-[var(--fp-color-foreground)]">
+          {formatRub(netMonthlyBalance)}
+          <span className="ml-2 align-middle text-[13px] font-semibold text-[var(--fp-color-label)]">
+            ({t("tracking.monthlyGoalContribution")}: {formatRub(monthlyTarget)})
+          </span>
+        </div>
         <div className="mt-3 grid grid-cols-3 gap-3">
           <div className="text-center">
             <div className="text-[20px] font-bold text-[var(--fp-color-teal)]">{formatRub(totalSaved)}</div>

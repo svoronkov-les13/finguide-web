@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, mapDashboardSnapshot, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 describe("backendPlanClient tracker journal mapping", () => {
@@ -55,6 +55,35 @@ describe("backendPlanClient monthly tracker mapping", () => {
       amount: 150000,
       note: "Saved",
     });
+  });
+});
+
+
+describe("backendPlanClient dashboard mapping", () => {
+  it("keeps net monthly balance separate from monthly goal contribution", () => {
+    const snapshot = mapDashboardSnapshot({
+      totalMonthlyIncome: 345000,
+      totalYearlyIncome: 4320000,
+      totalMonthlyExpenses: 149000,
+      totalYearlyExpenses: 1788000,
+      netMonthlyBalance: 196000,
+      netYearlyBalance: 2532000,
+      savingsRatePct: 58.6,
+      totalGoalsCost: 1000000,
+      totalGoalsSaved: 0,
+      totalGoalsRemaining: 1000000,
+      monthlyGoalContribution: 193725,
+      availableForPension: 2275,
+      projectedPensionCapital: 3000000,
+      yearsToRetirement: 28,
+      emergencyFundTarget: 894000,
+      emergencyFundCurrent: 0,
+      emergencyFundPct: 0,
+      yearlyProjection: [],
+    }, { score: 80, status: "good", signals: [] } as never, { retirementAge: 60 } as never, [{ year: 2026, capital: 0 }] as never);
+
+    expect(snapshot.netMonthlyBalanceRub).toBe(196000);
+    expect(snapshot.monthlyTargetRub).toBe(193725);
   });
 });
 

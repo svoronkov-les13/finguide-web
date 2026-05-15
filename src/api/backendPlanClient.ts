@@ -292,7 +292,7 @@ function adjustmentPct(value: number | undefined) {
   return value === undefined ? 0 : value / 100;
 }
 
-function mapDashboardSnapshot(
+export function mapDashboardSnapshot(
   dashboard: DashboardMetrics,
   health: HealthScore,
   pension: PensionSettings,
@@ -305,6 +305,7 @@ function mapDashboardSnapshot(
   return {
     recommendationYear: independenceYear,
     monthlyTargetRub: dashboard.monthlyGoalContribution,
+    netMonthlyBalanceRub: dashboard.netMonthlyBalance,
     annualTargetRub: dashboard.monthlyGoalContribution * 12,
     monthlyDeltaRub: dashboard.availableForPension - dashboard.monthlyGoalContribution,
     pensionCapitalRub: dashboard.projectedPensionCapital,

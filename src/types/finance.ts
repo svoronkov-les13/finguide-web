@@ -73,6 +73,7 @@ export interface TrackerEntry {
 export interface DashboardSnapshot {
   recommendationYear: number;
   monthlyTargetRub: number;
+  netMonthlyBalanceRub: number;
   annualTargetRub: number;
   monthlyDeltaRub: number;
   pensionCapitalRub: number;

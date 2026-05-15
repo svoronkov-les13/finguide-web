@@ -22,6 +22,7 @@ export const mockPlan: FinancialPlan = {
   dashboardSnapshot: {
     recommendationYear: 2076,
     monthlyTargetRub: 827_067,
+    netMonthlyBalanceRub: 158_500,
     annualTargetRub: 9_900_000,
     monthlyDeltaRub: -668_567,
     pensionCapitalRub: 0,
