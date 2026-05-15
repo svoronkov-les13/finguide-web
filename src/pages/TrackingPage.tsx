@@ -6,42 +6,8 @@ import { Card } from "@/components/ui/card";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
+import { makeEmptyYear, MONTH_NAMES_RU, MONTH_NAMES_SHORT, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type MonthStatus = "completed" | "partial" | "missed" | "current" | "pending";
-
-interface MonthData {
-  id: string;        // "01"–"12"
-  name: string;
-  status: MonthStatus;
-  amount?: number;
-  percent?: number;
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const MONTH_NAMES_RU = [
-  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
-];
-const MONTH_NAMES_SHORT = [
-  "Янв", "Фев", "Мар", "Апр", "Май", "Июн",
-  "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек",
-];
-
-function makeEmptyYear(year: number, currentYear: number, currentMonthIdx: number): MonthData[] {
-  return MONTH_NAMES_RU.map((name, i) => ({
-    id: String(i + 1).padStart(2, "0"),
-    name,
-    status: (year === currentYear && i === currentMonthIdx
-      ? "current"
-      : year < currentYear || (year === currentYear && i < currentMonthIdx)
-        ? "pending"
-        : "pending") as MonthStatus,
-  }));
-}
 
 // ─── Month Form (inline panel) ────────────────────────────────────────────────
 
