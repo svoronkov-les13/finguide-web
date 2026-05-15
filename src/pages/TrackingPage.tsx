@@ -5,6 +5,7 @@ import { usePlanQuery, useMonthlyTrackerQuery, useSaveMonthlyTrackerMutation } f
 import { Card } from "@/components/ui/card";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
+import { trackingActiveGoal } from "@/pages/trackingGoal";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -202,7 +203,7 @@ export function TrackingPage() {
   const [viewYear, setViewYear] = useState(currentYear);
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
 
-  const activeGoal = plan?.goals.find((g) => !g.reachable) ?? plan?.goals[0];
+  const activeGoal = trackingActiveGoal(plan?.goals);
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
 
