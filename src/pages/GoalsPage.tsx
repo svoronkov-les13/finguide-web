@@ -11,6 +11,7 @@ import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
+import { trackingActiveGoal } from "@/pages/trackingGoal";
 
 export function GoalsPage() {
   const { t } = useI18n();
@@ -39,9 +40,7 @@ export function GoalsPage() {
     return matchesSearch && matchesFilter;
   });
 
-  const activeGoal = [...goals]
-    .sort((a, b) => a.targetYear - b.targetYear)
-    .find(g => goalProgress(g).percent < 100) || goals[0];
+  const activeGoal = trackingActiveGoal(goals);
 
   // Group by year first
   const groupedGoals = filteredGoals.reduce((acc, goal) => {
