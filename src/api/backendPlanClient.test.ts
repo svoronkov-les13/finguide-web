@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 describe("backendPlanClient tracker journal mapping", () => {
@@ -38,6 +38,22 @@ describe("backendPlanClient tracker journal mapping", () => {
       amount: -350,
       type: "expense",
       status: "actual",
+    });
+  });
+});
+
+describe("backendPlanClient monthly tracker mapping", () => {
+  it("preserves saved amount returned by backend monthly tracker", () => {
+    expect(monthlyTrackerFromApi({
+      month: "2026-05",
+      status: "completed",
+      amount: 150000,
+      note: "Saved",
+    })).toEqual({
+      month: "2026-05",
+      status: "completed",
+      amount: 150000,
+      note: "Saved",
     });
   });
 });

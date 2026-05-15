@@ -637,7 +637,7 @@ export const backendPlanClient = {
   },
 
   async saveMonthlyTrackerEntry(planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) {
-    await backendJson<unknown>(`/plans/${planId}/calendar/monthly-tracker`, {
+    await backendNoContent(`/plans/${planId}/calendar/monthly-tracker`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ month, status, amount: amount ?? undefined, note: note ?? undefined }),
@@ -672,7 +672,7 @@ function contributionToApi(input: Partial<Omit<Contribution, "id">>) {
 
 // ─── Monthly Tracker mappers ─────────────────────────────────────────────────
 
-function monthlyTrackerFromApi(raw: unknown): MonthlyTrackerEntry {
+export function monthlyTrackerFromApi(raw: unknown): MonthlyTrackerEntry {
   const r = raw as Record<string, unknown>;
   return {
     month: String(r.month ?? ""),
