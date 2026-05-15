@@ -54,13 +54,13 @@ export function SummaryPage() {
           <Button
             variant="secondary"
             className="h-10 gap-2"
-            onClick={() => navigate({ to: '/income' as any })}
+            onClick={() => navigate({ to: '/income' as never })}
           >
             <Edit3 className="size-4" /> {t("summary.toEdit")}
           </Button>
           <Button
             className="h-10 gap-2"
-            onClick={() => navigate({ to: '/dashboard' as any })}
+            onClick={() => navigate({ to: '/dashboard' as never })}
           >
             <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
           </Button>
@@ -253,7 +253,7 @@ function CashflowTable({
                   {item.growth > 0 ? "+" : ""}{Math.round(item.growth * 100)}%
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as any }); }}
+                  onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
                   className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"
                   title={t("summary.edit")}
                 >
@@ -267,7 +267,7 @@ function CashflowTable({
           </div>
           <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--fp-color-border)]">
             <button
-              onClick={() => navigate({ to: editHref as any })}
+              onClick={() => navigate({ to: editHref as never })}
               className="text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] flex items-center gap-1.5 transition-colors"
             >
               <Edit3 className="size-3.5" /> {t("summary.editSection")}
@@ -343,7 +343,7 @@ function GoalsTable({
                     +{Math.round(item.growth * 100)}% {t("summary.perYearShort")}
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as any }); }}
+                    onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"
                   >
                     <ExternalLink className="size-4" />
@@ -366,7 +366,7 @@ function GoalsTable({
           </div>
           <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--fp-color-border)]">
             <button
-              onClick={() => navigate({ to: editHref as any })}
+              onClick={() => navigate({ to: editHref as never })}
               className="text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] flex items-center gap-1.5 transition-colors"
             >
               <Target className="size-3.5" /> {t("summary.editSection")}

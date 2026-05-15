@@ -12,9 +12,11 @@ export function DashboardPage() {
   return (
     <Page>
       {/* Top Section: Title & Scenario Bar */}
-      <section className="flex items-center justify-between gap-6 max-[760px]:block">
-        <h1 className="page-title text-[28px] font-bold max-[760px]:mb-4">Финансовый дашборд</h1>
-        <ScenarioBar onWhatIf={() => setWhatIfOpen(true)} />
+      <section className="grid items-center gap-4 max-[760px]:flex max-[760px]:flex-col max-[760px]:items-start mb-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.5fr_3fr]">
+        <h1 className="page-title text-[28px] font-bold">Финансовый дашборд</h1>
+        <div className="flex justify-start xl:justify-end overflow-hidden w-full">
+          <ScenarioBar onWhatIf={() => setWhatIfOpen(true)} />
+        </div>
       </section>
 
       {/* KPI Cards Grid */}

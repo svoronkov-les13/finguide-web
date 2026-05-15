@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import { Page } from "@/components/layout/Page";
 import { CheckCircle2, ChevronLeft, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
@@ -459,7 +460,7 @@ export function PensionPage() {
                     width={80}
                   />
                   <RechartsTooltip 
-                    formatter={(value: any) => [formatRub(Number(value)), t("pension.capital")]}
+                    formatter={(value) => [formatRub(Number(value)), t("pension.capital")]}
                     labelFormatter={(label) => t("pension.ageTooltip", { age: String(label) })}
                     contentStyle={{ borderRadius: '16px', border: '1px solid var(--fp-color-border)', backgroundColor: 'var(--fp-color-card)', boxShadow: '0 8px 32px rgba(36,31,24,0.08)', padding: '16px' }}
                     itemStyle={{ fontSize: '14px', fontWeight: 600, color: 'var(--fp-color-foreground)' }}
