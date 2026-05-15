@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { financialPlanClient } from "@/api/financialPlanClient";
 import { useAuth } from "@/auth/AuthProvider";
 import type { AuthSession } from "@/auth/oidc";
-import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, MonthlyTrackerEntry, ScenarioId, TrackerEntry } from "@/types/finance";
 
 export const planQueryKey = ["financial-plan"] as const;
 export const anonymousPlanQueryKey = [...planQueryKey, "anonymous"] as const;
@@ -169,6 +169,13 @@ export function useSaveWhatIfScenarioMutation() {
 
 export const contributionsQueryKey = ["contributions"] as const;
 
+type CacheWriter = Pick<QueryClient, "setQueryData" | "invalidateQueries">;
+
+export function updateSavingsCaches(queryClient: CacheWriter, queryKey: readonly unknown[], contributions: Contribution[]) {
+  queryClient.setQueryData(contributionsQueryKey, contributions);
+  queryClient.invalidateQueries({ queryKey });
+}
+
 export function useContributionsQuery() {
   const auth = useAuth();
   // Wait for plan to load so currentPlanId() returns the real UUID, not "plan_demo"
@@ -183,34 +190,41 @@ export function useContributionsQuery() {
 
 export function useAddContributionMutation() {
   const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ planId, ...input }: { planId: string } & Omit<Contribution, "id">) =>
       financialPlanClient.addContribution(planId, input),
-    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
   });
 }
 
 export function useUpdateContributionMutation() {
   const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ planId, id, patch }: { planId: string; id: string; patch: Partial<Omit<Contribution, "id">> }) =>
       financialPlanClient.updateContribution(planId, id, patch),
-    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
   });
 }
 
 export function useDeleteContributionMutation() {
   const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ planId, id }: { planId: string; id: string }) =>
       financialPlanClient.deleteContribution(planId, id),
-    onSuccess: (data) => queryClient.setQueryData(contributionsQueryKey, data),
+    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
   });
 }
 
 // ─── Monthly Tracker ──────────────────────────────────────────────────────────
 
 export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
+
+export function updateMonthlyTrackerCache(queryClient: Pick<QueryClient, "setQueryData">, data: MonthlyTrackerEntry[]) {
+  queryClient.setQueryData(monthlyTrackerQueryKey, data);
+}
 
 export function useMonthlyTrackerQuery() {
   const auth = useAuth();
@@ -229,8 +243,6 @@ export function useSaveMonthlyTrackerMutation() {
   return useMutation({
     mutationFn: ({ planId, month, status, amount, note }: { planId: string; month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
       financialPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
-    },
+    onSuccess: (data) => updateMonthlyTrackerCache(queryClient, data),
   });
 }
