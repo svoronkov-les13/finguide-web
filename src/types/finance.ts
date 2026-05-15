@@ -112,6 +112,7 @@ export interface FinancialPlan {
   goals: Goal[];
   tracker: TrackerEntry[];
   forecast: ForecastPoint[];
+  scenarioForecasts?: Partial<Record<ScenarioId, ForecastPoint[]>>;
 }
 
 export type EditablePlanPatch = Partial<PlanSettings>;

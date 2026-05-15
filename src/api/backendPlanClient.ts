@@ -46,6 +46,13 @@ type ApiTrackerEntry = {
   status: TrackerEntry["status"];
 };
 
+type ApiScenarioComparison = {
+  scenarios: Array<{
+    scenarioId: string;
+    projection: CashFlowProjectionPoint[];
+  }>;
+};
+
 let activeScenario: ScenarioId = "base";
 let lastPlanState: PlanState | undefined;
 let lastFinancialPlan: FinancialPlan | undefined;
@@ -118,9 +125,23 @@ async function readBackendPlan() {
 
   lastPlanState = planState;
 
-  const tracker = await backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries");
+  const [tracker, scenarioForecasts] = await Promise.all([
+    backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries"),
+    readScenarioForecasts(scenarios),
+  ]);
 
-  return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios, tracker });
+  return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios, tracker, scenarioForecasts });
+}
+
+async function readScenarioForecasts(scenarios: ApiScenario[]): Promise<FinancialPlan["scenarioForecasts"]> {
+  const scenarioIds = ["base", "optimistic", "pessimistic"].filter((id) => scenarios.some((scenario) => scenario.id === id));
+  if (scenarioIds.length === 0) return undefined;
+  const comparison = await backendJson<ApiScenarioComparison>("/scenarios/compare", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenarioIds }),
+  }, "POST /scenarios/compare");
+  return mapScenarioComparisonForecasts(comparison);
 }
 
 function mapBackendPlan(input: {
@@ -130,8 +151,9 @@ function mapBackendPlan(input: {
   health: HealthScore;
   scenarios: ApiScenario[];
   tracker: ApiTrackerEntry[];
+  scenarioForecasts?: FinancialPlan["scenarioForecasts"];
 }): FinancialPlan {
-  const { planState, dashboard, cashflow, health, scenarios, tracker } = input;
+  const { planState, dashboard, cashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   const forecast = cashflow.map(mapForecastPoint);
@@ -156,10 +178,19 @@ function mapBackendPlan(input: {
     goals,
     tracker: tracker.map(trackerEntryFromApi),
     forecast,
+    scenarioForecasts,
   };
 
   lastFinancialPlan = plan;
   return plan;
+}
+
+export function mapScenarioComparisonForecasts(comparison: ApiScenarioComparison): FinancialPlan["scenarioForecasts"] {
+  return Object.fromEntries(
+    comparison.scenarios
+      .map((scenario) => [toScenarioId(scenario.scenarioId, 0), scenario.projection.map(mapForecastPoint)] as const)
+      .filter(([scenarioId]) => scenarioId === "base" || scenarioId === "optimistic" || scenarioId === "pessimistic"),
+  );
 }
 
 function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undefined) {

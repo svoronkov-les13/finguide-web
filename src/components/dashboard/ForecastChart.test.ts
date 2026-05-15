@@ -39,4 +39,15 @@ describe("ForecastChart data", () => {
     expect(projectionYearsLabel([point({ year: 2024 }), point({ year: 2026 })])).toBe(3);
     expect(projectionYearsLabel([])).toBe(0);
   });
+
+  it("uses backend scenario comparison forecasts for optimistic and pessimistic lines", () => {
+    const [row] = buildForecastChartData([point({ year: 2026, capital: 2_000_000 })], {
+      optimistic: [point({ year: 2026, capital: 3_000_000 })],
+      pessimistic: [point({ year: 2026, capital: 1_000_000 })],
+    });
+
+    expect(row.capitalRubMln).toBe(2);
+    expect(row.capitalOptimisticRubMln).toBe(3);
+    expect(row.capitalPessimisticRubMln).toBe(1);
+  });
 });

@@ -6,6 +6,7 @@ import {
   Brush,
   CartesianGrid,
   ComposedChart,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -18,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatRub } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
-import type { ForecastPoint } from "@/types/finance";
+import type { ForecastPoint, FinancialPlan } from "@/types/finance";
 
 
 /* Style guide chart colors */
@@ -29,19 +30,34 @@ const CHART_COLORS = {
   capital: "var(--fp-color-primary)",
   capitalFill1: "#cfcac1",
   capitalFill2: "#d8d3cb",
+  optimistic: "#579982",
+  pessimistic: "#e88a5d",
   grid: "var(--fp-color-divider)",
   reference: "rgba(26, 20, 27, 0.14)",
 } as const;
 
-export function buildForecastChartData(forecast: ForecastPoint[] | undefined) {
-  return (forecast ?? []).map((point) => ({
-    ...point,
-    expensesAbs: Math.abs(point.expenses),
-    goalsAbs: Math.abs(point.goals) / 1_000_000,
-    capitalRubMln: point.capital / 1_000_000,
-    incomeRubMln: point.income / 1_000_000,
-    expensesRubMln: Math.abs(point.expenses) / 1_000_000,
-  }));
+export function buildForecastChartData(forecast: ForecastPoint[] | undefined, scenarioForecasts?: FinancialPlan["scenarioForecasts"]) {
+  const optimisticByYear = forecastByYear(scenarioForecasts?.optimistic);
+  const pessimisticByYear = forecastByYear(scenarioForecasts?.pessimistic);
+
+  return (forecast ?? []).map((point) => {
+    const optimistic = optimisticByYear.get(point.year);
+    const pessimistic = pessimisticByYear.get(point.year);
+    return {
+      ...point,
+      expensesAbs: Math.abs(point.expenses),
+      goalsAbs: Math.abs(point.goals) / 1_000_000,
+      capitalRubMln: point.capital / 1_000_000,
+      capitalOptimisticRubMln: optimistic ? optimistic.capital / 1_000_000 : undefined,
+      capitalPessimisticRubMln: pessimistic ? pessimistic.capital / 1_000_000 : undefined,
+      incomeRubMln: point.income / 1_000_000,
+      expensesRubMln: Math.abs(point.expenses) / 1_000_000,
+    };
+  });
+}
+
+function forecastByYear(forecast: ForecastPoint[] | undefined) {
+  return new Map((forecast ?? []).map((point) => [point.year, point]));
 }
 
 export function projectionYearsLabel(forecast: ForecastPoint[] | undefined) {
@@ -69,7 +85,7 @@ export function ForecastChart() {
   const { t } = useI18n();
   const hintVisible = useUiStore((state) => state.hintVisible);
   const setHintVisible = useUiStore((state) => state.setHintVisible);
-  const data = useMemo(() => buildForecastChartData(plan?.forecast), [plan]);
+  const data = useMemo(() => buildForecastChartData(plan?.forecast, plan?.scenarioForecasts), [plan]);
   const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
@@ -98,6 +114,8 @@ export function ForecastChart() {
         <LegendPill color={CHART_COLORS.goals} label={t("chart.goals")} />
         <LegendPill color="#9a958f" label={t("chart.savings")} line />
         <span className="ml-1 text-xs font-semibold">— {t("chart.base")}</span>
+        {plan.scenarioForecasts?.optimistic ? <span className="text-xs text-[var(--fp-color-muted-foreground)]">--- {t("chart.optimistic")}</span> : null}
+        {plan.scenarioForecasts?.pessimistic ? <span className="text-xs text-[var(--fp-color-muted-foreground)]">··· {t("chart.pessimistic")}</span> : null}
       </div>
 
       {hintVisible && (
@@ -152,6 +170,8 @@ export function ForecastChart() {
                           <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">Накопления</div>
                           <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2 border-l-2 border-[var(--fp-color-border)] pl-2">
                             <span className="text-[var(--fp-color-foreground)] font-medium">— Базовый</span><span className="font-semibold">{formatRub(row.capitalRubMln * 1_000_000, { compact: true })}</span>
+                            {row.capitalOptimisticRubMln !== undefined ? <><span className="text-[var(--fp-color-teal)]">-- Оптимистичный</span><span className="font-semibold">{formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}</span></> : null}
+                            {row.capitalPessimisticRubMln !== undefined ? <><span className="text-[var(--fp-color-muted-foreground)]">— Пессимистичный</span><span className="font-semibold">{formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}</span></> : null}
                           </div>
                         </div>
                       );
@@ -159,6 +179,8 @@ export function ForecastChart() {
                   />
                   {retirementYear ? <ReferenceLine x={retirementYear} stroke={CHART_COLORS.reference} strokeDasharray="6 5" /> : null}
                   <Area isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke="#1a141b" strokeWidth={3} fill="url(#capitalFill)" name="Накопления" />
+                  {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Оптимистичный" /> : null}
+                  {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Пессимистичный" /> : null}
                   <ReferenceLine y={Math.min(Math.max(...data.map((point) => point.capitalRubMln), 0), chartTop)} stroke="rgba(26,20,27,0.1)" strokeDasharray="4 6" />
                 </ComposedChart>
               </ResponsiveContainer>

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, mapDashboardSnapshot, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, mapDashboardSnapshot, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 describe("backendPlanClient tracker journal mapping", () => {
@@ -84,6 +84,27 @@ describe("backendPlanClient dashboard mapping", () => {
 
     expect(snapshot.netMonthlyBalanceRub).toBe(196000);
     expect(snapshot.monthlyTargetRub).toBe(193725);
+  });
+});
+
+
+describe("backendPlanClient scenario comparison mapping", () => {
+  it("maps backend scenario projections into forecast series", () => {
+    const forecasts = mapScenarioComparisonForecasts({
+      scenarios: [
+        {
+          scenarioId: "optimistic",
+          projection: [{ year: 2026, age: 33, totalIncome: 1_000_000, totalExpenses: 500_000, totalGoalExpenses: 100_000, netSavings: 400_000, capitalEndOfYear: 3_000_000 }],
+        },
+        {
+          scenarioId: "pessimistic",
+          projection: [{ year: 2026, age: 33, totalIncome: 900_000, totalExpenses: 600_000, totalGoalExpenses: 100_000, netSavings: 200_000, capitalEndOfYear: 1_000_000 }],
+        },
+      ],
+    } as never);
+
+    expect(forecasts?.optimistic?.[0]).toMatchObject({ year: 2026, capital: 3_000_000 });
+    expect(forecasts?.pessimistic?.[0]).toMatchObject({ year: 2026, capital: 1_000_000 });
   });
 });
 
