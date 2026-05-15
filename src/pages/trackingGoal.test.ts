@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { trackingActiveGoal } from "@/pages/trackingGoal";
+import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {
@@ -30,5 +30,12 @@ describe("trackingActiveGoal", () => {
     const car = { ...goal({ id: "car", name: "Car", targetYear: 2028, saved: 0, cost: 3000 }), priority: 3 } as Goal;
 
     expect(trackingActiveGoal([first, apartment, car])).toBe(car);
+  });
+
+  it("computes the monthly target for the nearest incomplete goal", () => {
+    const first = goal({ id: "first", targetYear: 2027, cost: 1_500_000, saved: 0, projectedCost: 1_605_000 });
+    const second = goal({ id: "second", targetYear: 2029, cost: 5_000_000, saved: 0, projectedCost: 6_298_560 });
+
+    expect(nearestGoalMonthlyTarget([second, first], 2026)).toBe(66_875);
   });
 });

@@ -5,7 +5,7 @@ import { usePlanQuery, useMonthlyTrackerQuery, useSaveMonthlyTrackerMutation } f
 import { Card } from "@/components/ui/card";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import { trackingActiveGoal } from "@/pages/trackingGoal";
+import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -205,6 +205,7 @@ export function TrackingPage() {
 
   const activeGoal = trackingActiveGoal(plan?.goals);
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
+  const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
 
   // Build month grid from backend data + defaults
@@ -345,7 +346,7 @@ export function TrackingPage() {
         <div className="mt-2 text-[28px] font-bold text-[var(--fp-color-foreground)]">
           {formatRub(netMonthlyBalance)}
           <span className="ml-2 align-middle text-[13px] font-semibold text-[var(--fp-color-label)]">
-            ({t("tracking.monthlyGoalContribution")}: {formatRub(monthlyTarget)})
+            ({t("tracking.allGoalsNorm")}: {formatRub(monthlyTarget)}; {t("tracking.nearestGoalNorm")}: {formatRub(nearestGoalTarget)})
           </span>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-3">
