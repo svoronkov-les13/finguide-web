@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeEmptyYear, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
 
 describe("makeEmptyYear", () => {
   it("marks past months in the current year as missed by default", () => {
@@ -19,5 +19,9 @@ describe("makeEmptyYear", () => {
 
   it("does not show an extra placeholder for pending months because the status label already says ahead", () => {
     expect(shouldShowEmptyAmountPlaceholder("pending")).toBe(false);
+  });
+
+  it("uses the nearest-goal target for month form completion", () => {
+    expect(monthFormTarget({ allGoalsTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(66_875);
   });
 });
