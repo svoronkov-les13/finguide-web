@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, MONTH_NAMES_RU, MONTH_NAMES_SHORT, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, MONTH_NAMES_RU, MONTH_NAMES_SHORT, shouldShowEmptyAmountPlaceholder, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Month Form (inline panel) ────────────────────────────────────────────────
@@ -391,11 +391,9 @@ export function TrackingPage() {
                       <span className="ml-1 text-[10px] font-normal text-[var(--fp-color-label)]">({m.percent}%)</span>
                     )}
                   </div>
-                ) : (
-                  <div className="mt-1 text-[12px] text-[var(--fp-color-label)]">
-                    {m.status === "pending" ? t("tracking.ahead") : ""}
-                  </div>
-                )}
+                ) : shouldShowEmptyAmountPlaceholder(m.status) ? (
+                  <div className="mt-1 text-[12px] text-[var(--fp-color-label)]" />
+                ) : null}
                 <div className="mt-1">{getStatusLabel(m)}</div>
               </button>
             );

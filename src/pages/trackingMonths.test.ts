@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeEmptyYear } from "@/pages/trackingMonths";
+import { makeEmptyYear, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
 
 describe("makeEmptyYear", () => {
   it("marks past months in the current year as missed by default", () => {
@@ -15,5 +15,9 @@ describe("makeEmptyYear", () => {
     const months = makeEmptyYear(2025, 2026, 4);
 
     expect(months.every((month) => month.status === "missed")).toBe(true);
+  });
+
+  it("does not show an extra placeholder for pending months because the status label already says ahead", () => {
+    expect(shouldShowEmptyAmountPlaceholder("pending")).toBe(false);
   });
 });
