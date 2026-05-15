@@ -6,7 +6,6 @@ import {
   Brush,
   CartesianGrid,
   ComposedChart,
-  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -19,9 +18,8 @@ import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatRub } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
+import type { ForecastPoint } from "@/types/finance";
 
-const DISPLAY_USD_TO_RUB = 132.7;
-const CHART_TOP_RUB_MLN = 953;
 
 /* Style guide chart colors */
 const CHART_COLORS = {
@@ -31,38 +29,50 @@ const CHART_COLORS = {
   capital: "var(--fp-color-primary)",
   capitalFill1: "#cfcac1",
   capitalFill2: "#d8d3cb",
-  optimistic: "#579982",
-  pessimistic: "#e88a5d",
   grid: "var(--fp-color-divider)",
   reference: "rgba(26, 20, 27, 0.14)",
 } as const;
+
+export function buildForecastChartData(forecast: ForecastPoint[] | undefined) {
+  return (forecast ?? []).map((point) => ({
+    ...point,
+    expensesAbs: Math.abs(point.expenses),
+    goalsAbs: Math.abs(point.goals) / 1_000_000,
+    capitalRubMln: point.capital / 1_000_000,
+    incomeRubMln: point.income / 1_000_000,
+    expensesRubMln: Math.abs(point.expenses) / 1_000_000,
+  }));
+}
+
+export function projectionYearsLabel(forecast: ForecastPoint[] | undefined) {
+  if (!forecast?.length) return 0;
+  const years = forecast.map((point) => point.year);
+  return Math.max(...years) - Math.min(...years) + 1;
+}
+
+function chartTopRubMln(data: ReturnType<typeof buildForecastChartData>) {
+  const peak = Math.max(
+    ...data.flatMap((point) => [point.capitalRubMln, point.incomeRubMln, point.expensesRubMln, point.goalsAbs]),
+    0,
+  );
+  if (peak <= 0) return 1;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(peak)));
+  return Math.ceil(peak / magnitude) * magnitude;
+}
+
+function chartTicks(top: number) {
+  return [0, top / 4, top / 2, top].map((value) => Math.round(value * 10) / 10);
+}
 
 export function ForecastChart() {
   const { data: plan } = usePlanQuery();
   const { t } = useI18n();
   const hintVisible = useUiStore((state) => state.hintVisible);
   const setHintVisible = useUiStore((state) => state.setHintVisible);
-  const data = useMemo(
-    () =>
-      plan?.forecast
-        .filter((point) => point.year >= 2026)
-        .map((point, index) => {
-          const yearsFromStart = Math.max(0, index);
-          const capitalRubMln = (point.capital * DISPLAY_USD_TO_RUB) / 1_000_000;
-          return {
-            ...point,
-            expensesAbs: Math.abs(point.expenses),
-            goalsAbs: (Math.abs(point.goals) * DISPLAY_USD_TO_RUB) / 1_000_000,
-            capitalRubMln,
-            capitalOptimisticRubMln: capitalRubMln * Math.pow(1.08, yearsFromStart),
-            capitalPessimisticRubMln: capitalRubMln * Math.pow(0.94, yearsFromStart),
-            incomeRubMln: (point.income * DISPLAY_USD_TO_RUB) / 1_000_000,
-            expensesRubMln: (Math.abs(point.expenses) * DISPLAY_USD_TO_RUB) / 1_000_000,
-          };
-        }) ?? [],
-    [plan],
-  );
-  const chartPeak = Math.max(...data.map((point) => point.capitalRubMln), 0);
+  const data = useMemo(() => buildForecastChartData(plan?.forecast), [plan]);
+  const chartTop = chartTopRubMln(data);
+  const ticks = chartTicks(chartTop);
+  const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
 
   if (!plan) return <Card className="h-[800px] w-full animate-pulse bg-[var(--fp-color-muted)]/60" />;
 
@@ -71,7 +81,7 @@ export function ForecastChart() {
       <div className="flex items-start justify-between gap-4 max-[760px]:block">
         <div>
           <h2 className="section-title text-[var(--fp-text-md)]">{t("chart.title")}</h2>
-          <p className="mt-1 text-xs text-[var(--fp-color-muted-foreground)]">{t("chart.projection", { years: 31 })}</p>
+          <p className="mt-1 text-xs text-[var(--fp-color-muted-foreground)]">{t("chart.projection", { years: projectionYearsLabel(plan.forecast) })}</p>
         </div>
         <div className="flex gap-1 max-[760px]:mt-3">
           <Button variant="active" size="sm">{t("chart.yearly")}</Button>
@@ -88,8 +98,6 @@ export function ForecastChart() {
         <LegendPill color={CHART_COLORS.goals} label={t("chart.goals")} />
         <LegendPill color="#9a958f" label={t("chart.savings")} line />
         <span className="ml-1 text-xs font-semibold">— {t("chart.base")}</span>
-        <span className="text-xs text-[var(--fp-color-muted-foreground)]">--- {t("chart.optimistic")}</span>
-        <span className="text-xs text-[var(--fp-color-muted-foreground)]">··· {t("chart.pessimistic")}</span>
       </div>
 
       {hintVisible && (
@@ -126,11 +134,11 @@ export function ForecastChart() {
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="year" tickLine={false} axisLine={false} minTickGap={20} tick={false} />
                   <YAxis
-                    domain={[0, CHART_TOP_RUB_MLN]}
-                    ticks={[0, 250, 500, CHART_TOP_RUB_MLN]}
+                    domain={[0, chartTop]}
+                    ticks={ticks}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => (value === CHART_TOP_RUB_MLN ? "млн ₽953" : value === 0 ? "0.0" : String(value))}
+                    tickFormatter={(value) => (value === 0 ? "0.0" : String(value))}
                     tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
                     width={58}
                   />
@@ -143,19 +151,15 @@ export function ForecastChart() {
                           <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">{label} год · {row.age} лет</div>
                           <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">Накопления</div>
                           <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2 border-l-2 border-[var(--fp-color-border)] pl-2">
-                            <span className="text-[var(--fp-color-pessimistic)] text-[var(--fp-color-muted-foreground)]">— Пессимистичный</span><span className="font-semibold">{formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}</span>
-                            <span className="text-[var(--fp-color-optimistic)] text-[var(--fp-color-teal)]">-- Оптимистичный</span><span className="font-semibold">{formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}</span>
                             <span className="text-[var(--fp-color-foreground)] font-medium">— Базовый</span><span className="font-semibold">{formatRub(row.capitalRubMln * 1_000_000, { compact: true })}</span>
                           </div>
                         </div>
                       );
                     }}
                   />
-                  <ReferenceLine x={2054} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
+                  {retirementYear ? <ReferenceLine x={retirementYear} stroke={CHART_COLORS.reference} strokeDasharray="6 5" /> : null}
                   <Area isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke="#1a141b" strokeWidth={3} fill="url(#capitalFill)" name="Накопления" />
-                  <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Оптимистичный" />
-                  <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name="Пессимистичный" />
-                  <ReferenceLine y={Math.min(chartPeak, CHART_TOP_RUB_MLN)} stroke="rgba(26,20,27,0.1)" strokeDasharray="4 6" />
+                  <ReferenceLine y={Math.min(Math.max(...data.map((point) => point.capitalRubMln), 0), chartTop)} stroke="rgba(26,20,27,0.1)" strokeDasharray="4 6" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -192,7 +196,7 @@ export function ForecastChart() {
                       );
                     }}
                   />
-                  <ReferenceLine x={2054} stroke={CHART_COLORS.reference} strokeDasharray="6 5" />
+                  {retirementYear ? <ReferenceLine x={retirementYear} stroke={CHART_COLORS.reference} strokeDasharray="6 5" /> : null}
                   <Bar isAnimationActive={false} dataKey="incomeRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.income} fillOpacity={0.92} name="Доходы" />
                   <Bar isAnimationActive={false} dataKey="expensesRubMln" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.expenses} fillOpacity={0.9} name="Расходы" />
                   <Bar isAnimationActive={false} dataKey="goalsAbs" barSize={16} radius={[4, 4, 0, 0]} fill={CHART_COLORS.goals} fillOpacity={0.9} name="Цели" />

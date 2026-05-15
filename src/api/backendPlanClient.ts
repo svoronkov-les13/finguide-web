@@ -17,7 +17,6 @@ import {
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
 import { getValidOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
-import { calculateForecast } from "@/engine/calculateForecast";
 import { apiBaseUrl, demoBearerToken } from "@/shared/api/baseUrl";
 import type {
   CashFlowProjectionPoint,
@@ -159,9 +158,8 @@ function mapBackendPlan(input: {
     forecast,
   };
 
-  const projectedPlan = { ...plan, forecast: calculateForecast(plan) };
-  lastFinancialPlan = projectedPlan;
-  return projectedPlan;
+  lastFinancialPlan = plan;
+  return plan;
 }
 
 function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undefined) {
@@ -595,7 +593,6 @@ export const backendPlanClient = {
     optimistic.scenarios = optimistic.scenarios.some((scenario) => scenario.id === "whatif")
       ? optimistic.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...input } : scenario))
       : [...optimistic.scenarios, { id: "whatif", name: "Что если?", ...input }];
-    optimistic.forecast = calculateForecast(optimistic);
     activeScenario = "whatif";
     lastFinancialPlan = optimistic;
     return optimistic;
