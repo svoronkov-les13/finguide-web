@@ -23,4 +23,12 @@ describe("trackingActiveGoal", () => {
 
     expect(trackingActiveGoal([first, second])).toBe(second);
   });
+
+  it("uses priority order instead of array order for the next incomplete goal", () => {
+    const first = { ...goal({ id: "first", name: "First", saved: 1000, cost: 1000 }), priority: 1 } as Goal;
+    const second = { ...goal({ id: "second", name: "Second", saved: 0, cost: 2000 }), priority: 2 } as Goal;
+    const third = { ...goal({ id: "third", name: "Third", saved: 0, cost: 3000 }), priority: 3 } as Goal;
+
+    expect(trackingActiveGoal([first, third, second])).toBe(second);
+  });
 });

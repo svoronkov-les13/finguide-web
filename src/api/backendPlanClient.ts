@@ -251,6 +251,7 @@ export function goalFromApi(goal: ApiGoal, lastForecastYear: number): Goal {
     name: goal.name,
     icon: goal.icon ?? "Target",
     targetYear: goal.targetYear,
+    priority: goal.priority,
     cost: goal.currentCost,
     saved: goal.savedAmount,
     projectedCost: goal.projectedTargetCost,

@@ -103,12 +103,13 @@ describe("backendPlanClient goal progress mapping", () => {
       projectedCompletionYear: 2026,
       currency: "RUB",
       targetYear: 2027,
+      priority: 2,
       type: "one_time",
       growthType: "inflation",
       growthPct: 7,
-      priority: 1,
     } as never, 2037);
 
+    expect(goal.priority).toBe(2);
     expect(goal.cost).toBe(1_500_000);
     expect(goal.saved).toBe(0);
     expect(goal.projectedCost).toBe(1_605_000);

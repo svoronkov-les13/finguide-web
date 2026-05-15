@@ -41,6 +41,7 @@ export interface Goal {
   name: string;
   icon: string;
   targetYear: number;
+  priority?: number;
   cost: number;
   saved: number;
   projectedCost?: number;
