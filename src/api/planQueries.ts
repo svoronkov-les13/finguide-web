@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, QueryClient } from "@tanstack/react-query";
 import { financialPlanClient } from "@/api/financialPlanClient";
 import { useAuth } from "@/auth/AuthProvider";
 import type { AuthSession } from "@/auth/oidc";
-import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, MonthlyTrackerEntry, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, Goal, MonthlyStatus, MonthlyTrackerEntry, ScenarioId, TrackerEntry } from "@/types/finance";
 
 export const planQueryKey = ["financial-plan"] as const;
 export const anonymousPlanQueryKey = [...planQueryKey, "anonymous"] as const;
@@ -112,6 +112,15 @@ export function useDeleteGoalMutation() {
   });
 }
 
+export function useReorderGoalsMutation() {
+  const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
+  return useMutation({
+    mutationFn: (goalIds: string[]) => financialPlanClient.reorderGoals(goalIds),
+    onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+  });
+}
+
 export function useAddTrackerEntryMutation() {
   const queryClient = useQueryClient();
   const queryKey = useCurrentPlanQueryKey();
@@ -165,64 +174,13 @@ export function useSaveWhatIfScenarioMutation() {
   });
 }
 
-// ─── Contributions ────────────────────────────────────────────────────────────
 
-export const contributionsQueryKey = ["contributions"] as const;
-
-type CacheWriter = Pick<QueryClient, "setQueryData" | "invalidateQueries">;
-
-export function updateSavingsCaches(queryClient: CacheWriter, queryKey: readonly unknown[], contributions: Contribution[]) {
-  queryClient.setQueryData(contributionsQueryKey, contributions);
-  queryClient.invalidateQueries({ queryKey });
-}
-
-export function useContributionsQuery() {
-  const auth = useAuth();
-  // Wait for plan to load so currentPlanId() returns the real UUID, not "plan_demo"
-  const { data: plan } = usePlanQuery();
-  return useQuery({
-    queryKey: contributionsQueryKey,
-    queryFn: () => financialPlanClient.getContributions(plan!.planId!),
-    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
-    staleTime: 30_000,
-  });
-}
-
-export function useAddContributionMutation() {
-  const queryClient = useQueryClient();
-  const queryKey = useCurrentPlanQueryKey();
-  return useMutation({
-    mutationFn: ({ planId, ...input }: { planId: string } & Omit<Contribution, "id">) =>
-      financialPlanClient.addContribution(planId, input),
-    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
-  });
-}
-
-export function useUpdateContributionMutation() {
-  const queryClient = useQueryClient();
-  const queryKey = useCurrentPlanQueryKey();
-  return useMutation({
-    mutationFn: ({ planId, id, patch }: { planId: string; id: string; patch: Partial<Omit<Contribution, "id">> }) =>
-      financialPlanClient.updateContribution(planId, id, patch),
-    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
-  });
-}
-
-export function useDeleteContributionMutation() {
-  const queryClient = useQueryClient();
-  const queryKey = useCurrentPlanQueryKey();
-  return useMutation({
-    mutationFn: ({ planId, id }: { planId: string; id: string }) =>
-      financialPlanClient.deleteContribution(planId, id),
-    onSuccess: (data) => updateSavingsCaches(queryClient, queryKey, data),
-  });
-}
 
 // ─── Monthly Tracker ──────────────────────────────────────────────────────────
 
 export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
 
-export function updateMonthlyTrackerCache(queryClient: CacheWriter, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
+export function updateMonthlyTrackerCache(queryClient: QueryClient, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
   queryClient.setQueryData(monthlyTrackerQueryKey, data);
   queryClient.invalidateQueries({ queryKey });
 }
@@ -233,9 +191,17 @@ export function useMonthlyTrackerQuery() {
   const { data: plan } = usePlanQuery();
   return useQuery({
     queryKey: monthlyTrackerQueryKey,
-    queryFn: () => financialPlanClient.getMonthlyTracker(plan!.planId!),
+    queryFn: async () => {
+      try {
+        return await financialPlanClient.getMonthlyTracker(plan!.planId!);
+      } catch {
+        // Anonymous demo plan is read-only — returns empty list for unauthenticated sessions
+        return [] as MonthlyTrackerEntry[];
+      }
+    },
     enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
     staleTime: 30_000,
+    retry: false,
   });
 }
 

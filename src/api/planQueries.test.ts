@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from "vitest";
-import { anonymousPlanQueryKey, contributionsQueryKey, monthlyTrackerQueryKey, planQueryKeyForAuth, updateMonthlyTrackerCache, updateSavingsCaches } from "@/api/planQueries";
+import { anonymousPlanQueryKey, monthlyTrackerQueryKey, planQueryKeyForAuth, updateMonthlyTrackerCache } from "@/api/planQueries";
 
 describe("planQueryKeyForAuth", () => {
   it("uses anonymous cache key when OIDC auth is disabled", () => {
@@ -30,19 +30,6 @@ describe("planQueryKeyForAuth", () => {
 });
 
 describe("mutation cache updates", () => {
-  it("updates contributions cache and invalidates the active plan after savings changes", () => {
-    const queryClient = {
-      setQueryData: vi.fn(),
-      invalidateQueries: vi.fn(),
-    };
-    const planKey = ["financial-plan", "auth", "user-123"] as const;
-    const contributions = [{ id: "c1", goalId: "g1", amount: 1000, currency: "RUB", date: "2026-05-15", note: null }];
-
-    updateSavingsCaches(queryClient, planKey, contributions as never);
-
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(contributionsQueryKey, contributions);
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
-  });
 
   it("writes returned monthly tracker rows and invalidates plan progress immediately", () => {
     const queryClient = {
@@ -52,7 +39,8 @@ describe("mutation cache updates", () => {
     const planKey = ["financial-plan", "auth", "user-123"] as const;
     const rows = [{ month: "2026-05", status: "completed", amount: 150000, note: null }];
 
-    updateMonthlyTrackerCache(queryClient, planKey, rows as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updateMonthlyTrackerCache(queryClient as any, planKey, rows as never);
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, rows);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });

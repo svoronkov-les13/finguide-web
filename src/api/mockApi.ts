@@ -126,6 +126,26 @@ export const mockApi = {
     });
   },
 
+  async reorderGoals(goalIds: string[]) {
+    await wait();
+    const sortedGoals = [...db.goals].sort((a, b) => {
+      const idxA = goalIds.indexOf(a.id);
+      const idxB = goalIds.indexOf(b.id);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+    const goalsWithPriority = sortedGoals.map((goal, index) => ({
+      ...goal,
+      priority: index + 1,
+    }));
+    return commit({
+      ...db,
+      goals: goalsWithPriority,
+    });
+  },
+
   async addTrackerEntry(input: Omit<TrackerEntry, "id">) {
     await wait();
     return commit(

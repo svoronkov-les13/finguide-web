@@ -15,6 +15,7 @@ interface GoalFormData {
   name: string;
   icon: string;
   targetYear: number;
+  targetMonth: number;
   cost: number;
   saved: number;
   growth: number;
@@ -36,12 +37,14 @@ export function GoalModal({
   onDelete?: (id: string) => void;
 }) {
   const { t } = useI18n();
+  const currentYear = new Date().getFullYear();
   const form = useForm<GoalFormData>({
     defaultValues: {
       icon: "Target",
       growth: 0.05,
       reachable: true,
       type: "onetime",
+      targetMonth: 12,
     },
   });
 
@@ -49,12 +52,13 @@ export function GoalModal({
 
   useEffect(() => {
     if (open) {
-      const targetYear = new Date().getFullYear() + 5;
+      const targetYear = currentYear + 5;
       form.reset({
         ...initialData,
         name: initialData?.name || "",
         icon: initialData?.icon || "Target",
         targetYear: initialData?.targetYear ?? targetYear,
+        targetMonth: initialData?.targetMonth ?? 12,
         cost: initialData?.cost || 0,
         saved: initialData?.saved || 0,
         growth: initialData?.growth || 0.05,
@@ -62,7 +66,7 @@ export function GoalModal({
         type: initialData?.type || "onetime",
       } as GoalFormData);
     }
-  }, [open, initialData, form]);
+  }, [open, initialData, form, currentYear]);
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit(data);
@@ -76,6 +80,8 @@ export function GoalModal({
     if (!newOpen) setIsDeleting(false);
     onOpenChange(newOpen);
   };
+
+  const { errors } = form.formState;
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
@@ -107,9 +113,12 @@ export function GoalModal({
                     <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.nameLabel")}</Label>
                     <Input
                       placeholder={t("goals.modalStep1Desc")}
-                      {...form.register("name")}
+                      {...form.register("name", {
+                        required: t("goals.validation.nameRequired"),
+                      })}
                       className="h-[48px] rounded-2xl border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 text-sm"
                     />
+                    {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
                   </div>
 
                   {/* Cost, Currency, Type */}
@@ -119,9 +128,13 @@ export function GoalModal({
                       <Input
                         type="number"
                         placeholder="0"
-                        {...form.register("cost", { valueAsNumber: true })}
+                        {...form.register("cost", {
+                          valueAsNumber: true,
+                          min: { value: 1, message: t("goals.validation.costMin") },
+                        })}
                         className="h-[48px] rounded-2xl border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 text-sm"
                       />
+                      {errors.cost && <span className="text-xs text-red-500">{errors.cost.message}</span>}
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.currency")}</Label>
@@ -142,7 +155,7 @@ export function GoalModal({
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           }`}
                         >
-                          Разовая
+                          {t("goals.typeOneTimeShort")}
                         </button>
                         <button
                           type="button"
@@ -153,7 +166,7 @@ export function GoalModal({
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           }`}
                         >
-                          Ежегодная
+                          {t("goals.typePeriodicShort")}
                         </button>
                       </div>
                     </div>
@@ -190,25 +203,45 @@ export function GoalModal({
                     </div>
                   </div>
 
-                  {/* Year and Saved */}
-                  <div className="grid grid-cols-2 items-end gap-4">
+                  {/* Year, Month, and Saved */}
+                  <div className="grid grid-cols-3 items-end gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.targetYear")}</Label>
                       <Input
                         type="number"
                         placeholder="2030"
-                        {...form.register("targetYear", { valueAsNumber: true })}
+                        {...form.register("targetYear", {
+                          valueAsNumber: true,
+                          min: { value: currentYear, message: t("goals.validation.yearMin") },
+                        })}
                         className="h-[48px] rounded-2xl border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 text-sm"
                       />
+                      {errors.targetYear && <span className="text-xs text-red-500">{errors.targetYear.message}</span>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.targetMonth")}</Label>
+                      <select
+                        {...form.register("targetMonth", { valueAsNumber: true })}
+                        className="h-[48px] rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 text-sm text-[var(--fp-color-foreground)] outline-none appearance-none cursor-pointer"
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                          <option key={m} value={m}>{t(`goals.monthNames.${m}` as Parameters<typeof t>[0])}</option>
+                        ))}
+                      </select>
+                      <span className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.monthHint")}</span>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.saved")}</Label>
                       <Input
                         type="number"
                         placeholder="0"
-                        {...form.register("saved", { valueAsNumber: true })}
+                        {...form.register("saved", {
+                          valueAsNumber: true,
+                          min: { value: 0, message: t("goals.validation.savedMin") },
+                        })}
                         className="h-[48px] rounded-2xl border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 text-sm"
                       />
+                      {errors.saved && <span className="text-xs text-red-500">{errors.saved.message}</span>}
                     </div>
                   </div>
 
@@ -228,12 +261,16 @@ export function GoalModal({
                          <Input
                           type="number"
                           step="0.01"
-                          {...form.register("growth", { valueAsNumber: true })}
+                          {...form.register("growth", {
+                            valueAsNumber: true,
+                            min: { value: 0, message: t("goals.validation.growthMin") },
+                          })}
                           className="h-[36px] w-[100px] rounded-xl border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-3 text-sm text-right"
                         />
                         <span className="text-sm text-[var(--fp-color-muted-foreground)]">%</span>
                       </div>
                     </div>
+                    {errors.growth && <span className="text-xs text-red-500">{errors.growth.message}</span>}
                   </div>
 
                   {/* Actions Inline */}
@@ -243,7 +280,7 @@ export function GoalModal({
                       className="inline-flex h-[48px] items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-bold text-[var(--fp-color-background)] transition hover:opacity-90"
                     >
                       <Check className="size-4" />
-                      {initialData?.id ? "Сохранить" : "Добавить"}
+                      {initialData?.id ? t("goals.saveBtnEdit") : t("goals.saveBtnAdd")}
                     </button>
                     <Dialog.Close asChild>
                       <button type="button" className="inline-flex h-[48px] items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-6 text-sm font-bold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)]">
@@ -262,14 +299,14 @@ export function GoalModal({
                               onClick={() => { onDelete(initialData.id!); onOpenChange(false); }}
                               className="inline-flex h-[40px] items-center rounded-full bg-red-600 px-4 text-xs font-bold text-white hover:bg-red-700"
                             >
-                              Да
+                              {t("goals.confirmYes")}
                             </button>
                             <button
                               type="button"
                               onClick={() => setIsDeleting(false)}
                               className="inline-flex h-[40px] items-center rounded-full bg-muted px-4 text-xs font-bold text-foreground hover:bg-muted/80"
                             >
-                              Нет
+                              {t("goals.confirmNo")}
                             </button>
                           </div>
                         ) : (
@@ -278,7 +315,7 @@ export function GoalModal({
                             onClick={() => setIsDeleting(true)}
                             className="inline-flex h-[48px] place-items-center rounded-full border border-red-500/20 bg-red-500/10 px-6 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/20"
                           >
-                            Удалить цель
+                            {t("goals.deleteGoalBtn")}
                           </button>
                         )}
                       </div>
@@ -348,7 +385,7 @@ export function GoalModal({
               <div className="mt-auto">
                 <div className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--fp-color-foreground)]">
                   <Icons.Lightbulb className="size-4 text-[var(--fp-color-muted-foreground)]" />
-                  Советы
+                  {t("goals.tipsTitle")}
                 </div>
                 <ul className="flex flex-col gap-3 text-xs text-[var(--fp-color-muted-foreground)]">
                   <li className="flex items-start gap-2">

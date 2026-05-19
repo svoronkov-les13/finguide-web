@@ -24,9 +24,7 @@ export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx
     name,
     status: (year === currentYear && i === currentMonthIdx
       ? "current"
-      : year < currentYear || (year === currentYear && i < currentMonthIdx)
-        ? "missed"
-        : "pending") as MonthStatus,
+      : "pending") as MonthStatus,
   }));
 }
 

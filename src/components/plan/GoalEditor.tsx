@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react";
 import type { ReactNode } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { goalProgress } from "@/components/goals/goalProgress";
 import { SurfaceRow } from "@/components/plan/DataPanel";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function GoalEditor({ goals, onUpdate, onDelete }: GoalEditorProps) {
 }
 
 function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (id: string, patch: Partial<Goal>) => void; onDelete: (id: string) => void }) {
+  const { t } = useI18n();
   const Icon = iconMap[goal.icon] ?? Icons.Target;
   const progress = goalProgress(goal);
 
@@ -36,7 +38,7 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
           <Icon className="size-4" />
         </span>
         <Input className="h-10 min-w-0 flex-1 bg-card/90 font-semibold" defaultValue={goal.name} onBlur={(event) => onUpdate(goal.id, { name: event.currentTarget.value })} />
-        <Button variant="danger" size="iconSm" onClick={() => onDelete(goal.id)} aria-label={`Удалить ${goal.name}`}>
+        <Button variant="danger" size="iconSm" onClick={() => onDelete(goal.id)} aria-label={`${t("common.delete")} ${goal.name}`}>
           <Icons.Trash2 className="size-3.5" />
         </Button>
       </div>
@@ -45,7 +47,7 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
         <div className="flex items-end justify-between gap-3 text-xs">
           <div>
             <div className="font-semibold text-foreground">{formatRub(goal.saved, { compact: true })}</div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">из {formatRub(goal.cost, { compact: true })}</div>
+            <div className="mt-0.5 text-[11px] text-muted-foreground">{t("goals.outOf") || "из"} {formatRub(goal.cost, { compact: true })}</div>
           </div>
           <div className="rounded-full border border-border/75 bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{progress.percent}%</div>
         </div>
@@ -55,13 +57,13 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 max-[520px]:grid-cols-1">
-        <Field label="Год">
+        <Field label={t("goals.targetYear")}>
           <Input type="number" defaultValue={goal.targetYear} onBlur={(event) => onUpdate(goal.id, { targetYear: Number(event.currentTarget.value) })} />
         </Field>
-        <Field label="Стоимость">
+        <Field label={t("goals.cost")}>
           <Input type="number" defaultValue={goal.cost} onBlur={(event) => onUpdate(goal.id, { cost: Number(event.currentTarget.value) })} />
         </Field>
-        <Field label="Накоплено">
+        <Field label={t("goals.saved")}>
           <Input type="number" defaultValue={goal.saved} onBlur={(event) => onUpdate(goal.id, { saved: Number(event.currentTarget.value) })} />
         </Field>
       </div>

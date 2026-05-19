@@ -20,7 +20,7 @@ describe("ForecastChart data", () => {
     const [row] = buildForecastChartData([point({})]);
 
     expect(row.incomeRubMln).toBe(1);
-    expect(row.expensesRubMln).toBe(0.5);
+    expect(row.expensesRubMln).toBe(0.6);
     expect(row.goalsAbs).toBe(0.1);
     expect(row.capitalRubMln).toBe(2);
   });

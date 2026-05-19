@@ -1,11 +1,25 @@
 import type { FinancialPlan, ForecastPoint } from "@/types/finance";
 
-export function calculateForecast(plan: FinancialPlan): ForecastPoint[] {
+export interface ForecastOptions {
+  /**
+   * Optional tracker actuals for the current year.
+   * When provided, the forecast for the current year adjusts capital
+   * based on the deviation between actual savings and planned savings.
+   */
+  trackerDeviation?: number;
+  /** The year the tracker data applies to (defaults to current calendar year) */
+  trackerYear?: number;
+}
+
+export function calculateForecast(plan: FinancialPlan, options?: ForecastOptions): ForecastPoint[] {
   const scenario = plan.scenarios.find((item) => item.id === plan.activeScenario) ?? plan.scenarios[0];
   let capital = plan.settings.startingCapital / 80;
   const returnRate = Math.max(-0.95, plan.settings.investmentReturn + scenario.returnDelta);
   const expenseDelta = scenario.expenseGrowthDelta + (scenario.inflationDelta ?? 0);
   const goalsDelta = expenseDelta + (scenario.goalsCostDelta ?? 0);
+
+  const trackerDeviation = options?.trackerDeviation ?? 0;
+  const trackerYear = options?.trackerYear;
 
   return plan.forecast.map((point) => {
     const yearsFromStart = point.year - plan.settings.startYear;
@@ -16,7 +30,14 @@ export function calculateForecast(plan: FinancialPlan): ForecastPoint[] {
     const income = Math.round(point.income * incomeFactor);
     const expenses = Math.round(point.expenses * expenseFactor);
     const goals = Math.round(point.goals * goalsFactor);
-    const savings = Math.round(income + expenses + goals);
+    let savings = Math.round(income + expenses + goals);
+
+    // Apply tracker deviation for the tracked year:
+    // Positive deviation = saved more than planned → increase savings
+    // Negative deviation = saved less than planned → decrease savings
+    if (trackerYear != null && point.year === trackerYear && trackerDeviation !== 0) {
+      savings += trackerDeviation;
+    }
 
     capital = Math.max(0, Math.round((capital + savings) * (1 + returnRate)));
 

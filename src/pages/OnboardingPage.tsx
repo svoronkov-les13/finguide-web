@@ -21,6 +21,7 @@ const ONBOARDING_KEY = "fp.onboarding.seen";
 
 /** Step 1: Mini dashboard preview (income/expense/savings cards + chart skeleton) */
 function IllustrationDashboard() {
+  const { t } = useI18n();
   const cardStyle: React.CSSProperties = {
     borderRadius: "var(--fp-radius-md)",
     border: "var(--fp-border-default)",
@@ -94,17 +95,17 @@ function IllustrationDashboard() {
       {/* KPI row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         <div style={cardStyle}>
-          <span style={metaStyle}>Доходы</span>
+          <span style={metaStyle}>{t("cashflow.income")}</span>
           <span style={valueStyle}>₽ 405 000</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
         </div>
         <div style={cardStyle}>
-          <span style={metaStyle}>Расходы</span>
+          <span style={metaStyle}>{t("cashflow.expense")}</span>
           <span style={valueStyle}>₽ 178 000</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
         </div>
         <div style={cardStyle}>
-          <span style={metaStyle}>Накопления</span>
+          <span style={metaStyle}>{t("chart.savings")}</span>
           <span style={valueStyle}>₽ 227 000</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
         </div>
@@ -277,6 +278,7 @@ function IllustrationGoals() {
 
 /** Step 3: Scenario comparison (chart + three cards) */
 function IllustrationScenarios() {
+  const { t } = useI18n();
   const scenarios = [
     { label: "Базовый", value: "₽ 8.2 млн", year: "к 2046 году", active: true },
     { label: "Оптимистичный", value: "₽ 12.4 млн", year: "к 2046 году", active: false },
@@ -327,7 +329,7 @@ function IllustrationScenarios() {
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fp-color-foreground)" }}>
             Прогноз накоплений
           </span>
-          <span style={{ fontSize: 11, color: "var(--fp-color-accent-gold-text)" }}>по годам</span>
+          <span style={{ fontSize: 11, color: "var(--fp-color-accent-gold-text)" }}>{t("onboarding.byYears")}</span>
         </div>
         <svg viewBox="0 0 360 100" style={{ width: "100%", height: 80 }}>
           <path d="M0,85 Q90,80 180,55 T360,15" fill="none" stroke="var(--fp-color-foreground)" strokeWidth="2.5" />

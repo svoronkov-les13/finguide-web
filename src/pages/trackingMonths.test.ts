@@ -2,19 +2,21 @@ import { describe, expect, it } from "vitest";
 import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
 
 describe("makeEmptyYear", () => {
-  it("marks past months in the current year as missed by default", () => {
+  it("marks past months in the current year as pending (not missed) when no data exists", () => {
     const months = makeEmptyYear(2026, 2026, 4);
 
-    expect(months[0].status).toBe("missed");
-    expect(months[3].status).toBe("missed");
+    // Past months without data are 'pending' — only explicit user action creates 'missed'
+    expect(months[0].status).toBe("pending");
+    expect(months[3].status).toBe("pending");
     expect(months[4].status).toBe("current");
     expect(months[5].status).toBe("pending");
   });
 
-  it("marks months from previous years as missed by default", () => {
+  it("marks months from previous years as pending when no data exists", () => {
     const months = makeEmptyYear(2025, 2026, 4);
 
-    expect(months.every((month) => month.status === "missed")).toBe(true);
+    // All months pending — they default to plan in resolveMonthlyActuals
+    expect(months.every((month) => month.status === "pending")).toBe(true);
   });
 
   it("does not show an extra placeholder for pending months because the status label already says ahead", () => {
