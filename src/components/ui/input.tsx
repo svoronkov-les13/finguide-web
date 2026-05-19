@@ -6,7 +6,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type = "text", icon, ...props }, ref) => (
+  ({ className, type = "text", icon, onFocus, ...props }, ref) => (
     <div className="relative w-full">
       {icon && (
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]">
@@ -24,6 +24,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           icon && "pl-11",
           className,
         )}
+        onFocus={(e) => {
+          e.currentTarget.select();
+          onFocus?.(e);
+        }}
         {...props}
       />
     </div>

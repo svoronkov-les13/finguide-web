@@ -5,15 +5,17 @@ import { KpiCards } from "@/components/dashboard/KpiCards";
 import { ScenarioBar } from "@/components/dashboard/ScenarioBar";
 import { WhatIfDialog } from "@/components/dashboard/WhatIfDialog";
 import { Page } from "@/components/layout/Page";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function DashboardPage() {
+  const { t } = useI18n();
   const [whatIfOpen, setWhatIfOpen] = useState(false);
 
   return (
     <Page>
       {/* Top Section: Title & Scenario Bar */}
       <section className="grid items-center gap-4 max-[760px]:flex max-[760px]:flex-col max-[760px]:items-start mb-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.5fr_3fr]">
-        <h1 className="page-title text-[28px] font-bold">Финансовый дашборд</h1>
+        <h1 className="page-title text-[28px] font-bold">{t("dashboard.title")}</h1>
         <div className="flex justify-start xl:justify-end overflow-hidden w-full">
           <ScenarioBar onWhatIf={() => setWhatIfOpen(true)} />
         </div>

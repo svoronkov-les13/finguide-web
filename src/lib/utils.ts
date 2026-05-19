@@ -9,24 +9,24 @@ export function formatRub(value: number, options: { compact?: boolean; sign?: bo
   const sign = options.sign && value > 0 ? "+" : "";
   const abs = Math.abs(value);
   if (options.compact && abs >= 1_000_000) {
-    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value / 1_000_000)} млн ₽`;
+    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value / 1_000_000).replace(/\u2212/g, '-')} млн ₽`;
   }
   if (options.compact && abs >= 1_000) {
-    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value / 1_000)} тыс. ₽`;
+    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value / 1_000).replace(/\u2212/g, '-')} тыс. ₽`;
   }
-  return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value)} ₽`;
+  return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value).replace(/\u2212/g, '-')} ₽`;
 }
 
 export function formatUsd(value: number, options: { compact?: boolean; sign?: boolean } = {}) {
   const sign = options.sign && value > 0 ? "+" : "";
   const abs = Math.abs(value);
   if (options.compact && abs >= 1_000_000) {
-    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value / 1_000_000)} млн $`;
+    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(value / 1_000_000).replace(/\u2212/g, '-')} млн $`;
   }
   if (options.compact && abs >= 1_000) {
-    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value / 1_000)} тыс. $`;
+    return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value / 1_000).replace(/\u2212/g, '-')} тыс. $`;
   }
-  return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value)} $`;
+  return `${sign}${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value).replace(/\u2212/g, '-')} $`;
 }
 
 export function formatPercent(value: number) {

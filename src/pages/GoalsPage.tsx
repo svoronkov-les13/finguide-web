@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Page } from "@/components/layout/Page";
 import { Plus, Target, Download, Search } from "lucide-react";
-import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation } from "@/api/planQueries";
+import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn, formatRub } from "@/lib/utils";
@@ -19,6 +19,7 @@ export function GoalsPage() {
   const addGoal = useAddGoalMutation();
   const updateGoal = useUpdateGoalMutation();
   const deleteGoal = useDeleteGoalMutation();
+  const reorderGoals = useReorderGoalsMutation();
 
   const [editingItem, setEditingItem] = useState<Partial<Goal> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -26,6 +27,102 @@ export function GoalsPage() {
   const [activeFilter, setActiveFilter] = useState<"all" | "onetime" | "periodic">("all");
   const [sortField, setSortField] = useState<"name" | "cost" | "type" | "year">("year");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const [draggedGoalId, setDraggedGoalId] = useState<string | null>(null);
+  const [dragOverGoalId, setDragOverGoalId] = useState<string | null>(null);
+  const [dragOverYear, setDragOverYear] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, goalId: string) => {
+    setDraggedGoalId(goalId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, goalId: string) => {
+    e.preventDefault();
+    if (draggedGoalId !== goalId) {
+      setDragOverGoalId(goalId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverGoalId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetGoalId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedGoalId || draggedGoalId === targetGoalId) {
+      setDraggedGoalId(null);
+      setDragOverGoalId(null);
+      setDragOverYear(null);
+      return;
+    }
+
+    const currentGoals = [...(plan?.goals ?? [])];
+    const draggedIdx = currentGoals.findIndex((g) => g.id === draggedGoalId);
+    const targetIdx = currentGoals.findIndex((g) => g.id === targetGoalId);
+
+    if (draggedIdx !== -1 && targetIdx !== -1) {
+      const draggedItem = currentGoals[draggedIdx];
+      const targetItem = currentGoals[targetIdx];
+
+      if (draggedItem.targetYear !== targetItem.targetYear) {
+        updateGoal.mutate({ id: draggedGoalId, patch: { targetYear: targetItem.targetYear } });
+        draggedItem.targetYear = targetItem.targetYear;
+      }
+
+      const [removed] = currentGoals.splice(draggedIdx, 1);
+      currentGoals.splice(targetIdx, 0, removed);
+
+      // Trigger mutation
+      reorderGoals.mutate(currentGoals.map((g) => g.id));
+    }
+
+    setDraggedGoalId(null);
+    setDragOverGoalId(null);
+    setDragOverYear(null);
+  };
+
+  const handleYearDragOver = (e: React.DragEvent, year: number) => {
+    e.preventDefault();
+    if (draggedGoalId) {
+      const draggedGoal = plan?.goals?.find((g) => g.id === draggedGoalId);
+      if (draggedGoal && draggedGoal.targetYear !== year) {
+        setDragOverYear(year);
+      }
+    }
+  };
+
+  const handleYearDrop = (e: React.DragEvent, year: number) => {
+    e.preventDefault();
+    setDragOverYear(null);
+
+    if (!draggedGoalId) return;
+
+    const currentGoals = [...(plan?.goals ?? [])];
+    const draggedIdx = currentGoals.findIndex((g) => g.id === draggedGoalId);
+    if (draggedIdx === -1) return;
+
+    const draggedItem = currentGoals[draggedIdx];
+    if (draggedItem.targetYear === year) return;
+
+    updateGoal.mutate({ id: draggedGoalId, patch: { targetYear: year } });
+    draggedItem.targetYear = year;
+
+    const [removed] = currentGoals.splice(draggedIdx, 1);
+    const nextYearIndex = currentGoals.findIndex((g) => g.targetYear > year);
+
+    if (nextYearIndex !== -1) {
+      currentGoals.splice(nextYearIndex, 0, removed);
+    } else {
+      currentGoals.push(removed);
+    }
+
+    reorderGoals.mutate(currentGoals.map((g) => g.id));
+
+    setDraggedGoalId(null);
+    setDragOverGoalId(null);
+  };
 
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
 
@@ -62,7 +159,7 @@ export function GoalsPage() {
       if (sortField === "name") result = a.name.localeCompare(b.name);
       if (sortField === "cost") result = a.cost - b.cost;
       if (sortField === "type") result = String(a.type).localeCompare(String(b.type));
-      if (sortField === "year") result = a.cost - b.cost; // Fallback inner sort when sorting by year
+      if (sortField === "year") result = (a.priority ?? 0) - (b.priority ?? 0);
       return sortDirection === "asc" ? result : -result;
     });
   });
@@ -85,6 +182,7 @@ export function GoalsPage() {
         name: data.name || t("goals.newGoal"),
         icon: data.icon || "Target",
         targetYear: data.targetYear || 2030,
+        targetMonth: data.targetMonth ?? 12,
         cost: data.cost || 0,
         saved: data.saved || 0,
         growth: data.growth || 0,
@@ -132,7 +230,7 @@ export function GoalsPage() {
       {goals.length > 0 && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm">
-            <span className="font-medium text-[var(--fp-color-muted-foreground)]">Всего</span>
+            <span className="font-medium text-[var(--fp-color-muted-foreground)]">{t("goals.totalLabel")}</span>
             <span className="font-bold text-[var(--fp-color-foreground)] text-base">{formatRub(totalCost)}</span>
           </div>
           
@@ -171,7 +269,7 @@ export function GoalsPage() {
                     {year}
                   </span>
                   <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)]">
-                    {groupedGoals[year].length} цели
+                    {t("goals.totalGoalsCount", { count: groupedGoals[year].length })}
                   </span>
                 </div>
                 {i < arr.length - 1 && (
@@ -285,8 +383,19 @@ export function GoalsPage() {
               const yearTotalSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
               const yearPercent = yearTotalCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearTotalCost) * 100)) : 0;
 
+              const isYearDragOver = dragOverYear === year;
+
               return (
-                <div key={year} className="flex flex-col gap-4">
+                <div 
+                  key={year} 
+                  onDragOver={(e) => handleYearDragOver(e, year)}
+                  onDragLeave={() => setDragOverYear(null)}
+                  onDrop={(e) => handleYearDrop(e, year)}
+                  className={cn(
+                    "flex flex-col gap-4 rounded-3xl p-2 transition-all duration-200 border border-transparent",
+                    isYearDragOver ? "border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-surface-hover)]/30 scale-[1.005] shadow-sm" : ""
+                  )}
+                >
                   {/* Year Header Block */}
                   <div className={cn(
                     "flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl p-5 border",
@@ -330,6 +439,17 @@ export function GoalsPage() {
                         isAccumulation={isAccumulation}
                         isQueue={!isCompleted && !isAccumulation}
                         onClick={() => handleEdit(goal)} 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, goal.id)}
+                        onDragEnd={() => {
+                          setDraggedGoalId(null);
+                          setDragOverGoalId(null);
+                        }}
+                        onDragOver={(e) => handleDragOver(e, goal.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, goal.id)}
+                        isDragging={draggedGoalId === goal.id}
+                        isDragOver={dragOverGoalId === goal.id}
                       />
                     ))}
                   </div>

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Check, ChevronDown, Layers, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
+import { Check, ChevronDown, Layers, LayoutDashboard, LogOut } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { usePlanQuery } from "@/api/planQueries";
 import { useAuth } from "@/auth/AuthProvider";
@@ -39,41 +39,12 @@ export function Topbar() {
         </Link>
       </div>
 
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <button
-            type="button"
-            className="inline-flex h-9 items-center gap-3 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)] transition hover:bg-[var(--fp-color-surface)] max-[760px]:hidden outline-none focus-visible:ring-2 focus-visible:ring-[var(--fp-color-primary)]"
-          >
-            <Layers className="size-4 text-[var(--fp-color-muted-foreground)]" />
-            <span className="max-w-[190px] truncate">{planName}</span>
-            <ChevronDown className="size-4 text-[var(--fp-color-muted-foreground)]" />
-          </button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            align="end"
-            className="z-[var(--fp-z-topbar)] mt-2 min-w-[240px] overflow-hidden rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-1.5 shadow-[var(--fp-shadow-card)]"
-          >
-            <DropdownMenu.Item className="flex cursor-pointer items-center justify-between gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]">
-              <span className="truncate">{planName}</span>
-              <Check className="size-4 shrink-0 text-[var(--fp-color-primary)]" />
-            </DropdownMenu.Item>
-            
-            <DropdownMenu.Separator className="my-1 h-px bg-[var(--fp-color-border)]" />
-            
-            <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-muted-foreground)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)] focus:bg-[var(--fp-color-surface-hover)] focus:text-[var(--fp-color-foreground)]">
-              <Settings className="size-4 shrink-0" />
-              <span>{t("topbar.managePlans")}</span>
-            </DropdownMenu.Item>
-            
-            <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2 text-sm text-[var(--fp-color-primary)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]">
-              <Plus className="size-4 shrink-0" />
-              <span className="font-medium">{t("topbar.createPlan")}</span>
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+      <div
+        className="inline-flex h-9 items-center gap-3 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)] max-[760px]:hidden"
+      >
+        <Layers className="size-4 text-[var(--fp-color-muted-foreground)]" />
+        <span className="max-w-[190px] truncate">{planName}</span>
+      </div>
 
       <div className="flex min-w-0 items-center gap-3 border-l border-[var(--fp-color-border)] pl-6 max-[760px]:border-l-0 max-[760px]:pl-0">
         <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-muted)] text-[11px] font-semibold text-[var(--fp-color-foreground)]">

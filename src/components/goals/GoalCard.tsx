@@ -75,11 +75,11 @@ export function GoalCard({
 
       {/* Right: Amounts */}
       <div className="shrink-0 text-right pl-2">
-        <div className={cn("font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-[15px]")}>
+        <div className={cn("font-semibold text-[var(--fp-color-foreground)] num", compact ? "text-xs" : "text-[15px]")}>
           {formatRub(item.cost, { compact: true })}
         </div>
         {!compact && (
-          <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
+          <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)] num">
             {formatRub(progress.saved, { compact: true })} {t("goals.saved").toLowerCase()}
           </div>
         )}

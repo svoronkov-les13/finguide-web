@@ -24,15 +24,19 @@ interface PageProps {
   size?: PageSize;
   /** Нижний отступ pb-12. По умолчанию включён. */
   bottom?: boolean;
+  /** Если true, страница сама скроллится (overflow-auto). По умолчанию true. */
+  scrollable?: boolean;
 }
 
-export function Page({ children, className, size = "default", bottom = true }: PageProps) {
+export function Page({ children, className, size = "default", bottom = true, scrollable = true }: PageProps) {
   return (
     <div
       className={cn(
-        "mx-auto grid w-full gap-6",
+        "mx-auto w-full",
+        scrollable
+          ? cn("grid gap-6", bottom && "pb-12")
+          : cn("flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0", bottom && "pb-12"),
         MAX_WIDTHS[size],
-        bottom && "pb-12",
         className,
       )}
     >

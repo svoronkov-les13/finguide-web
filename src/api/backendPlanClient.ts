@@ -14,6 +14,7 @@ import {
   patchPlansPlanIdPension,
   postPlansPlanIdExpenses,
   postPlansPlanIdGoals,
+  postPlansPlanIdGoalsReorder,
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
 import { getValidOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
@@ -30,7 +31,8 @@ import type {
   PlanState,
   Scenario as ApiScenario,
 } from "@/shared/api/generated/model";
-import type { Cashflow, Contribution, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
+import { calculateForecast } from "@/engine/calculateForecast";
 
 type ApiResponse = {
   status: number;
@@ -126,7 +128,8 @@ async function readBackendPlan() {
   lastPlanState = planState;
 
   const [tracker, scenarioForecasts] = await Promise.all([
-    backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries"),
+    backendJson<ApiTrackerEntry[]>(`/plans/${planId}/tracker/entries`, undefined, "GET /tracker/entries")
+      .catch(() => [] as ApiTrackerEntry[]), // read-only anonymous demo plan may return empty
     readScenarioForecasts(scenarios),
   ]);
 
@@ -156,7 +159,11 @@ function mapBackendPlan(input: {
   const { planState, dashboard, cashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
-  const forecast = cashflow.map(mapForecastPoint);
+  
+  const baseForecast = cashflow.map(mapForecastPoint);
+  const activeScenarioForecast = activeScenario !== "base" ? scenarioForecasts?.[activeScenario] : undefined;
+  const forecast = activeScenarioForecast || baseForecast;
+
   const goals = planState.goals.map((goal) => goalFromApi(goal, forecast.at(-1)?.year ?? settings.startYear));
   const plan: FinancialPlan = {
     planId: planState.id,
@@ -180,6 +187,11 @@ function mapBackendPlan(input: {
     forecast,
     scenarioForecasts,
   };
+
+  if (activeScenario === "whatif") {
+    plan.forecast = calculateForecast(plan);
+    plan.dashboardSnapshot = mapDashboardSnapshot(dashboard, health, planState.pension, plan.forecast);
+  }
 
   lastFinancialPlan = plan;
   return plan;
@@ -582,6 +594,12 @@ export const backendPlanClient = {
     return readBackendPlan();
   },
 
+  async reorderGoals(goalIds: string[]) {
+    const planId = currentPlanId();
+    await postPlansPlanIdGoalsReorder(planId, { goalIds }, await requestOptions());
+    return readBackendPlan();
+  },
+
   async addTrackerEntry(input: Omit<TrackerEntry, "id">) {
     await backendJson<ApiTrackerEntry>(`/plans/${currentPlanId()}/tracker/entries`, {
       method: "POST",
@@ -629,35 +647,7 @@ export const backendPlanClient = {
     return optimistic;
   },
 
-  // ─── Contributions ────────────────────────────────────────────────────────
 
-  async getContributions(planId: string): Promise<Contribution[]> {
-    const raw = await backendJson<unknown[]>(`/plans/${planId}/contributions`, undefined, "GET /contributions");
-    return raw.map(contributionFromApi);
-  },
-
-  async addContribution(planId: string, input: Omit<Contribution, "id">) {
-    await backendJson<unknown>(`/plans/${planId}/contributions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(contributionToApi(input)),
-    }, "POST /contributions");
-    return backendPlanClient.getContributions(planId);
-  },
-
-  async updateContribution(planId: string, id: string, patch: Partial<Omit<Contribution, "id">>) {
-    await backendJson<unknown>(`/plans/${planId}/contributions/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(contributionToApi(patch)),
-    }, "PATCH /contributions/{id}");
-    return backendPlanClient.getContributions(planId);
-  },
-
-  async deleteContribution(planId: string, id: string) {
-    await backendNoContent(`/plans/${planId}/contributions/${id}`, { method: "DELETE" }, "DELETE /contributions/{id}");
-    return backendPlanClient.getContributions(planId);
-  },
 
   // ─── Monthly Tracker ──────────────────────────────────────────────────────
 
@@ -676,29 +666,7 @@ export const backendPlanClient = {
   },
 };
 
-// ─── Contribution mappers ────────────────────────────────────────────────────
 
-function contributionFromApi(raw: unknown): Contribution {
-  const r = raw as Record<string, unknown>;
-  return {
-    id: String(r.id ?? ""),
-    goalId: r.goalId ? String(r.goalId) : null,
-    amount: Number(r.amount ?? 0),
-    currency: (r.currency as "RUB" | "USD") ?? "RUB",
-    date: String(r.date ?? ""),
-    note: r.note ? String(r.note) : null,
-  };
-}
-
-function contributionToApi(input: Partial<Omit<Contribution, "id">>) {
-  return {
-    ...(input.goalId !== undefined && { goalId: input.goalId }),
-    ...(input.amount !== undefined && { amount: input.amount }),
-    ...(input.currency !== undefined && { currency: input.currency }),
-    ...(input.date !== undefined && { date: input.date }),
-    ...(input.note !== undefined && { note: input.note }),
-  };
-}
 
 // ─── Monthly Tracker mappers ─────────────────────────────────────────────────
 

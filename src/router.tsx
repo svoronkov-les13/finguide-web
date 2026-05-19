@@ -14,7 +14,6 @@ import { RegisterPage } from "@/pages/RegisterPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SummaryPage } from "@/pages/SummaryPage";
 import { TrackingPage } from "@/pages/TrackingPage";
-import { SavingsPage } from "@/pages/SavingsPage";
 
 const rootRoute = createRootRoute({
   component: Outlet,
@@ -91,11 +90,6 @@ const pensionRoute = createRoute({
   component: PensionPage,
 });
 
-const savingsRoute = createRoute({
-  getParentRoute: () => appRoute,
-  path: "/savings",
-  component: SavingsPage,
-});
 
 const summaryRoute = createRoute({
   getParentRoute: () => appRoute,
@@ -161,7 +155,6 @@ const routeTree = rootRoute.addChildren([
     goalsRoute,
     trackingRoute,
     pensionRoute,
-    savingsRoute,
     summaryRoute,
     settingsRoute,
     faqRoute,

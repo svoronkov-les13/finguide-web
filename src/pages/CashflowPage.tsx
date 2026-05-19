@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Page } from "@/components/layout/Page";
 import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
@@ -21,6 +21,23 @@ type CashflowColumn = {
   icon: React.ReactNode;
 };
 
+const getStoredOrder = (planId: string, type: string, frequency: string): string[] => {
+  try {
+    const raw = localStorage.getItem(`finguide.cashflow-order.${planId}.${type}.${frequency}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const setStoredOrder = (planId: string, type: string, frequency: string, order: string[]) => {
+  try {
+    localStorage.setItem(`finguide.cashflow-order.${planId}.${type}.${frequency}`, JSON.stringify(order));
+  } catch {
+    // ignore
+  }
+};
+
 export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -35,6 +52,84 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const [instructionOpen, setInstructionOpen] = useState(false);
   const [calcDetailsOpen, setCalcDetailsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "monthly" | "yearly" | "onetime">("all");
+
+  const [orders, setOrders] = useState<Record<string, string[]>>({});
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (plan?.planId) {
+      const pId = plan.planId;
+      const mOrder = getStoredOrder(pId, type, "monthly");
+      const yOrder = getStoredOrder(pId, type, "yearly");
+      const oOrder = getStoredOrder(pId, type, "onetime");
+      Promise.resolve().then(() => {
+        setOrders({
+          monthly: mOrder,
+          yearly: yOrder,
+          onetime: oOrder,
+        });
+      });
+    }
+  }, [plan?.planId, type]);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedItemId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    if (draggedItemId !== id) {
+      setDragOverItemId(id);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItemId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string, frequency: string) => {
+    e.preventDefault();
+    if (!draggedItemId || draggedItemId === targetId) {
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+      return;
+    }
+
+    const colItems = items.filter((i) => i.frequency === frequency);
+    const freqOrder = orders[frequency] ?? [];
+
+    const sortedItems = [...colItems].sort((a, b) => {
+      const idxA = freqOrder.indexOf(a.id);
+      const idxB = freqOrder.indexOf(b.id);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+
+    const draggedIdx = sortedItems.findIndex((i) => i.id === draggedItemId);
+    const targetIdx = sortedItems.findIndex((i) => i.id === targetId);
+
+    if (draggedIdx !== -1 && targetIdx !== -1) {
+      const [draggedItem] = sortedItems.splice(draggedIdx, 1);
+      sortedItems.splice(targetIdx, 0, draggedItem);
+
+      const newOrder = sortedItems.map((i) => i.id);
+
+      setOrders((prev) => ({
+        ...prev,
+        [frequency]: newOrder,
+      }));
+      if (plan?.planId) {
+        setStoredOrder(plan.planId, type, frequency, newOrder);
+      }
+    }
+
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+  };
 
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
 
@@ -117,7 +212,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   };
 
   return (
-    <Page size="wide" bottom={false}>
+    <Page size="wide" bottom={false} scrollable={false}>
       {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -221,15 +316,21 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
         <CashflowEmptyState type={type} onAdd={() => handleAddItem("monthly")} className="mt-4" />
       ) : (
         <div className={cn(
-          "grid items-start gap-x-5 gap-y-8",
+          "grid items-stretch gap-x-5 gap-y-8 flex-1 min-h-0",
           activeFilter === "all" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 max-w-[500px]"
         )}>
           {columns.filter(col => activeFilter === "all" || col.id === activeFilter).map((column) => {
-            const colItems = items.filter(i => {
-              // Map the actual data to the columns more robustly.
-              // Relying on `i.category` string match was a bit hacky before. Let's use `frequency`.
-              return i.frequency === column.id;
-            });
+            const freqOrder = orders[column.id] ?? [];
+            const colItems = items
+              .filter((i) => i.frequency === column.id)
+              .sort((a, b) => {
+                const idxA = freqOrder.indexOf(a.id);
+                const idxB = freqOrder.indexOf(b.id);
+                if (idxA === -1 && idxB === -1) return 0;
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+              });
 
             const colTotalYear = colItems.reduce((sum, item) => {
               if (!item.enabled) return sum;
@@ -241,79 +342,24 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
             }, 0);
 
             return (
-              <div key={column.id} className="flex flex-col">
-                {/* Column header */}
-                <div className="mb-4 flex items-start gap-3">
-                  <div
-                    className="mt-1 w-1 self-stretch rounded-full"
-                    style={{ backgroundColor: column.accentColor, minHeight: 48 }}
-                  />
-                  <div className="flex flex-1 items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="grid size-7 place-items-center rounded-full"
-                          style={{ backgroundColor: `${column.accentColor}15`, color: column.accentColor }}
-                        >
-                          {column.icon}
-                        </span>
-                        <span className="font-semibold text-[var(--fp-color-foreground)]">{t(column.titleKey)}</span>
-                        <span
-                          className="grid size-5 place-items-center rounded-full text-xs font-bold text-white"
-                          style={{ backgroundColor: column.accentColor }}
-                        >
-                          {colItems.length}
-                        </span>
-                      </div>
-                      {colItems.length > 0 ? (
-                        <div className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">
-                          <span>{t("cashflow.total")} </span>
-                          <span className="font-semibold" style={{ color: column.accentColor }}>
-                            {formatRub(colTotalYear)}
-                          </span>
-                          <span> {t("cashflow.perYear")}</span>
-                          <div className="text-xs">{t("cashflow.avgPerMonth", { amount: formatRub(colTotalMonth) })}</div>
-                        </div>
-                      ) : (
-                        <div className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">{t("cashflow.noRecords")}</div>
-                      )}
-                    </div>
-                    {/* Mini sparkline placeholder */}
-                    <div className="mt-2 hidden h-8 w-16 opacity-30 sm:block xl:w-24">
-                      <svg viewBox="0 0 96 32" className="size-full" preserveAspectRatio="none">
-                        <path
-                          d={column.id === "monthly" ? "M0,28 Q24,20 48,18 T96,8" : column.id === "yearly" ? "M0,16 L96,16" : "M0,20 Q16,12 32,20 T64,20 T96,20"}
-                          fill="none"
-                          stroke={column.accentColor}
-                          strokeWidth="2"
-                          opacity="0.5"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Add button */}
-                <button
-                  onClick={() => handleAddItem(column.defaultFrequency)}
-                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
-                >
-                  <Plus className="size-4" />
-                  {t("cashflow.add")}
-                </button>
-
-                {/* Cards */}
-                <div className="flex flex-col gap-3">
-                  {colItems.map((item) => (
-                    <CashflowCard
-                      key={item.id}
-                      item={item}
-                      compact={isCompact}
-                      onClick={() => handleEditItem(item)}
-                    />
-                  ))}
-                </div>
-              </div>
+              <CashflowColumn
+                key={column.id}
+                column={column}
+                colItems={colItems}
+                colTotalYear={colTotalYear}
+                colTotalMonth={colTotalMonth}
+                isCompact={isCompact}
+                onAddItem={handleAddItem}
+                onEditItem={handleEditItem}
+                t={t}
+                draggedItemId={draggedItemId}
+                dragOverItemId={dragOverItemId}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                startYear={plan.settings.startYear}
+              />
             );
           })}
         </div>
@@ -355,5 +401,279 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
         startYear={plan.settings.startYear}
       />
     </Page>
+  );
+}
+
+interface CashflowColumnProps {
+  column: {
+    id: "monthly" | "yearly" | "onetime";
+    titleKey: "cashflow.monthly" | "cashflow.yearly" | "cashflow.onetime";
+    defaultFrequency: Cashflow["frequency"];
+    accentColor: string;
+    icon: React.ReactNode;
+  };
+  colItems: Cashflow[];
+  colTotalYear: number;
+  colTotalMonth: number;
+  isCompact: boolean;
+  onAddItem: (frequency: Cashflow["frequency"]) => void;
+  onEditItem: (item: Cashflow) => void;
+  t: ReturnType<typeof useI18n>["t"];
+  draggedItemId?: string | null;
+  dragOverItemId?: string | null;
+  onDragStart?: (e: React.DragEvent, id: string) => void;
+  onDragOver?: (e: React.DragEvent, id: string) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: React.DragEvent, id: string, frequency: string) => void;
+  startYear: number;
+}
+
+function CashflowColumn({
+  column,
+  colItems,
+  colTotalYear,
+  colTotalMonth,
+  isCompact,
+  onAddItem,
+  onEditItem,
+  t,
+  draggedItemId,
+  dragOverItemId,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  startYear,
+}: CashflowColumnProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [showScrollbar, setShowScrollbar] = useState(false);
+  const [thumbHeight, setThumbHeight] = useState(0);
+  const [thumbTop, setThumbTop] = useState(0);
+
+  // Generate dynamic sparkline based on the real API / cashflow items
+  const horizon = 20;
+  const yearlyValues: number[] = [];
+  
+  for (let year = startYear; year < startYear + horizon; year++) {
+    let yearSum = 0;
+    colItems.forEach((item) => {
+      if (!item.enabled) return;
+      
+      const isStarted = year >= item.startYear;
+      const isNotEnded = item.endYear === null || year <= item.endYear;
+      
+      if (isStarted && isNotEnded) {
+        const t = year - item.startYear;
+        const growthFactor = Math.pow(1 + (item.growth ?? 0) / 100, t);
+        const yearlyAmount = item.frequency === "monthly" 
+          ? (item.amount * 12) * growthFactor 
+          : item.amount * growthFactor;
+        
+        yearSum += yearlyAmount;
+      }
+    });
+    yearlyValues.push(yearSum);
+  }
+
+  const minVal = Math.min(...yearlyValues);
+  const maxVal = Math.max(...yearlyValues);
+  const points: { x: number; y: number }[] = [];
+  const width = 96;
+  const height = 32;
+  const paddingBottom = 4;
+  const paddingTop = 4;
+  const chartHeight = height - paddingTop - paddingBottom; // 24px
+
+  yearlyValues.forEach((val, i) => {
+    const x = (i / (horizon - 1)) * width;
+    let y = height - paddingBottom; // default bottom
+    
+    if (maxVal > minVal) {
+      const pct = (val - minVal) / (maxVal - minVal);
+      y = height - paddingBottom - pct * chartHeight;
+    } else if (maxVal > 0) {
+      y = height / 2;
+    }
+    points.push({ x, y });
+  });
+
+  const strokePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const fillPath = `${strokePath} L96,32 L0,32 Z`;
+
+  const updateScrollbar = () => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    if (scrollHeight > clientHeight) {
+      setShowScrollbar(true);
+      let h = clientHeight * (clientHeight / scrollHeight);
+      h = Math.max(h, 24); // min 24px height
+      setThumbHeight(h);
+
+      const maxScrollTop = scrollHeight - clientHeight;
+      const maxThumbTop = clientHeight - h;
+      const topPos = (scrollTop / maxScrollTop) * maxThumbTop;
+      setThumbTop(topPos);
+    } else {
+      setShowScrollbar(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial update
+    updateScrollbar();
+    // Use a small delay/timeout to let layout and children settle
+    const timer = setTimeout(updateScrollbar, 50);
+
+    const observer = new ResizeObserver(updateScrollbar);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [colItems, isCompact]);
+
+  return (
+    <div className="flex flex-col h-full min-h-[220px]">
+      {/* Column header */}
+      <div className="mb-4 flex items-start gap-3">
+        <div
+          className="mt-1 w-1 self-stretch rounded-full flex-shrink-0"
+          style={{ backgroundColor: column.accentColor, minHeight: 48 }}
+        />
+        <div className="flex flex-1 items-start justify-between min-w-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <span
+                className="grid size-7 place-items-center rounded-full"
+                style={{ backgroundColor: `${column.accentColor}15`, color: column.accentColor }}
+              >
+                {column.icon}
+              </span>
+              <span className="font-semibold text-[var(--fp-color-foreground)]">{t(column.titleKey)}</span>
+              <span
+                className="grid size-5 place-items-center rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: column.accentColor }}
+              >
+                {colItems.length}
+              </span>
+            </div>
+            <div className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">
+              {colItems.length > 0 ? (
+                <>
+                  <span>{t("cashflow.total")} </span>
+                  <span className="font-semibold" style={{ color: column.accentColor }}>
+                    {formatRub(colTotalYear)}
+                  </span>
+                  <span> {t("cashflow.perYear")}</span>
+                  <div className="text-xs">{t("cashflow.avgPerMonth", { amount: formatRub(colTotalMonth) })}</div>
+                </>
+              ) : (
+                <>
+                  <span>{t("cashflow.noRecords")}</span>
+                  <div className="text-xs opacity-0">—</div>
+                </>
+              )}
+            </div>
+          </div>
+          {/* Sparkline */}
+          <div className="mt-2 hidden h-8 w-16 opacity-40 sm:block xl:w-24">
+            <svg viewBox="0 0 96 32" className="size-full" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id={`spark-fill-${column.id}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={column.accentColor} stopOpacity="0.35" />
+                  <stop offset="100%" stopColor={column.accentColor} stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d={fillPath}
+                fill={`url(#spark-fill-${column.id})`}
+              />
+              <path
+                d={strokePath}
+                fill="none" stroke={column.accentColor} strokeWidth="2" opacity="0.7"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Add button */}
+      <button
+        onClick={() => onAddItem(column.defaultFrequency)}
+        className="mb-3 ml-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+      >
+        <Plus className="size-4" />
+        {t("cashflow.add")}
+      </button>
+
+      {/* Scrollable Container with simulated custom scrollbar on the left */}
+      <div className="relative flex-1 min-h-0 flex gap-3">
+        {/* simulated custom scrollbar rail (w-1 = 4px) */}
+        <div className="w-1 flex-shrink-0 relative h-full">
+          {/* Always visible light track line as continuation of the header line */}
+          <div
+            className="absolute inset-y-0 left-0 w-full rounded-full opacity-10"
+            style={{ backgroundColor: column.accentColor }}
+          />
+
+          {/* Interactive thumb pill */}
+          {showScrollbar && (
+            <div
+              className="absolute left-0 w-full rounded-full transition-transform duration-75"
+              style={{
+                backgroundColor: column.accentColor,
+                height: `${thumbHeight}px`,
+                transform: `translateY(${thumbTop}px)`,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Real hidden-scrollbar scrollable cards box */}
+        <div
+          ref={containerRef}
+          onScroll={updateScrollbar}
+          className="flex-1 overflow-y-auto hide-scrollbar"
+        >
+          <div className="flex flex-col gap-3 pb-4">
+            {colItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-[var(--fp-color-muted-foreground)]">
+                <span
+                  className="grid size-10 place-items-center rounded-full"
+                  style={{ backgroundColor: `${column.accentColor}12`, color: column.accentColor, opacity: 0.5 }}
+                >
+                  {column.icon}
+                </span>
+                <span className="text-sm">{t("cashflow.noRecords")}</span>
+              </div>
+            ) : (
+              colItems.map((item) => (
+                <CashflowCard
+                  key={item.id}
+                  item={item}
+                  compact={isCompact}
+                  onClick={() => onEditItem(item)}
+                  draggable
+                  onDragStart={(e) => onDragStart?.(e, item.id)}
+                  onDragEnd={() => {
+                    // Handled inside drop if needed
+                  }}
+                  onDragOver={(e) => onDragOver?.(e, item.id)}
+                  onDragLeave={onDragLeave}
+                  onDrop={(e) => onDrop?.(e, item.id, column.id)}
+                  isDragging={draggedItemId === item.id}
+                  isDragOver={dragOverItemId === item.id}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

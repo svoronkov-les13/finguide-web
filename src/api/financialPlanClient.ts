@@ -1,6 +1,6 @@
 import { backendPlanClient } from "@/api/backendPlanClient";
 import { mockApi } from "@/api/mockApi";
-import type { Cashflow, Contribution, EditablePlanPatch, Goal, MonthlyStatus, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, Goal, MonthlyStatus, ScenarioId, TrackerEntry } from "@/types/finance";
 
 const useMockApi = import.meta.env.VITE_FINGUIDE_USE_MOCK === "true";
 const allowDevMockFallback = import.meta.env.DEV && import.meta.env.VITE_FINGUIDE_DEV_MOCK_FALLBACK !== "false";
@@ -34,7 +34,6 @@ function activeClient() {
   return devMockFallbackActive ? mockApi : backendPlanClient;
 }
 
-// New contribution/tracker methods always go to backend (no mock fallback needed)
 const backendFirstClient = {
   getPlan: getPlanWithDevFallback,
   setScenario: (id: ScenarioId) => activeClient().setScenario(id),
@@ -46,18 +45,14 @@ const backendFirstClient = {
   updateGoal: (id: string, patch: Partial<Goal>) => activeClient().updateGoal(id, patch),
   addGoal: (input: Omit<Goal, "id">) => activeClient().addGoal(input),
   deleteGoal: (id: string) => activeClient().deleteGoal(id),
+  reorderGoals: (goalIds: string[]) => activeClient().reorderGoals(goalIds),
   addTrackerEntry: (input: Omit<TrackerEntry, "id">) => activeClient().addTrackerEntry(input),
   updateTrackerEntry: (id: string, patch: Partial<TrackerEntry>) => activeClient().updateTrackerEntry(id, patch),
   deleteTrackerEntry: (id: string) => activeClient().deleteTrackerEntry(id),
   resetPlan: () => activeClient().resetPlan(),
   saveWhatIfScenario: (input: Parameters<typeof backendPlanClient.saveWhatIfScenario>[0]) =>
     activeClient().saveWhatIfScenario(input),
-  // Contributions & Monthly tracker — always hit backend
-  getContributions: (planId: string) => backendPlanClient.getContributions(planId),
-  addContribution: (planId: string, input: Omit<Contribution, "id">) => backendPlanClient.addContribution(planId, input),
-  updateContribution: (planId: string, id: string, patch: Partial<Omit<Contribution, "id">>) =>
-    backendPlanClient.updateContribution(planId, id, patch),
-  deleteContribution: (planId: string, id: string) => backendPlanClient.deleteContribution(planId, id),
+  // Monthly tracker — always hit backend
   getMonthlyTracker: (planId: string) => backendPlanClient.getMonthlyTracker(planId),
   saveMonthlyTrackerEntry: (planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
     backendPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),

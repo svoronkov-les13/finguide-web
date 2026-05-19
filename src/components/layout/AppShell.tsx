@@ -21,8 +21,8 @@ export function AppShell({ children }: AppShellProps) {
       <Sidebar />
       <div className="min-w-0 overflow-hidden">
         <Topbar />
-        <main className="scrollbar-thin h-[calc(100vh-52px)] overflow-auto px-6 py-8 max-[760px]:h-auto max-[760px]:overflow-visible max-[760px]:px-4 max-[760px]:py-6">
-          <div className="flex min-h-full w-full justify-center">
+        <main className="scrollbar-thin h-[calc(100vh-52px)] overflow-y-auto px-6 py-8 max-[760px]:h-auto max-[760px]:overflow-visible max-[760px]:px-4 max-[760px]:py-6">
+          <div className="flex w-full justify-center">
             <div className="w-full max-w-[1400px]">
               {children}
             </div>

@@ -90,19 +90,8 @@ button {
 
 .section-title {
   position: relative;
-  padding-left: var(--fp-space-base);
+  padding-left: 0;
   font-weight: var(--fp-weight-bold);
-}
-
-.section-title::before {
-  position: absolute;
-  top: 0.3em;
-  bottom: 0.3em;
-  left: 0;
-  width: 3px;
-  border-radius: var(--fp-radius-full);
-  background: currentColor;
-  content: "";
 }
 
 /* Figma: Label / Caption UPPERCASE — 11px Medium, ls +0.88px */
@@ -200,6 +189,37 @@ button {
 .scrollbar-thin::-webkit-scrollbar-thumb {
   border-radius: var(--fp-radius-full);
   background: rgba(31, 28, 37, 0.22);
+}
+
+/* Firefox fallback */
+@-moz-document url-prefix() {
+  .scrollbar-accent {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, rgba(31, 28, 37, 0.24)) transparent;
+  }
+}
+
+.scrollbar-accent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-accent::-webkit-scrollbar-thumb {
+  border-radius: var(--fp-radius-full);
+  background: var(--scrollbar-thumb, rgba(31, 28, 37, 0.22));
+  opacity: 0.7;
+}
+
+.scrollbar-accent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Brave */
 }
 
 /* =============================================

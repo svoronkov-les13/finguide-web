@@ -41,6 +41,8 @@ export interface Goal {
   name: string;
   icon: string;
   targetYear: number;
+  /** Month within targetYear (1–12). Default 12 (December) if not set. */
+  targetMonth?: number;
   priority?: number;
   cost: number;
   saved: number;
@@ -117,16 +119,6 @@ export interface FinancialPlan {
 
 export type EditablePlanPatch = Partial<PlanSettings>;
 
-// ─── Contributions (Savings page) ─────────────────────────────────────────────
-
-export interface Contribution {
-  id: string;
-  goalId: string | null;
-  amount: number;
-  currency: "RUB" | "USD";
-  date: string; // ISO date "YYYY-MM-DD"
-  note: string | null;
-}
 
 // ─── Monthly Tracker (Calendar tracker) ───────────────────────────────────────
 

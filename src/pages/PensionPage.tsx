@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { Page } from "@/components/layout/Page";
 import { CheckCircle2, ChevronLeft, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
@@ -197,7 +198,7 @@ export function PensionPage() {
                   </div>
                   <div className="text-[12px] text-[var(--fp-color-label)] flex items-center gap-1.5 mt-2">
                     <Info className="size-[14px] shrink-0" /> 
-                    <span className="leading-tight">Задаётся в <span className="font-semibold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-foreground)] cursor-pointer">Общих данных</span></span>
+                    <span className="leading-tight">Задаётся в <Link to="/general" className="font-semibold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-foreground)] cursor-pointer">{t("routes.general").toLowerCase()}</Link></span>
                   </div>
                 </div>
 

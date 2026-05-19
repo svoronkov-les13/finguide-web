@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
 import type { ScenarioId } from "@/types/finance";
+import type { TranslationKey } from "@/i18n/messages";
 
 export function ScenarioBar({ onWhatIf }: { onWhatIf: () => void }) {
   const { data: plan } = usePlanQuery();
@@ -28,7 +29,7 @@ export function ScenarioBar({ onWhatIf }: { onWhatIf: () => void }) {
             setScenario.mutate(scenario.id as ScenarioId);
           }}
         >
-          {scenario.name}
+          {t(`dashboard.scenario_${scenario.id}` as TranslationKey) || scenario.name}
         </Button>
       ))}
       <span className="mx-1 h-7 w-px shrink-0 bg-[var(--fp-color-border)]" />
@@ -40,7 +41,7 @@ export function ScenarioBar({ onWhatIf }: { onWhatIf: () => void }) {
         onClick={onWhatIf}
       >
         <WandSparkles className="size-3.5" />
-        Моделирование сценариев
+        {t("dashboard.whatifTitle")}
       </Button>
     </div>
   );
