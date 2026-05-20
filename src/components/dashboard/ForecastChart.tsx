@@ -134,7 +134,7 @@ export function ForecastChart() {
     [adjustedForecast, plan?.monthlyForecast, plan?.scenarioForecasts],
   );
   const lineXAxisKey = xAxisMode === "year" && lineData.some((point) => point.label) ? "label" : xAxisMode;
-  const chartTop = chartTopRubMln([...data, ...lineData]);
+  const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
 
