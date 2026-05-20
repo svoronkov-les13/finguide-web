@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
 import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
@@ -192,6 +192,7 @@ export function TrackingPage() {
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ monthlyTarget, nearestGoalTarget });
+  const savingNeeds = goalSavingNeeds(plan?.goals, currentYear, currentMonthIdx, plan?.settings.monthsInYear ?? 12);
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
@@ -348,6 +349,20 @@ export function TrackingPage() {
                 </div>
                 <div className="text-[9px] text-[var(--fp-color-label)] scale-90 origin-center truncate">
                   {totalPercent}%
+                </div>
+                <div className="mt-2 space-y-1 text-left text-[10px] text-[var(--fp-color-label)]">
+                  <div className="flex justify-between gap-2">
+                    <span>{t("tracking.currentYearGoalsNeed")}</span>
+                    <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearTotal)}</span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>{t("tracking.currentYearMonthlyNeed")}</span>
+                    <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>{t("tracking.allGoalsMonthlyNeed")}</span>
+                    <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
+                  </div>
                 </div>
               </div>
               
