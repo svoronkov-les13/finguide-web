@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, mapDashboardSnapshot, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 describe("backendPlanClient tracker journal mapping", () => {
@@ -137,5 +137,25 @@ describe("backendPlanClient goal progress mapping", () => {
     expect(goal.projectedSaved).toBe(1_605_000);
     expect(goal.projectedProgressPct).toBe(100);
     expect(goal.reachable).toBe(true);
+  });
+
+  it("preserves goal target month when reading and saving goals", () => {
+    const goal = goalFromApi({
+      id: "goal-1",
+      name: "Отпуск",
+      icon: "Plane",
+      currentCost: 500_000,
+      savedAmount: 100_000,
+      currency: "RUB",
+      targetYear: 2026,
+      targetMonth: 7,
+      priority: 1,
+      type: "one_time",
+      growthType: "manual",
+      growthPct: 5,
+    } as never, 2037);
+
+    expect(goal.targetMonth).toBe(7);
+    expect(goalRequestFromGoal(goal, 1)).toMatchObject({ targetYear: 2026, targetMonth: 7 });
   });
 });

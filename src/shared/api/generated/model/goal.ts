@@ -18,6 +18,8 @@ export interface Goal {
   currency: CurrencyCode;
   /** @minimum 2024 */
   targetYear: number;
+  /** Month within targetYear (1-12). Defaults to December when omitted. */
+  targetMonth?: number;
   type: GoalType;
   growthType: GrowthType;
   /**

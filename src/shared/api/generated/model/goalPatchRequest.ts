@@ -18,6 +18,8 @@ export interface GoalPatchRequest {
   currency?: CurrencyCode;
   /** @minimum 2024 */
   targetYear?: number;
+  /** Month within targetYear (1-12). Omitted value keeps current month. */
+  targetMonth?: number;
   type?: GoalPatchRequestType;
   growthType?: GrowthType;
   /**
