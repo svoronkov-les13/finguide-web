@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeEmptyYear, monthFormTarget, monthlyNormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
 
 describe("makeEmptyYear", () => {
   it("marks past months in the current year as pending (not missed) when no data exists", () => {
@@ -27,7 +27,4 @@ describe("makeEmptyYear", () => {
     expect(monthFormTarget({ allGoalsTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(66_875);
   });
 
-  it("shows the monthly norm from backend monthly goal contribution, not recalculated net balance", () => {
-    expect(monthlyNormTarget({ monthlyTarget: 196_000, netMonthlyBalance: 85_000 })).toBe(196_000);
-  });
 });

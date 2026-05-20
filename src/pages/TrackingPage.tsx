@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, monthlyNormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Month Form Dialog ────────────────────────────────────────────────────────
@@ -192,8 +192,6 @@ export function TrackingPage() {
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ allGoalsTarget: monthlyTarget, nearestGoalTarget });
-  const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
-  const displayedMonthlyNorm = monthlyNormTarget({ monthlyTarget, netMonthlyBalance });
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
@@ -334,7 +332,7 @@ export function TrackingPage() {
                 {t("tracking.monthlyNorm")} — {t("tracking.incomeMinusExpenses")}
               </div>
               <div className="mt-2 text-[24px] font-bold text-[var(--fp-color-foreground)]">
-                {formatRub(displayedMonthlyNorm)}
+                {formatRub(monthlyTarget)}
               </div>
             </div>
             

@@ -35,7 +35,3 @@ export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
 export function monthFormTarget({ allGoalsTarget, nearestGoalTarget }: { allGoalsTarget: number; nearestGoalTarget: number }) {
   return nearestGoalTarget > 0 ? nearestGoalTarget : allGoalsTarget;
 }
-
-export function monthlyNormTarget({ monthlyTarget }: { monthlyTarget: number; netMonthlyBalance: number }) {
-  return monthlyTarget;
-}
