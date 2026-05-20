@@ -35,8 +35,3 @@ export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
 export function monthFormTarget({ monthlyTarget }: { monthlyTarget: number; nearestGoalTarget: number }) {
   return monthlyTarget;
 }
-
-export function trackingMonthPercent({ amount, contributionGoalTarget, fallbackTarget }: { amount?: number; contributionGoalTarget: number; fallbackTarget: number }) {
-  const target = contributionGoalTarget > 0 ? contributionGoalTarget : fallbackTarget;
-  return amount && target > 0 ? Math.min(Math.round((amount / target) * 100), 100) : undefined;
-}

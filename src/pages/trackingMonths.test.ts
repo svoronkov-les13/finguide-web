@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeEmptyYear, monthFormTarget, trackingMonthPercent, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
 
 describe("makeEmptyYear", () => {
   it("marks past months in the current year as pending (not missed) when no data exists", () => {
@@ -27,8 +27,5 @@ describe("makeEmptyYear", () => {
     expect(monthFormTarget({ monthlyTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(305_283);
   });
 
-  it("calculates month percent from the goal receiving the contribution", () => {
-    expect(trackingMonthPercent({ amount: 33_438, contributionGoalTarget: 66_875, fallbackTarget: 305_283 })).toBe(50);
-  });
 
 });
