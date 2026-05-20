@@ -438,17 +438,15 @@ export function TrackingPage() {
                   <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(totalPlanned)}</span>
                   {" "}({totalPercent}%)
                 </div>
-                <div>
-                  {t("tracking.currentYearGoalsNeed")}: {" "}
-                  <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearTotal)}</span>
-                </div>
-                <div>
-                  {t("tracking.currentYearMonthlyNeed")}: {" "}
-                  <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
-                </div>
-                <div>
-                  {t("tracking.allGoalsMonthlyNeed")}: {" "}
-                  <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
+                <div className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-3 text-[11px]">
+                  <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5">
+                    <span>{t("tracking.currentYearGoalsNeed")}:</span>
+                    <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearTotal)}</span>
+                    <span>{t("tracking.currentYearMonthlyNeed")}:</span>
+                    <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
+                    <span>{t("tracking.allGoalsMonthlyNeed")}:</span>
+                    <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
+                  </div>
                 </div>
               </div>
             </Card>
