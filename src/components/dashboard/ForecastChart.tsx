@@ -129,7 +129,12 @@ export function ForecastChart() {
   }, [plan?.forecast, tracker]);
 
   const data = useMemo(() => buildForecastChartData(adjustedForecast, plan?.scenarioForecasts), [adjustedForecast, plan?.scenarioForecasts]);
-  const chartTop = chartTopRubMln(data);
+  const lineData = useMemo(
+    () => buildForecastChartData(plan?.monthlyForecast?.length ? plan.monthlyForecast : adjustedForecast, undefined),
+    [adjustedForecast, plan?.monthlyForecast],
+  );
+  const lineXAxisKey = xAxisMode === "year" && lineData.some((point) => point.label) ? "label" : xAxisMode;
+  const chartTop = chartTopRubMln([...data, ...lineData]);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
 
@@ -174,8 +179,11 @@ export function ForecastChart() {
 
   const renderUnifiedChart = (isModal: boolean) => {
     // Determine the dynamic retirement capital value
-    const retirementPoint = data.find((point) => point.year === retirementYear);
+    const retirementPoint = lineData.find((point) => point.year === retirementYear) ?? data.find((point) => point.year === retirementYear);
     const retirementCapitalVal = retirementPoint ? (retirementPoint.capital / 1_000_000).toFixed(1) : "80.3";
+    const retirementReferenceX = xAxisMode === "year" && lineXAxisKey === "label"
+      ? lineData.find((point) => point.year === retirementYear && point.monthNumber === 12)?.label
+      : xAxisMode === "year" ? retirementYear : plan.settings.retirementAge;
     const pensionText = `${t("chart.pensionMarker").split(":")[0]}: ${retirementCapitalVal} млн`;
 
     return (
@@ -298,7 +306,7 @@ export function ForecastChart() {
             </div>
           )}
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 0 }}>
+            <ComposedChart data={lineData} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="var(--fp-color-border)" strokeDasharray="3 3" />
               {plan.scenarioForecasts?.optimistic && plan.scenarioForecasts?.pessimistic ? (
                 <Area
@@ -310,7 +318,7 @@ export function ForecastChart() {
                   connectNulls
                 />
               ) : null}
-              <XAxis dataKey={xAxisMode} tickLine={false} axisLine={false} minTickGap={20} tick={false} />
+              <XAxis dataKey={lineXAxisKey} tickLine={false} axisLine={false} minTickGap={20} tick={false} />
               <YAxis
                 domain={[0, chartTop]}
                 ticks={ticks}
@@ -329,7 +337,7 @@ export function ForecastChart() {
                     <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)]">
                       <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">
                         {t("chart.tooltipTitle", {
-                          year: String(xAxisMode === "year" ? label : row.year),
+                          year: String(xAxisMode === "year" ? (row.label ?? label) : row.year),
                           age: String(xAxisMode === "age" ? label : row.age),
                         })}
                       </div>
@@ -356,14 +364,14 @@ export function ForecastChart() {
               />
               {retirementYear ? (
                 <ReferenceLine
-                  x={xAxisMode === "year" ? retirementYear : plan.settings.retirementAge}
+                  x={retirementReferenceX}
                   stroke={CHART_COLORS.reference}
                   strokeDasharray="6 5"
                 />
               ) : null}
               <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
-              {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
-              {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {lineXAxisKey !== "label" && plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {lineXAxisKey !== "label" && plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -577,4 +585,3 @@ function LegendPill({
     </button>
   );
 }
-
