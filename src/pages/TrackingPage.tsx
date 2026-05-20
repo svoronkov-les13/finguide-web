@@ -192,7 +192,6 @@ export function TrackingPage() {
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ allGoalsTarget: monthlyTarget, nearestGoalTarget });
-  const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
@@ -332,13 +331,8 @@ export function TrackingPage() {
               <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--fp-color-label)]">
                 {t("tracking.monthlyNorm")} — {t("tracking.incomeMinusExpenses")}
               </div>
-              <div className="mt-2 flex items-baseline justify-between gap-2 flex-wrap">
-                <div className="text-[24px] font-bold text-[var(--fp-color-foreground)]">
-                  {formatRub(netMonthlyBalance)}
-                </div>
-                <div className="text-[10px] text-[var(--fp-color-label)] text-right">
-                  {t("tracking.allGoalsNorm")}: {formatRub(monthlyTarget)}
-                </div>
+              <div className="mt-2 text-[24px] font-bold text-[var(--fp-color-foreground)]">
+                {formatRub(monthlyTarget)}
               </div>
             </div>
             

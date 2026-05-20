@@ -26,4 +26,5 @@ describe("makeEmptyYear", () => {
   it("uses the nearest-goal target for month form completion", () => {
     expect(monthFormTarget({ allGoalsTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(66_875);
   });
+
 });
