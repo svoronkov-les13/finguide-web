@@ -32,8 +32,8 @@ export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
   return status !== "pending";
 }
 
-export function monthFormTarget({ allGoalsTarget }: { allGoalsTarget: number; nearestGoalTarget: number }) {
-  return allGoalsTarget;
+export function monthFormTarget({ monthlyTarget }: { monthlyTarget: number; nearestGoalTarget: number }) {
+  return monthlyTarget;
 }
 
 export function trackingMonthPercent({ amount, contributionGoalTarget, fallbackTarget }: { amount?: number; contributionGoalTarget: number; fallbackTarget: number }) {

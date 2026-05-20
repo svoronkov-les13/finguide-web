@@ -24,7 +24,7 @@ describe("makeEmptyYear", () => {
   });
 
   it("uses the backend monthly target for month form completion", () => {
-    expect(monthFormTarget({ allGoalsTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(305_283);
+    expect(monthFormTarget({ monthlyTarget: 305_283, nearestGoalTarget: 66_875 })).toBe(305_283);
   });
 
   it("calculates month percent from the goal receiving the contribution", () => {
