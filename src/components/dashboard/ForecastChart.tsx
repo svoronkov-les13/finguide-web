@@ -34,6 +34,7 @@ const CHART_COLORS = {
   pessimistic: "#B05C50",
   grid: "var(--fp-color-divider)",
   reference: "rgba(26, 20, 27, 0.14)",
+  zeroLine: "rgba(26, 20, 27, 0.34)",
 } as const;
 
 export function buildForecastChartData(forecast: ForecastPoint[] | undefined, scenarioForecasts?: FinancialPlan["scenarioForecasts"]) {
@@ -319,6 +320,7 @@ export function ForecastChart() {
                 tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
                 width={58}
               />
+              <ReferenceLine y={0} stroke={CHART_COLORS.zeroLine} strokeWidth={1.5} />
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null;
