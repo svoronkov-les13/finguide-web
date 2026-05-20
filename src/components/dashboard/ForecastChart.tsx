@@ -130,11 +130,11 @@ export function ForecastChart() {
 
   const data = useMemo(() => buildForecastChartData(adjustedForecast, plan?.scenarioForecasts), [adjustedForecast, plan?.scenarioForecasts]);
   const lineData = useMemo(
-    () => buildForecastChartData(plan?.monthlyForecast?.length ? plan.monthlyForecast : adjustedForecast, undefined),
-    [adjustedForecast, plan?.monthlyForecast],
+    () => buildForecastChartData(plan?.monthlyForecast?.length ? plan.monthlyForecast : adjustedForecast, plan?.scenarioForecasts),
+    [adjustedForecast, plan?.monthlyForecast, plan?.scenarioForecasts],
   );
   const lineXAxisKey = xAxisMode === "year" && lineData.some((point) => point.label) ? "label" : xAxisMode;
-  const chartTop = chartTopRubMln([...data, ...lineData]);
+  const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
 
@@ -370,8 +370,8 @@ export function ForecastChart() {
                 />
               ) : null}
               <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
-              {lineXAxisKey !== "label" && plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
-              {lineXAxisKey !== "label" && plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
