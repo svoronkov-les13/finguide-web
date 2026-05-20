@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, trackingMonthPercent, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Month Form Dialog ────────────────────────────────────────────────────────
@@ -201,11 +201,9 @@ export function TrackingPage() {
       if (Number(entryYear) !== viewYear) return;
       const idx = Number(entryMonth) - 1;
       if (idx < 0 || idx > 11) return;
-      const percent = trackingMonthPercent({
-        amount: entry.amount ?? undefined,
-        contributionGoalTarget: nearestGoalTarget,
-        fallbackTarget: monthlyTarget,
-      });
+      const percent = entry.amount && monthlyTarget > 0
+        ? Math.min(Math.round((entry.amount / monthlyTarget) * 100), 100)
+        : undefined;
       base[idx] = {
         ...base[idx],
         status: entry.status === "pending" ? (idx === currentMonthIdx && viewYear === currentYear ? "current" : "pending") : entry.status as MonthStatus,
