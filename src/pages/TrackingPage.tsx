@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { formatRub, cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, monthlyNormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 
 // ─── Month Form Dialog ────────────────────────────────────────────────────────
@@ -193,6 +193,7 @@ export function TrackingPage() {
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ allGoalsTarget: monthlyTarget, nearestGoalTarget });
   const netMonthlyBalance = plan?.dashboardSnapshot?.netMonthlyBalanceRub ?? 0;
+  const displayedMonthlyNorm = monthlyNormTarget({ monthlyTarget, netMonthlyBalance });
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
@@ -332,13 +333,8 @@ export function TrackingPage() {
               <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--fp-color-label)]">
                 {t("tracking.monthlyNorm")} — {t("tracking.incomeMinusExpenses")}
               </div>
-              <div className="mt-2 flex items-baseline justify-between gap-2 flex-wrap">
-                <div className="text-[24px] font-bold text-[var(--fp-color-foreground)]">
-                  {formatRub(netMonthlyBalance)}
-                </div>
-                <div className="text-[10px] text-[var(--fp-color-label)] text-right">
-                  {t("tracking.allGoalsNorm")}: {formatRub(monthlyTarget)}
-                </div>
+              <div className="mt-2 text-[24px] font-bold text-[var(--fp-color-foreground)]">
+                {formatRub(displayedMonthlyNorm)}
               </div>
             </div>
             
