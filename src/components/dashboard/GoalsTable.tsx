@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { formatRub } from "@/lib/utils";
-import { sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
+import { computeDashboardGoalCounts, sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
 import type { Goal } from "@/types/finance";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -18,7 +18,7 @@ export function GoalsTable() {
   const { data: plan } = usePlanQuery();
   const goals = sortDashboardGoals(plan?.goals ?? []);
   const total = goals.reduce((sum, goal) => sum + goal.cost, 0);
-  const reachable = goals.filter((goal) => goal.reachable).length;
+  const counts = computeDashboardGoalCounts(goals);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -33,11 +33,11 @@ export function GoalsTable() {
         <div className="flex items-center gap-4 text-xs text-[var(--fp-color-muted-foreground)] max-[760px]:mt-2">
           <span className="num">● {t("goals.totalLabel")}: <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(total, { compact: true })}</span></span>
           <span className="flex items-center gap-2">
-            <span className="text-[var(--fp-color-teal)]">● {t("goals.reachableCount", { count: String(reachable) })}</span>
-            <span className="text-[var(--fp-color-coral)]">● {t("goals.atRiskCount", { count: "0" })}</span>
+            <span className="text-[var(--fp-color-teal)]">● {t("goals.reachableCount", { count: String(counts.reachable) })}</span>
+            <span className="text-[var(--fp-color-coral)]">● {t("goals.atRiskCount", { count: String(counts.atRisk) })}</span>
           </span>
           <span className="num font-medium text-[var(--fp-color-foreground)] bg-[var(--fp-color-surface)] px-2.5 py-0.5 rounded-full">
-            {t("goals.reachableOf", { reachable: String(reachable), total: String(goals.length) })}
+            {t("goals.reachableOf", { reachable: String(counts.reachable), total: String(counts.total) })}
           </span>
           <button
             onClick={() => navigate({ to: "/goals" })}
@@ -59,8 +59,8 @@ export function GoalsTable() {
             <span className="text-[var(--fp-color-foreground)] flex items-center gap-1.5 font-bold">
               <Icons.Target className="size-3.5 text-[var(--fp-color-muted-foreground)]" />
               {t("goals.totalLabel").toUpperCase()}: {formatRub(total, { compact: true })}
-              <span className="text-[var(--fp-color-teal)] ml-1">● {reachable}</span>
-              <span className="text-[var(--fp-color-coral)]">● 0</span>
+              <span className="text-[var(--fp-color-teal)] ml-1">● {counts.reachable}</span>
+              <span className="text-[var(--fp-color-coral)]">● {counts.atRisk}</span>
             </span>
             <span className="text-center">{t("goals.colYearHeader")}</span>
             <span className="text-right">{t("goals.colCostHeader")}</span>

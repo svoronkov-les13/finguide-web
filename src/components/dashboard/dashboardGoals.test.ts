@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
+import { computeDashboardGoalCounts, sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {
@@ -17,6 +17,20 @@ function goal(overrides: Partial<Goal>): Goal {
     ...overrides,
   };
 }
+
+describe("computeDashboardGoalCounts", () => {
+  it("counts at-risk goals as total minus reachable", () => {
+    const goals = [
+      goal({ id: "reachable", reachable: true }),
+      goal({ id: "risk-1", reachable: false }),
+      goal({ id: "risk-2", reachable: false }),
+      goal({ id: "risk-3", reachable: false }),
+      goal({ id: "risk-4", reachable: false }),
+    ];
+
+    expect(computeDashboardGoalCounts(goals)).toEqual({ total: 5, reachable: 1, atRisk: 4 });
+  });
+});
 
 describe("sortDashboardGoals", () => {
   it("sorts goals by target date then priority", () => {
