@@ -16,6 +16,38 @@ export function nearestGoalMonthlyTarget(goals: Goal[] | undefined, currentYear:
   return Math.round(remaining / monthsUntilTarget);
 }
 
+export function goalSavingNeeds(goals: Goal[] | undefined, currentYear: number, currentMonthIdx: number, monthsInYear = 12) {
+  const activeGoals = (goals ?? []).filter((goal) => goal.cost <= 0 || goal.saved < (goal.projectedCost ?? goal.cost));
+  const currentYearGoals = activeGoals.filter((goal) => goal.targetYear === currentYear);
+
+  return {
+    currentYearTotal: sumRemaining(currentYearGoals),
+    currentYearMonthly: sumMonthlyNeed(currentYearGoals, currentYear, currentMonthIdx, monthsInYear),
+    allGoalsMonthly: sumMonthlyNeed(activeGoals, currentYear, currentMonthIdx, monthsInYear),
+  };
+}
+
+function sumRemaining(goals: Goal[]) {
+  return goals.reduce((total, goal) => total + goalRemaining(goal), 0);
+}
+
+function sumMonthlyNeed(goals: Goal[], currentYear: number, currentMonthIdx: number, monthsInYear: number) {
+  return goals.reduce((total, goal) => {
+    const monthsUntilTarget = monthsToTarget(goal, currentYear, currentMonthIdx, monthsInYear);
+    return total + Math.round(goalRemaining(goal) / monthsUntilTarget);
+  }, 0);
+}
+
+function goalRemaining(goal: Goal) {
+  return Math.max(0, (goal.projectedCost ?? goal.cost) - goal.saved);
+}
+
+function monthsToTarget(goal: Goal, currentYear: number, currentMonthIdx: number, monthsInYear: number) {
+  const targetMonth = goal.targetMonth ?? monthsInYear;
+  const currentMonth = currentMonthIdx + 1;
+  return Math.max(1, (goal.targetYear - currentYear) * monthsInYear + targetMonth - currentMonth + 1);
+}
+
 function orderedTrackingGoals(goals: Goal[] | undefined) {
   return [...(goals ?? [])].sort((left, right) => {
     if (left.targetYear !== right.targetYear) return left.targetYear - right.targetYear;

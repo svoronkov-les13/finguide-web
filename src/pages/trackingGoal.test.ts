@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {
@@ -37,5 +37,17 @@ describe("trackingActiveGoal", () => {
     const second = goal({ id: "second", targetYear: 2029, cost: 5_000_000, saved: 0, projectedCost: 6_298_560 });
 
     expect(nearestGoalMonthlyTarget([second, first], 2026)).toBe(66_875);
+  });
+
+  it("summarizes current-year and all-goals monthly needs using targetMonth deadlines", () => {
+    const juneGoal = goal({ id: "june", targetYear: 2026, targetMonth: 6, cost: 120_000, saved: 20_000 });
+    const decemberGoal = goal({ id: "december", targetYear: 2026, targetMonth: 12, cost: 240_000, saved: 0 });
+    const futureGoal = goal({ id: "future", targetYear: 2027, targetMonth: 3, cost: 330_000, saved: 0 });
+
+    expect(goalSavingNeeds([juneGoal, decemberGoal, futureGoal], 2026, 4)).toEqual({
+      currentYearTotal: 340_000,
+      currentYearMonthly: 80_000,
+      allGoalsMonthly: 110_000,
+    });
   });
 });
