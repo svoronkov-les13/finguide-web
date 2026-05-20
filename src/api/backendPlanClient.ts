@@ -112,15 +112,29 @@ async function backendNoContent(path: string, options: RequestInit = {}, operati
   }
 }
 
+interface ApiMonthlyCashflowPoint {
+  month: string;
+  year: number;
+  monthNumber: number;
+  age?: number | null;
+  income: number;
+  expenses: number;
+  goalExpenses: number;
+  netSavings: number;
+  capitalEndOfMonth: number;
+}
+
 async function readBackendPlan() {
   const planState = unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
   const planId = planState.id;
 
-  const [dashboard, cashflow, health, scenarios] = await Promise.all([
+  const [dashboard, cashflow, monthlyCashflow, health, scenarios] = await Promise.all([
     getPlansPlanIdDashboard(planId, await requestOptions()).then((response) => unwrapData<DashboardMetrics>(response, "GET /dashboard")),
     getPlansPlanIdAnalyticsCashflow(planId, undefined, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
+    backendJson<ApiMonthlyCashflowPoint[]>(`/plans/${planId}/analytics/cashflow/monthly`, undefined, "GET /analytics/cashflow/monthly")
+      .catch(() => [] as ApiMonthlyCashflowPoint[]),
     getPlansPlanIdAnalyticsHealth(planId, await requestOptions()).then((response) => unwrapData<HealthScore>(response, "GET /analytics/health")),
     getScenarios(await requestOptions()).then((response) => unwrapData<ApiScenario[]>(response, "GET /scenarios")),
   ]);
@@ -133,7 +147,7 @@ async function readBackendPlan() {
     readScenarioForecasts(scenarios),
   ]);
 
-  return mapBackendPlan({ planState, dashboard, cashflow, health, scenarios, tracker, scenarioForecasts });
+  return mapBackendPlan({ planState, dashboard, cashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
 }
 
 async function readScenarioForecasts(scenarios: ApiScenario[]): Promise<FinancialPlan["scenarioForecasts"]> {
@@ -151,16 +165,18 @@ function mapBackendPlan(input: {
   planState: PlanState;
   dashboard: DashboardMetrics;
   cashflow: CashFlowProjectionPoint[];
+  monthlyCashflow: ApiMonthlyCashflowPoint[];
   health: HealthScore;
   scenarios: ApiScenario[];
   tracker: ApiTrackerEntry[];
   scenarioForecasts?: FinancialPlan["scenarioForecasts"];
 }): FinancialPlan {
-  const { planState, dashboard, cashflow, health, scenarios, tracker, scenarioForecasts } = input;
+  const { planState, dashboard, cashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   
   const baseForecast = cashflow.map(mapForecastPoint);
+  const monthlyForecast = monthlyCashflow.map(mapMonthlyForecastPoint);
   const activeScenarioForecast = activeScenario !== "base" ? scenarioForecasts?.[activeScenario] : undefined;
   const forecast = activeScenarioForecast || baseForecast;
 
@@ -185,6 +201,7 @@ function mapBackendPlan(input: {
     goals,
     tracker: tracker.map(trackerEntryFromApi),
     forecast,
+    monthlyForecast,
     scenarioForecasts,
   };
 
@@ -236,6 +253,28 @@ function mapForecastPoint(point: CashFlowProjectionPoint) {
     savings: point.netSavings,
     capital: point.capitalEndOfYear,
   };
+}
+
+export function mapMonthlyForecastPoint(point: ApiMonthlyCashflowPoint) {
+  return {
+    year: point.year,
+    age: point.age ?? 0,
+    month: point.month,
+    monthNumber: point.monthNumber,
+    label: monthLabel(point.month),
+    income: point.income,
+    expenses: -point.expenses,
+    goals: -point.goalExpenses,
+    savings: point.netSavings,
+    capital: point.capitalEndOfMonth,
+  };
+}
+
+function monthLabel(month: string) {
+  const [year, monthNumber] = month.split("-");
+  const names = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const index = Number(monthNumber) - 1;
+  return `${names[index] ?? monthNumber} ${year}`;
 }
 
 function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions | undefined): Cashflow {

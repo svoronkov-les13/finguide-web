@@ -57,6 +57,9 @@ export interface Goal {
 export interface ForecastPoint {
   year: number;
   age: number;
+  month?: string;
+  monthNumber?: number;
+  label?: string;
   income: number;
   expenses: number;
   goals: number;
@@ -114,6 +117,7 @@ export interface FinancialPlan {
   goals: Goal[];
   tracker: TrackerEntry[];
   forecast: ForecastPoint[];
+  monthlyForecast?: ForecastPoint[];
   scenarioForecasts?: Partial<Record<ScenarioId, ForecastPoint[]>>;
 }
 

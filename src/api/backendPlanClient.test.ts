@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 describe("backendPlanClient tracker journal mapping", () => {
@@ -84,6 +84,34 @@ describe("backendPlanClient dashboard mapping", () => {
 
     expect(snapshot.netMonthlyBalanceRub).toBe(196000);
     expect(snapshot.monthlyTargetRub).toBe(193725);
+  });
+});
+
+
+describe("backendPlanClient monthly cashflow mapping", () => {
+  it("maps monthly cashflow to forecast points for dashboard line chart", () => {
+    expect(mapMonthlyForecastPoint({
+      month: "2026-01",
+      year: 2026,
+      monthNumber: 1,
+      age: 33,
+      income: 345_000,
+      expenses: 149_000,
+      goalExpenses: 0,
+      netSavings: 5_000,
+      capitalEndOfMonth: 2_505_000,
+    })).toEqual({
+      year: 2026,
+      age: 33,
+      month: "2026-01",
+      monthNumber: 1,
+      label: "янв 2026",
+      income: 345_000,
+      expenses: -149_000,
+      goals: -0,
+      savings: 5_000,
+      capital: 2_505_000,
+    });
   });
 });
 
