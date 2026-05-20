@@ -32,6 +32,11 @@ export function shouldShowEmptyAmountPlaceholder(status: MonthStatus) {
   return status !== "pending";
 }
 
-export function monthFormTarget({ allGoalsTarget, nearestGoalTarget }: { allGoalsTarget: number; nearestGoalTarget: number }) {
-  return nearestGoalTarget > 0 ? nearestGoalTarget : allGoalsTarget;
+export function monthFormTarget({ allGoalsTarget }: { allGoalsTarget: number; nearestGoalTarget: number }) {
+  return allGoalsTarget;
+}
+
+export function trackingMonthPercent({ amount, contributionGoalTarget, fallbackTarget }: { amount?: number; contributionGoalTarget: number; fallbackTarget: number }) {
+  const target = contributionGoalTarget > 0 ? contributionGoalTarget : fallbackTarget;
+  return amount && target > 0 ? Math.min(Math.round((amount / target) * 100), 100) : undefined;
 }
