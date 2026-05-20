@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { formatRub } from "@/lib/utils";
+import { sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
 import type { Goal } from "@/types/finance";
 import { useI18n } from "@/i18n/I18nProvider";
 
@@ -15,7 +16,7 @@ export function GoalsTable() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { data: plan } = usePlanQuery();
-  const goals = plan?.goals ?? [];
+  const goals = sortDashboardGoals(plan?.goals ?? []);
   const total = goals.reduce((sum, goal) => sum + goal.cost, 0);
   const reachable = goals.filter((goal) => goal.reachable).length;
   const currentYear = new Date().getFullYear();
