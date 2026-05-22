@@ -69,9 +69,11 @@ async function requestOptions(): Promise<RequestInit> {
   };
 }
 
-function unwrapData<T>(response: ApiResponse, operation: string): T {
+export function unwrapData<T>(response: ApiResponse, operation: string): T {
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`${operation} failed with HTTP ${response.status}`);
+    const envelope = response.data as { error?: { message?: string } } | undefined;
+    const detail = envelope?.error?.message ? `: ${envelope.error.message}` : "";
+    throw new Error(`${operation} failed with HTTP ${response.status}${detail}`);
   }
 
   const envelope = response.data as { data?: T; error?: { message?: string } } | undefined;
@@ -519,7 +521,7 @@ export const backendPlanClient = {
     const currentAssumptions = current.modelAssumptions;
 
     if (currentAssumptions) {
-      await patchPlansPlanIdAnalyticsAssumptions(
+      unwrapData<ModelAssumptions>(await patchPlansPlanIdAnalyticsAssumptions(
         planId,
         {
           ...currentAssumptions,
@@ -531,10 +533,10 @@ export const backendPlanClient = {
           inflationSchedule: currentAssumptions.inflationSchedule,
         },
         await requestOptions(),
-      );
+      ), "PATCH /analytics/assumptions");
     }
 
-    await patchPlansPlanIdPension(
+    unwrapData<PensionSettings>(await patchPlansPlanIdPension(
       planId,
       {
         ...current.pension,
@@ -545,7 +547,7 @@ export const backendPlanClient = {
         inflationPct: patch.inflation !== undefined ? patch.inflation * 100 : current.pension.inflationPct,
       },
       await requestOptions(),
-    );
+    ), "PATCH /pension");
 
     return readBackendPlan();
   },

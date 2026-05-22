@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest } from "@/api/backendPlanClient";
+import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest, unwrapData } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
+
+describe("backendPlanClient response handling", () => {
+  it("throws backend errors instead of silently accepting failed settings updates", () => {
+    expect(() => unwrapData({ status: 403, data: { error: { message: "Plan is read-only" } } }, "PATCH /analytics/assumptions")).toThrow(
+      "PATCH /analytics/assumptions failed with HTTP 403: Plan is read-only",
+    );
+  });
+});
 
 describe("backendPlanClient tracker journal mapping", () => {
   it("maps UI tracker entries to backend journal requests", () => {
