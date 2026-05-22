@@ -20,7 +20,6 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { formatRub, cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
 import type { ForecastPoint, FinancialPlan } from "@/types/finance";
-import { useTrackerDeviation } from "@/hooks/useTrackerDeviation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 
@@ -72,6 +71,14 @@ export function projectionYearsLabel(forecast: ForecastPoint[] | undefined) {
   return Math.max(...years) - Math.min(...years) + 1;
 }
 
+export function resolveForecastForChart(
+  plan: FinancialPlan | undefined,
+  tracker?: { deviation: number; year: number; hasData: boolean },
+) {
+  void tracker;
+  return plan?.forecast;
+}
+
 function chartTopRubMln(data: ReturnType<typeof buildForecastChartData>) {
   const peak = Math.max(
     ...data.flatMap((point) => [point.capitalRubMln, point.incomeRubMln, point.expensesRubMln, point.goalsAbs]),
@@ -91,8 +98,6 @@ export function ForecastChart() {
   const { t } = useI18n();
   const hintVisible = useUiStore((state) => state.hintVisible);
   const setHintVisible = useUiStore((state) => state.setHintVisible);
-  const tracker = useTrackerDeviation();
-
   const [xAxisMode, setXAxisMode] = useState<"year" | "age">("year");
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -115,20 +120,8 @@ export function ForecastChart() {
     };
   });
 
-  // Apply tracker deviation: adjust forecast for the tracked year
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const adjustedForecast = useMemo(() => {
-    if (!plan?.forecast || !tracker.hasData || tracker.deviation === 0) return plan?.forecast;
-    return plan.forecast.map((point) => {
-      if (point.year !== tracker.year) return point;
-      // Adjust capital and savings for the tracked year
-      const adjustedSavings = point.savings + tracker.deviation;
-      const adjustedCapital = Math.max(0, point.capital + tracker.deviation);
-      return { ...point, savings: adjustedSavings, capital: adjustedCapital };
-    });
-  }, [plan?.forecast, tracker]);
-
-  const data = useMemo(() => buildForecastChartData(adjustedForecast, plan?.scenarioForecasts), [adjustedForecast, plan?.scenarioForecasts]);
+  const forecast = resolveForecastForChart(plan);
+  const data = useMemo(() => buildForecastChartData(forecast, plan?.scenarioForecasts), [forecast, plan?.scenarioForecasts]);
   const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
