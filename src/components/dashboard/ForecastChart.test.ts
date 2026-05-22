@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { buildForecastChartData, projectionYearsLabel } from "@/components/dashboard/ForecastChart";
-import type { ForecastPoint } from "@/types/finance";
+import { buildForecastChartData, projectionYearsLabel, resolveForecastForChart } from "@/components/dashboard/ForecastChart";
+import type { FinancialPlan, ForecastPoint } from "@/types/finance";
 
 const point = (patch: Partial<ForecastPoint>): ForecastPoint => ({
   year: 2024,
@@ -49,5 +49,17 @@ describe("ForecastChart data", () => {
     expect(row.capitalRubMln).toBe(2);
     expect(row.capitalOptimisticRubMln).toBe(3);
     expect(row.capitalPessimisticRubMln).toBe(1);
+  });
+
+  it("uses backend forecast as the chart source without applying tracker deviation again", () => {
+    const forecast = [point({ year: 2026, capital: 1_552_000, savings: 1_552_000 })];
+    const resolved = resolveForecastForChart({ forecast } as FinancialPlan, {
+      year: 2026,
+      deviation: -980_000,
+      hasData: true,
+    });
+
+    expect(resolved).toBe(forecast);
+    expect(buildForecastChartData(resolved)[0].capitalRubMln).toBe(1.552);
   });
 });
