@@ -58,4 +58,21 @@ describe("trackingActiveGoal", () => {
       allGoalsMonthly: 125_000,
     });
   });
+
+  it("uses the nearest active goal for the year summary when no goal ends this year", () => {
+    const futureGoal = goal({
+      id: "future",
+      targetYear: 2027,
+      cost: 1_800_000,
+      projectedCost: 2_000_000,
+      saved: 100_000,
+    });
+
+    expect(goalSavingNeeds([futureGoal], 2026, 5)).toEqual({
+      currentYearSaved: 100_000,
+      currentYearTotal: 2_000_000,
+      currentYearMonthly: 100_000,
+      allGoalsMonthly: 100_000,
+    });
+  });
 });
