@@ -11,6 +11,7 @@ import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
+import { goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
 import { trackingActiveGoal } from "@/pages/trackingGoal";
 
 export function GoalsPage() {
@@ -127,6 +128,10 @@ export function GoalsPage() {
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
 
   const goals = plan.goals ?? [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthIdx = now.getMonth();
+  const monthsInYear = plan.settings.monthsInYear ?? 12;
   const totalCost = goals.reduce((sum, goal) => sum + goalProgress(goal).cost, 0);
   const totalSaved = goals.reduce((sum, goal) => sum + goalProgress(goal).saved, 0);
   const accumulatedPercent = totalCost > 0 ? Math.min(100, Math.round((totalSaved / totalCost) * 100)) : 0;
@@ -378,10 +383,10 @@ export function GoalsPage() {
               if (!yearGoals || yearGoals.length === 0) return null;
 
               const isAccumulation = activeGoal?.targetYear === year;
-              const isCompleted = yearGoals.every(g => g.saved >= g.cost);
-              const yearTotalCost = yearGoals.reduce((sum, g) => sum + g.cost, 0);
+              const isCompleted = yearGoals.every(g => g.saved >= goalProjectedCost(g));
+              const yearSummary = goalYearSummary(yearGoals, year, currentYear, currentMonthIdx, monthsInYear);
               const yearTotalSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
-              const yearPercent = yearTotalCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearTotalCost) * 100)) : 0;
+              const yearPercent = yearSummary.totalProjectedCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearSummary.totalProjectedCost) * 100)) : 0;
 
               const isYearDragOver = dragOverYear === year;
 
@@ -418,15 +423,19 @@ export function GoalsPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 bg-white/40 px-4 py-2 rounded-full border border-white/20">
-                      <span className={cn("font-bold text-lg", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{formatRub(yearTotalCost)}</span>
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/10">
-                        <div 
-                          className={cn("h-full rounded-full", isAccumulation ? "bg-[var(--fp-color-accent-gold-text)]" : "bg-[var(--fp-color-foreground)]")} 
-                          style={{ width: `${yearPercent}%` }} 
-                        />
+                    <div className="grid min-w-[320px] gap-3 rounded-2xl border border-white/20 bg-white/40 px-4 py-3 sm:grid-cols-3">
+                      <YearSummaryMetric label={t("goals.yearTotalProjected")} value={formatRub(yearSummary.totalProjectedCost)} emphasis={isAccumulation} />
+                      <YearSummaryMetric label={t("goals.yearRemaining")} value={formatRub(yearSummary.remaining)} emphasis={isAccumulation} />
+                      <YearSummaryMetric label={t("goals.yearMonthlyUntilEnd")} value={formatRub(yearSummary.monthlyUntilYearEnd)} emphasis={isAccumulation} />
+                      <div className="sm:col-span-3 flex items-center gap-3">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
+                          <div
+                            className={cn("h-full rounded-full", isAccumulation ? "bg-[var(--fp-color-accent-gold-text)]" : "bg-[var(--fp-color-foreground)]")}
+                            style={{ width: `${yearPercent}%` }}
+                          />
+                        </div>
+                        <span className={cn("text-xs font-bold", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-muted-foreground)]")}>{yearPercent}%</span>
                       </div>
-                      <span className={cn("text-xs font-bold", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-muted-foreground)]")}>{yearPercent}%</span>
                     </div>
                   </div>
 
@@ -480,5 +489,14 @@ export function GoalsPage() {
         onDelete={(id) => deleteGoal.mutate(id)}
       />
     </Page>
+  );
+}
+
+function YearSummaryMetric({ label, value, emphasis }: { label: string; value: string; emphasis: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] font-semibold uppercase text-[var(--fp-color-muted-foreground)]">{label}</div>
+      <div className={cn("mt-1 truncate text-sm font-bold", emphasis ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{value}</div>
+    </div>
   );
 }

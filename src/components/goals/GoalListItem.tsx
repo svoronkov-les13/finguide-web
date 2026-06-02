@@ -4,6 +4,7 @@ import type { Goal } from "@/types/finance";
 import { formatRub } from "@/lib/utils";
 import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
+import { goalProjectedCost } from "@/pages/goalsYearSummary";
 
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ export function GoalListItem({
   const progress = goalProgress(goal);
   const isPeriodic = goal.type === "periodic";
   const month = goal.targetMonth ?? 12;
+  const projectedCost = goalProjectedCost(goal);
 
   return (
     <div
@@ -85,7 +87,12 @@ export function GoalListItem({
       </div>
 
       <div className="flex w-[40%] min-w-[250px] max-w-[400px] items-center gap-4">
-         <span className="font-semibold text-sm text-[var(--fp-color-foreground)] whitespace-nowrap num">{formatRub(progress.cost)}</span>
+         <div className="min-w-[128px]">
+           <div className="whitespace-nowrap text-sm font-semibold text-[var(--fp-color-foreground)] num">{formatRub(progress.cost)}</div>
+           <div className="mt-0.5 whitespace-nowrap text-[10px] font-medium text-[var(--fp-color-muted-foreground)] num">
+             {t("goals.projectedCost", { year: String(goal.targetYear), amount: formatRub(projectedCost, { compact: true }) })}
+           </div>
+         </div>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
            <div className={`h-full transition-all ${progress.achieved ? "bg-emerald-500" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
          </div>
