@@ -24,6 +24,13 @@ describe("trackingActiveGoal", () => {
     expect(trackingActiveGoal([first, second])).toBe(second);
   });
 
+  it("keeps a goal active until inflation-adjusted cost is funded", () => {
+    const first = goal({ id: "first", name: "First", saved: 1000, cost: 1000, projectedCost: 1200 });
+    const second = goal({ id: "second", name: "Second", saved: 0, cost: 2000 });
+
+    expect(trackingActiveGoal([first, second])).toBe(first);
+  });
+
   it("uses target year before priority for the next incomplete goal", () => {
     const first = { ...goal({ id: "first", name: "First", targetYear: 2027, saved: 1000, cost: 1000 }), priority: 1 } as Goal;
     const apartment = { ...goal({ id: "apartment", name: "Apartment", targetYear: 2029, saved: 0, cost: 5000 }), priority: 2 } as Goal;
@@ -39,15 +46,16 @@ describe("trackingActiveGoal", () => {
     expect(nearestGoalMonthlyTarget([second, first], 2026)).toBe(66_875);
   });
 
-  it("summarizes current-year and all-goals monthly needs using targetMonth deadlines", () => {
-    const juneGoal = goal({ id: "june", targetYear: 2026, targetMonth: 6, cost: 120_000, saved: 20_000 });
-    const decemberGoal = goal({ id: "december", targetYear: 2026, targetMonth: 12, cost: 240_000, saved: 0 });
-    const futureGoal = goal({ id: "future", targetYear: 2027, targetMonth: 3, cost: 330_000, saved: 0 });
+  it("summarizes current-year and all-goals monthly needs using inflation-adjusted goal totals", () => {
+    const juneGoal = goal({ id: "june", targetYear: 2026, targetMonth: 6, cost: 120_000, projectedCost: 132_000, saved: 20_000 });
+    const decemberGoal = goal({ id: "december", targetYear: 2026, targetMonth: 12, cost: 240_000, projectedCost: 264_000, saved: 0 });
+    const futureGoal = goal({ id: "future", targetYear: 2027, targetMonth: 3, cost: 330_000, projectedCost: 396_000, saved: 0 });
 
     expect(goalSavingNeeds([juneGoal, decemberGoal, futureGoal], 2026, 4)).toEqual({
-      currentYearTotal: 340_000,
-      currentYearMonthly: 80_000,
-      allGoalsMonthly: 110_000,
+      currentYearSaved: 20_000,
+      currentYearTotal: 396_000,
+      currentYearMonthly: 89_000,
+      allGoalsMonthly: 125_000,
     });
   });
 });
