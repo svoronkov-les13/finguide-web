@@ -31,7 +31,7 @@ import type {
   PlanState,
   Scenario as ApiScenario,
 } from "@/shared/api/generated/model";
-import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, PlanSummary, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
 import { calculateForecast } from "@/engine/calculateForecast";
 
 type ApiResponse = {
@@ -53,6 +53,14 @@ type ApiScenarioComparison = {
     scenarioId: string;
     projection: CashFlowProjectionPoint[];
   }>;
+};
+
+type ApiPlanSummary = {
+  id: string;
+  name: string;
+  current: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 let activeScenario: ScenarioId = "base";
@@ -176,6 +184,7 @@ function mapBackendPlan(input: {
   const { planState, dashboard, cashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
+  const planName = (planState as PlanState & { name?: string }).name ?? "Основной план";
   
   const baseForecast = cashflow.map(mapForecastPoint);
   const monthlyForecast = monthlyCashflow.map(mapMonthlyForecastPoint);
@@ -188,7 +197,7 @@ function mapBackendPlan(input: {
     owner: {
       name: planState.profile.name,
       email: planState.profile.email,
-      planName: "Основной план",
+      planName,
       tier: "Backend API",
     },
     settings,
@@ -510,6 +519,34 @@ export const backendPlanClient = {
     return readBackendPlan();
   },
 
+  async listPlans(): Promise<PlanSummary[]> {
+    return backendJson<ApiPlanSummary[]>("/plans", undefined, "GET /plans").then((plans) => plans.map(planSummaryFromApi));
+  },
+
+  async createPlan(name: string): Promise<PlanSummary> {
+    return backendJson<ApiPlanSummary>("/plans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }, "POST /plans").then(planSummaryFromApi);
+  },
+
+  async copyPlan(planId: string, name: string): Promise<PlanSummary> {
+    return backendJson<ApiPlanSummary>(`/plans/${planId}/copy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    }, "POST /plans/{planId}/copy").then(planSummaryFromApi);
+  },
+
+  async switchPlan(planId: string): Promise<PlanSummary> {
+    return backendJson<ApiPlanSummary>("/plans/current", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId }),
+    }, "PUT /plans/current").then(planSummaryFromApi);
+  },
+
   async setScenario(id: ScenarioId) {
     activeScenario = id;
     return readBackendPlan();
@@ -708,6 +745,16 @@ export const backendPlanClient = {
     return backendPlanClient.getMonthlyTracker(planId);
   },
 };
+
+function planSummaryFromApi(raw: ApiPlanSummary): PlanSummary {
+  return {
+    id: raw.id,
+    name: raw.name,
+    current: Boolean(raw.current),
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+  };
+}
 
 
 

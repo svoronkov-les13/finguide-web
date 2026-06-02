@@ -6,6 +6,7 @@ import type { Cashflow, EditablePlanPatch, Goal, MonthlyStatus, MonthlyTrackerEn
 
 export const planQueryKey = ["financial-plan"] as const;
 export const anonymousPlanQueryKey = [...planQueryKey, "anonymous"] as const;
+export const plansQueryKey = ["plans"] as const;
 
 export function planQueryKeyForAuth(auth: { enabled: boolean; authenticated: boolean; session?: AuthSession }) {
   if (!auth.enabled) return anonymousPlanQueryKey;
@@ -26,6 +27,17 @@ export function usePlanQuery() {
   return useQuery({
     queryKey,
     queryFn: () => financialPlanClient.getPlan(),
+    enabled: !auth.enabled || auth.authenticated,
+    staleTime: 30_000,
+  });
+}
+
+export function usePlansQuery() {
+  const auth = useAuth();
+
+  return useQuery({
+    queryKey: plansQueryKey,
+    queryFn: () => financialPlanClient.listPlans(),
     enabled: !auth.enabled || auth.authenticated,
     staleTime: 30_000,
   });
@@ -180,9 +192,42 @@ export function useSaveWhatIfScenarioMutation() {
 
 export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
 
+export function updatePlanManagementCaches(queryClient: QueryClient, queryKey: readonly unknown[]) {
+  queryClient.invalidateQueries({ queryKey });
+  queryClient.invalidateQueries({ queryKey: plansQueryKey });
+  queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
+}
+
 export function updateMonthlyTrackerCache(queryClient: QueryClient, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
   queryClient.setQueryData(monthlyTrackerQueryKey, data);
   queryClient.invalidateQueries({ queryKey });
+}
+
+export function useCreatePlanMutation() {
+  const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
+  return useMutation({
+    mutationFn: (name: string) => financialPlanClient.createPlan(name),
+    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+  });
+}
+
+export function useCopyPlanMutation() {
+  const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
+  return useMutation({
+    mutationFn: ({ planId, name }: { planId: string; name: string }) => financialPlanClient.copyPlan(planId, name),
+    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+  });
+}
+
+export function useSwitchPlanMutation() {
+  const queryClient = useQueryClient();
+  const queryKey = useCurrentPlanQueryKey();
+  return useMutation({
+    mutationFn: (planId: string) => financialPlanClient.switchPlan(planId),
+    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+  });
 }
 
 export function useMonthlyTrackerQuery() {

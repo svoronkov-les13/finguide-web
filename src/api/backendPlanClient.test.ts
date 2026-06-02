@@ -1,14 +1,47 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from "vitest";
-import { goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest, unwrapData } from "@/api/backendPlanClient";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { backendPlanClient, goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest, unwrapData } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("backendPlanClient response handling", () => {
   it("throws backend errors instead of silently accepting failed settings updates", () => {
     expect(() => unwrapData({ status: 403, data: { error: { message: "Plan is read-only" } } }, "PATCH /analytics/assumptions")).toThrow(
       "PATCH /analytics/assumptions failed with HTTP 403: Plan is read-only",
     );
+  });
+});
+
+describe("backendPlanClient plan management", () => {
+  it("calls plan management endpoints and unwraps summaries", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      if (url.endsWith("/plans") && !init?.method) {
+        return jsonResponse({ data: [{ id: "plan-1", name: "Основной", current: true, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z" }] });
+      }
+      if (url.endsWith("/plans") && init?.method === "POST") {
+        return jsonResponse({ data: { id: "plan-2", name: body.name, current: true, createdAt: "2026-01-02T00:00:00Z", updatedAt: "2026-01-02T00:00:00Z" } }, 201);
+      }
+      if (url.endsWith("/plans/plan-1/copy") && init?.method === "POST") {
+        return jsonResponse({ data: { id: "plan-3", name: body.name, current: true, createdAt: "2026-01-03T00:00:00Z", updatedAt: "2026-01-03T00:00:00Z" } }, 201);
+      }
+      if (url.endsWith("/plans/current") && init?.method === "PUT") {
+        return jsonResponse({ data: { id: body.planId, name: "Основной", current: true, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z" } });
+      }
+      throw new Error(`Unexpected request ${init?.method ?? "GET"} ${url}`);
+    });
+
+    await expect(backendPlanClient.listPlans()).resolves.toHaveLength(1);
+    await expect(backendPlanClient.createPlan("Новый")).resolves.toMatchObject({ id: "plan-2", name: "Новый", current: true });
+    await expect(backendPlanClient.copyPlan("plan-1", "Копия")).resolves.toMatchObject({ id: "plan-3", name: "Копия", current: true });
+    await expect(backendPlanClient.switchPlan("plan-1")).resolves.toMatchObject({ id: "plan-1", current: true });
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -195,3 +228,11 @@ describe("backendPlanClient goal progress mapping", () => {
     expect(goalRequestFromGoal(goal, 1)).toMatchObject({ targetYear: 2026, targetMonth: 7 });
   });
 });
+
+function jsonResponse(payload: unknown, status = 200) {
+  return Promise.resolve({
+    status,
+    headers: new Headers(),
+    text: () => Promise.resolve(JSON.stringify(payload)),
+  } as Response);
+}
