@@ -510,6 +510,22 @@ function findGoal(id: string) {
   return lastFinancialPlan?.goals.find((item) => item.id === id);
 }
 
+function updateCachedGoals(apiGoals: ApiGoal[]) {
+  if (!lastFinancialPlan) return undefined;
+  const lastForecastYear = lastFinancialPlan.forecast.at(-1)?.year ?? lastFinancialPlan.settings.startYear;
+  const goals = apiGoals
+    .slice()
+    .sort((a, b) => a.priority - b.priority)
+    .map((goal) => goalFromApi(goal, lastForecastYear));
+
+  if (lastPlanState) {
+    lastPlanState = { ...lastPlanState, goals: apiGoals };
+  }
+
+  lastFinancialPlan = { ...lastFinancialPlan, goals };
+  return lastFinancialPlan;
+}
+
 function currentPlanId() {
   return lastPlanState?.id ?? "plan_demo";
 }
@@ -659,25 +675,37 @@ export const backendPlanClient = {
     const current = findGoal(id);
     if (!current) throw new Error(`Goal ${id} was not found`);
     const priority = (lastFinancialPlan?.goals.findIndex((goal) => goal.id === id) ?? 0) + 1;
-    await patchPlansPlanIdGoalsId(planId, id, goalRequestFromGoal({ ...current, ...patch }, priority), await requestOptions());
-    return readBackendPlan();
+    const updated = unwrapData<ApiGoal>(
+      await patchPlansPlanIdGoalsId(planId, id, goalRequestFromGoal({ ...current, ...patch }, priority), await requestOptions()),
+      "PATCH /goals/{id}",
+    );
+    const nextGoals = (lastPlanState?.goals ?? []).map((goal) => (goal.id === id ? updated : goal));
+    return updateCachedGoals(nextGoals) ?? readBackendPlan();
   },
 
   async addGoal(input: Omit<Goal, "id">) {
     const planId = currentPlanId();
-    await postPlansPlanIdGoals(planId, goalRequestFromGoal({ ...input, id: `goal-${Date.now()}` }, (lastFinancialPlan?.goals.length ?? 0) + 1), await requestOptions());
-    return readBackendPlan();
+    const created = unwrapData<ApiGoal>(
+      await postPlansPlanIdGoals(planId, goalRequestFromGoal({ ...input, id: `goal-${Date.now()}` }, (lastFinancialPlan?.goals.length ?? 0) + 1), await requestOptions()),
+      "POST /goals",
+    );
+    const nextGoals = [...(lastPlanState?.goals ?? []), created];
+    return updateCachedGoals(nextGoals) ?? readBackendPlan();
   },
 
   async deleteGoal(id: string) {
     await deletePlansPlanIdGoalsId(currentPlanId(), id, await requestOptions());
-    return readBackendPlan();
+    const nextGoals = (lastPlanState?.goals ?? []).filter((goal) => goal.id !== id);
+    return updateCachedGoals(nextGoals) ?? readBackendPlan();
   },
 
   async reorderGoals(goalIds: string[]) {
     const planId = currentPlanId();
-    await postPlansPlanIdGoalsReorder(planId, { goalIds }, await requestOptions());
-    return readBackendPlan();
+    const reordered = unwrapData<ApiGoal[]>(
+      await postPlansPlanIdGoalsReorder(planId, { goalIds }, await requestOptions()),
+      "POST /goals/reorder",
+    );
+    return updateCachedGoals(reordered) ?? readBackendPlan();
   },
 
   async addTrackerEntry(input: Omit<TrackerEntry, "id">) {
