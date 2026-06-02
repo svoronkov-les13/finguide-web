@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from "vitest";
-import { anonymousPlanQueryKey, monthlyTrackerQueryKey, planQueryKeyForAuth, updateMonthlyTrackerCache } from "@/api/planQueries";
+import { anonymousPlanQueryKey, monthlyTrackerQueryKey, planQueryKeyForAuth, plansQueryKey, updateMonthlyTrackerCache, updatePlanManagementCaches } from "@/api/planQueries";
 
 describe("planQueryKeyForAuth", () => {
   it("uses anonymous cache key when OIDC auth is disabled", () => {
@@ -44,5 +44,19 @@ describe("mutation cache updates", () => {
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, rows);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
+  });
+
+  it("invalidates plan, plan list, and tracker state after plan management mutations", () => {
+    const queryClient = {
+      invalidateQueries: vi.fn(),
+    };
+    const planKey = ["financial-plan", "auth", "user-123"] as const;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updatePlanManagementCaches(queryClient as any, planKey);
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: plansQueryKey });
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: monthlyTrackerQueryKey });
   });
 });

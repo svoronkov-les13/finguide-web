@@ -123,6 +123,14 @@ export interface FinancialPlan {
 
 export type EditablePlanPatch = Partial<PlanSettings>;
 
+export interface PlanSummary {
+  id: string;
+  name: string;
+  current: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 // ─── Monthly Tracker (Calendar tracker) ───────────────────────────────────────
 

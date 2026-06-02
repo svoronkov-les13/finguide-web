@@ -1,6 +1,6 @@
 import { mockPlan } from "@/data/mock-plan";
 import { calculateForecast } from "@/engine/calculateForecast";
-import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, PlanSummary, ScenarioId, TrackerEntry } from "@/types/finance";
 
 const STORAGE_KEY = "finguide.mock-plan.v1";
 
@@ -24,6 +24,7 @@ function writeStoredPlan(plan: FinancialPlan) {
 }
 
 let db: FinancialPlan = readStoredPlan() ?? structuredClone(mockPlan);
+let mockPlanCreatedAt = new Date().toISOString();
 
 function commit(next: FinancialPlan, options: { preserveDashboardSnapshot?: boolean } = {}) {
   db = {
@@ -47,6 +48,48 @@ export const mockApi = {
   async getPlan() {
     await wait();
     return snapshot();
+  },
+
+  async listPlans(): Promise<PlanSummary[]> {
+    await wait(80);
+    return [mockPlanSummary()];
+  },
+
+  async createPlan(name: string): Promise<PlanSummary> {
+    await wait(120);
+    mockPlanCreatedAt = new Date().toISOString();
+    db = {
+      ...structuredClone(mockPlan),
+      planId: `plan-${Date.now()}`,
+      owner: { ...mockPlan.owner, planName: name },
+      cashflows: [],
+      goals: [],
+      tracker: [],
+      scenarios: structuredClone(mockPlan.scenarios),
+    };
+    writeStoredPlan(db);
+    return mockPlanSummary();
+  },
+
+  async copyPlan(planId: string, name: string): Promise<PlanSummary> {
+    await wait(120);
+    void planId;
+    mockPlanCreatedAt = new Date().toISOString();
+    db = {
+      ...structuredClone(db),
+      planId: `plan-${Date.now()}`,
+      owner: { ...db.owner, planName: name },
+      goals: db.goals.map((goal) => ({ ...goal, saved: 0 })),
+      tracker: [],
+    };
+    writeStoredPlan(db);
+    return mockPlanSummary();
+  },
+
+  async switchPlan(planId: string): Promise<PlanSummary> {
+    await wait(80);
+    void planId;
+    return mockPlanSummary();
   },
 
   async setScenario(id: ScenarioId) {
@@ -214,3 +257,14 @@ export const mockApi = {
     });
   },
 };
+
+function mockPlanSummary(): PlanSummary {
+  const now = new Date().toISOString();
+  return {
+    id: db.planId ?? "plan_demo",
+    name: db.owner.planName,
+    current: true,
+    createdAt: mockPlanCreatedAt,
+    updatedAt: now,
+  };
+}

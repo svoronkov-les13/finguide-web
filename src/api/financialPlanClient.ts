@@ -36,6 +36,10 @@ function activeClient() {
 
 const backendFirstClient = {
   getPlan: getPlanWithDevFallback,
+  listPlans: () => activeClient().listPlans(),
+  createPlan: (name: string) => activeClient().createPlan(name),
+  copyPlan: (planId: string, name: string) => activeClient().copyPlan(planId, name),
+  switchPlan: (planId: string) => activeClient().switchPlan(planId),
   setScenario: (id: ScenarioId) => activeClient().setScenario(id),
   updateSettings: (patch: EditablePlanPatch) => activeClient().updateSettings(patch),
   updateCashflow: (id: string, patch: Partial<Cashflow>) => activeClient().updateCashflow(id, patch),
