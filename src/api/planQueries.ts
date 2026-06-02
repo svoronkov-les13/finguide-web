@@ -192,18 +192,23 @@ export function useSaveWhatIfScenarioMutation() {
 
 export const monthlyTrackerQueryKey = ["monthly-tracker"] as const;
 
+export function monthlyTrackerQueryKeyForPlan(planId: string | null | undefined) {
+  return [...monthlyTrackerQueryKey, planId ?? "pending"] as const;
+}
+
 export function updatePlanManagementCaches(queryClient: QueryClient, queryKey: readonly unknown[]) {
   queryClient.invalidateQueries({ queryKey });
   queryClient.invalidateQueries({ queryKey: plansQueryKey });
   queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
 }
 
-export function updateMonthlyTrackerCache(queryClient: QueryClient, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
+export function updateMonthlyTrackerCache(queryClient: QueryClient, queryKey: readonly unknown[], planId: string, data: MonthlyTrackerEntry[]) {
   // Merge: replace entries for the affected year(s) while keeping others intact
-  const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(monthlyTrackerQueryKey) ?? [];
+  const trackerQueryKey = monthlyTrackerQueryKeyForPlan(planId);
+  const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(trackerQueryKey) ?? [];
   const incomingYears = new Set(data.map((e) => e.month.split("-")[0]));
   const kept = existing.filter((e) => !incomingYears.has(e.month.split("-")[0]));
-  queryClient.setQueryData(monthlyTrackerQueryKey, [...kept, ...data]);
+  queryClient.setQueryData(trackerQueryKey, [...kept, ...data]);
   queryClient.invalidateQueries({ queryKey });
 }
 
@@ -238,17 +243,18 @@ export function useMonthlyTrackerQuery() {
   const auth = useAuth();
   // Wait for plan to load so currentPlanId() returns the real UUID, not "plan_demo"
   const { data: plan } = usePlanQuery();
+  const planId = plan?.planId;
   return useQuery({
-    queryKey: monthlyTrackerQueryKey,
+    queryKey: monthlyTrackerQueryKeyForPlan(planId),
     queryFn: async () => {
       try {
-        return await financialPlanClient.getMonthlyTracker(plan!.planId!);
+        return await financialPlanClient.getMonthlyTracker(planId!);
       } catch {
         // Anonymous demo plan is read-only — returns empty list for unauthenticated sessions
         return [] as MonthlyTrackerEntry[];
       }
     },
-    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
+    enabled: (!auth.enabled || auth.authenticated) && !!planId,
     staleTime: 30_000,
     retry: false,
   });
@@ -260,7 +266,7 @@ export function useSaveMonthlyTrackerMutation() {
   return useMutation({
     mutationFn: ({ planId, month, status, amount, note }: { planId: string; month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
       financialPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
-    onSuccess: (data) => updateMonthlyTrackerCache(queryClient, queryKey, data),
+    onSuccess: (data, variables) => updateMonthlyTrackerCache(queryClient, queryKey, variables.planId, data),
   });
 }
 
@@ -272,23 +278,25 @@ export function useMonthlyTrackerForYear(year: number) {
   const auth = useAuth();
   const { data: plan } = usePlanQuery();
   const queryClient = useQueryClient();
+  const planId = plan?.planId;
+  const trackerQueryKey = monthlyTrackerQueryKeyForPlan(planId);
 
   return useQuery({
-    queryKey: [...monthlyTrackerQueryKey, year] as const,
+    queryKey: [...trackerQueryKey, "year", year] as const,
     queryFn: async () => {
       try {
-        const data = await financialPlanClient.getMonthlyTracker(plan!.planId!, year);
+        const data = await financialPlanClient.getMonthlyTracker(planId!, year);
         // Merge into the shared cache so the grid picks it up
-        const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(monthlyTrackerQueryKey) ?? [];
+        const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(trackerQueryKey) ?? [];
         const yearStr = String(year);
         const kept = existing.filter((e) => e.month.split("-")[0] !== yearStr);
-        queryClient.setQueryData(monthlyTrackerQueryKey, [...kept, ...data]);
+        queryClient.setQueryData(trackerQueryKey, [...kept, ...data]);
         return data;
       } catch {
         return [] as MonthlyTrackerEntry[];
       }
     },
-    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
+    enabled: (!auth.enabled || auth.authenticated) && !!planId,
     staleTime: 30_000,
     retry: false,
   });
