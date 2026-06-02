@@ -7,6 +7,7 @@ import {
   monthlyTrackerQueryKeyForPlan,
   planQueryKeyForAuth,
   plansQueryKey,
+  updatePlanCacheAndRefresh,
   updateMonthlyTrackerCache,
   updatePlanManagementCaches,
 } from "@/api/planQueries";
@@ -38,6 +39,21 @@ describe("planQueryKeyForAuth", () => {
 });
 
 describe("mutation cache updates", () => {
+  it("writes returned plan data immediately and starts a background refresh", () => {
+    const queryClient = {
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    };
+    const planKey = ["financial-plan", "auth", "user-123"] as const;
+    const plan = { planId: "plan-1", goals: [] };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updatePlanCacheAndRefresh(queryClient as any, planKey, plan as never);
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(planKey, plan);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
+  });
+
   it("partitions monthly tracker cache by plan id", () => {
     expect(monthlyTrackerQueryKeyForPlan("plan-a")).toEqual(["monthly-tracker", "plan-a"]);
     expect(monthlyTrackerQueryKeyForPlan("plan-b")).toEqual(["monthly-tracker", "plan-b"]);
@@ -62,6 +78,7 @@ describe("mutation cache updates", () => {
 
   it("invalidates plan, plan list, and tracker state after plan management mutations", () => {
     const queryClient = {
+      setQueryData: vi.fn(),
       invalidateQueries: vi.fn(),
     };
     const planKey = ["financial-plan", "auth", "user-123"] as const;
@@ -72,6 +89,28 @@ describe("mutation cache updates", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: plansQueryKey });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: monthlyTrackerQueryKey });
+  });
+
+  it("marks the returned plan summary as current before background refresh", () => {
+    const existingPlans = [
+      { id: "plan-1", name: "Основной", current: true },
+      { id: "plan-2", name: "Сценарий", current: false },
+    ];
+    const queryClient = {
+      getQueryData: vi.fn().mockReturnValue(existingPlans),
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    };
+    const planKey = ["financial-plan", "auth", "user-123"] as const;
+    const switchedPlan = { id: "plan-2", name: "Сценарий", current: true };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updatePlanManagementCaches(queryClient as any, planKey, switchedPlan as never);
+
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(plansQueryKey, [
+      { id: "plan-1", name: "Основной", current: false },
+      { id: "plan-2", name: "Сценарий", current: true },
+    ]);
   });
 
   it("merges year-scoped data without discarding entries from other years", () => {

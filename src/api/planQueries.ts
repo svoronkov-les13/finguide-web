@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, QueryClient } from "@tanstack/re
 import { financialPlanClient } from "@/api/financialPlanClient";
 import { useAuth } from "@/auth/AuthProvider";
 import type { AuthSession } from "@/auth/oidc";
-import type { Cashflow, EditablePlanPatch, Goal, MonthlyStatus, MonthlyTrackerEntry, ScenarioId, TrackerEntry } from "@/types/finance";
+import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, PlanSummary, ScenarioId, TrackerEntry } from "@/types/finance";
 
 export const planQueryKey = ["financial-plan"] as const;
 export const anonymousPlanQueryKey = [...planQueryKey, "anonymous"] as const;
@@ -18,6 +18,11 @@ export function planQueryKeyForAuth(auth: { enabled: boolean; authenticated: boo
 
 function useCurrentPlanQueryKey() {
   return planQueryKeyForAuth(useAuth());
+}
+
+export function updatePlanCacheAndRefresh(queryClient: QueryClient, queryKey: readonly unknown[], plan: FinancialPlan) {
+  queryClient.setQueryData(queryKey, plan);
+  queryClient.invalidateQueries({ queryKey });
 }
 
 export function usePlanQuery() {
@@ -102,7 +107,7 @@ export function useUpdateGoalMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<Goal> }) => financialPlanClient.updateGoal(id, patch),
-    onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+    onSuccess: (plan) => updatePlanCacheAndRefresh(queryClient, queryKey, plan),
   });
 }
 
@@ -111,7 +116,7 @@ export function useAddGoalMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: (input: Omit<Goal, "id">) => financialPlanClient.addGoal(input),
-    onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+    onSuccess: (plan) => updatePlanCacheAndRefresh(queryClient, queryKey, plan),
   });
 }
 
@@ -120,7 +125,7 @@ export function useDeleteGoalMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: (id: string) => financialPlanClient.deleteGoal(id),
-    onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+    onSuccess: (plan) => updatePlanCacheAndRefresh(queryClient, queryKey, plan),
   });
 }
 
@@ -129,7 +134,7 @@ export function useReorderGoalsMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: (goalIds: string[]) => financialPlanClient.reorderGoals(goalIds),
-    onSuccess: (plan) => queryClient.setQueryData(queryKey, plan),
+    onSuccess: (plan) => updatePlanCacheAndRefresh(queryClient, queryKey, plan),
   });
 }
 
@@ -196,7 +201,15 @@ export function monthlyTrackerQueryKeyForPlan(planId: string | null | undefined)
   return [...monthlyTrackerQueryKey, planId ?? "pending"] as const;
 }
 
-export function updatePlanManagementCaches(queryClient: QueryClient, queryKey: readonly unknown[]) {
+export function updatePlanManagementCaches(queryClient: QueryClient, queryKey: readonly unknown[], currentPlan?: PlanSummary) {
+  if (currentPlan) {
+    const existingPlans = queryClient.getQueryData<PlanSummary[]>(plansQueryKey) ?? [];
+    const hasPlan = existingPlans.some((plan) => plan.id === currentPlan.id);
+    const nextPlans = (hasPlan ? existingPlans : [...existingPlans, currentPlan])
+      .map((plan) => ({ ...plan, current: plan.id === currentPlan.id }));
+    queryClient.setQueryData(plansQueryKey, nextPlans);
+  }
+
   queryClient.invalidateQueries({ queryKey });
   queryClient.invalidateQueries({ queryKey: plansQueryKey });
   queryClient.invalidateQueries({ queryKey: monthlyTrackerQueryKey });
@@ -217,7 +230,7 @@ export function useCreatePlanMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: (name: string) => financialPlanClient.createPlan(name),
-    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+    onSuccess: (plan) => updatePlanManagementCaches(queryClient, queryKey, plan),
   });
 }
 
@@ -226,7 +239,7 @@ export function useCopyPlanMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: ({ planId, name }: { planId: string; name: string }) => financialPlanClient.copyPlan(planId, name),
-    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+    onSuccess: (plan) => updatePlanManagementCaches(queryClient, queryKey, plan),
   });
 }
 
@@ -235,7 +248,7 @@ export function useSwitchPlanMutation() {
   const queryKey = useCurrentPlanQueryKey();
   return useMutation({
     mutationFn: (planId: string) => financialPlanClient.switchPlan(planId),
-    onSuccess: () => updatePlanManagementCaches(queryClient, queryKey),
+    onSuccess: (plan) => updatePlanManagementCaches(queryClient, queryKey, plan),
   });
 }
 

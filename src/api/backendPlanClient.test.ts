@@ -45,6 +45,60 @@ describe("backendPlanClient plan management", () => {
   });
 });
 
+describe("backendPlanClient goal mutations", () => {
+  it("updates cached goals from mutation responses without rereading heavy analytics", async () => {
+    const initialGoal = apiGoal({ id: "goal-1", name: "Подушка", priority: 1 });
+    const createdGoal = apiGoal({ id: "goal-2", name: "Отпуск", priority: 2, currentCost: 500_000 });
+    let mutationPhase = false;
+    const heavyRequestsAfterMutation: string[] = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (mutationPhase && isHeavyPlanRead(url)) {
+        heavyRequestsAfterMutation.push(url);
+        throw new Error(`Unexpected heavy read after goal mutation: ${url}`);
+      }
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({ data: planState([initialGoal]) });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+      if (url.endsWith("/plans/plan-1/goals") && method === "POST") {
+        return jsonResponse({ data: createdGoal }, 201);
+      }
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    mutationPhase = true;
+
+    const updated = await backendPlanClient.addGoal({
+      name: "Отпуск",
+      icon: "Plane",
+      targetYear: 2027,
+      targetMonth: 8,
+      priority: 2,
+      cost: 500_000,
+      saved: 0,
+      growth: 0.07,
+      reachable: true,
+      type: "onetime",
+    });
+
+    expect(heavyRequestsAfterMutation).toEqual([]);
+    expect(updated.goals.map((goal) => goal.id)).toEqual(["goal-1", "goal-2"]);
+    expect(updated.goals.at(-1)).toMatchObject({ id: "goal-2", name: "Отпуск", cost: 500_000 });
+  });
+});
+
 describe("backendPlanClient tracker journal mapping", () => {
   it("maps UI tracker entries to backend journal requests", () => {
     const entry: Omit<TrackerEntry, "id"> = {
@@ -235,4 +289,90 @@ function jsonResponse(payload: unknown, status = 200) {
     headers: new Headers(),
     text: () => Promise.resolve(JSON.stringify(payload)),
   } as Response);
+}
+
+function isHeavyPlanRead(url: string) {
+  return url.includes("/dashboard")
+    || url.includes("/analytics/")
+    || url.includes("/tracker/entries")
+    || url.endsWith("/scenarios")
+    || url.endsWith("/scenarios/compare");
+}
+
+function apiGoal(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "goal-1",
+    name: "Цель",
+    icon: "Target",
+    currentCost: 1_000_000,
+    savedAmount: 0,
+    currency: "RUB",
+    targetYear: 2027,
+    targetMonth: 12,
+    priority: 1,
+    type: "one_time",
+    growthType: "inflation",
+    growthPct: 7,
+    projectedTargetCost: 1_070_000,
+    projectedSavedAmount: 0,
+    projectedProgressPct: 0,
+    projectedReachable: false,
+    ...overrides,
+  };
+}
+
+function planState(goals: unknown[]) {
+  return {
+    id: "plan-1",
+    name: "Основной",
+    profile: {
+      name: "User",
+      email: "user@example.com",
+      age: 33,
+      initialBalance: 2_000_000,
+    },
+    pension: {
+      currentAge: 33,
+      retirementAge: 60,
+      monthlyExpenses: 150_000,
+      desiredMonthlyExpensesCurrentPrices: 150_000,
+      expectedReturnPct: 10,
+      inflationPct: 7,
+    },
+    modelAssumptions: {
+      startYear: 2026,
+      birthYear: 1993,
+      monthsPerYear: 12,
+      initialCapital: 2_000_000,
+      investmentReturnPct: 10,
+      inflationSchedule: [{ year: 2026, ratePct: 7 }],
+      projectionEndYear: 2036,
+    },
+    incomes: [],
+    expenses: [],
+    goals,
+  };
+}
+
+function dashboardMetrics() {
+  return {
+    totalMonthlyIncome: 300_000,
+    totalYearlyIncome: 3_600_000,
+    totalMonthlyExpenses: 150_000,
+    totalYearlyExpenses: 1_800_000,
+    netMonthlyBalance: 150_000,
+    netYearlyBalance: 1_800_000,
+    savingsRatePct: 50,
+    totalGoalsCost: 1_000_000,
+    totalGoalsSaved: 0,
+    totalGoalsRemaining: 1_000_000,
+    monthlyGoalContribution: 100_000,
+    availableForPension: 50_000,
+    projectedPensionCapital: 10_000_000,
+    yearsToRetirement: 27,
+    emergencyFundTarget: 900_000,
+    emergencyFundCurrent: 0,
+    emergencyFundPct: 0,
+    yearlyProjection: [],
+  };
 }
