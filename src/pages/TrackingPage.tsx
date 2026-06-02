@@ -442,52 +442,23 @@ export function TrackingPage() {
           </Card>
 
           {/* Year summary */}
-            <Card className="p-5 flex-1 flex flex-col justify-between">
-              <div className="mb-2 font-semibold text-[var(--fp-color-foreground)]">
-                {t("tracking.yearSummary", { year: String(viewYear) })}
+          <Card className="p-5">
+            <div className="mb-3 font-semibold text-[var(--fp-color-foreground)]">
+              {t("tracking.yearSummary", { year: String(viewYear) })}
+            </div>
+            <div className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-3 text-[12px]">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2 text-[var(--fp-color-label)]">
+                <span>{t("tracking.currentYearGoalsNeed")}:</span>
+                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">
+                  {formatRub(savingNeeds.currentYearSaved)} {t("tracking.outOf")} {formatRub(savingNeeds.currentYearTotal)}
+                </span>
+                <span>{t("tracking.currentYearMonthlyNeed")}:</span>
+                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
+                <span>{t("tracking.allGoalsMonthlyNeed")}:</span>
+                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
               </div>
-              {(completedMonths.length + partialMonths.length + missedMonths.length) > 0 ? (
-                <>
-                  <p className="text-[13px] text-[var(--fp-color-label)]">
-                    {t("tracking.yearSummaryText", {
-                      year: String(viewYear),
-                      total: String(completedMonths.length + partialMonths.length + missedMonths.length),
-                      completed: String(completedMonths.length),
-                      partial: String(partialMonths.length),
-                    })}
-                  </p>
-                  <div className="mt-3 space-y-2 text-[13px] text-[var(--fp-color-label)] pt-2 border-t border-[var(--fp-color-border)]/40">
-                    <div>
-                      {t("tracking.totalSavings")}: {" "}
-                      <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(totalSaved)}</span>
-                      {" "}{t("tracking.outOfPlanned")}{" "}
-                      <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(totalPlanned)}</span>
-                      {" "}({totalPercent}%)
-                    </div>
-                    <div className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-3 text-[12px]">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2 text-[var(--fp-color-label)]">
-                        {savingNeeds.currentYearTotal > 0 && (
-                          <>
-                            <span>{t("tracking.currentYearGoalsNeed")}:</span>
-                            <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">
-                              {formatRub(savingNeeds.currentYearSaved)} {t("tracking.outOf")} {formatRub(savingNeeds.currentYearTotal)}
-                            </span>
-                            <span>{t("tracking.currentYearMonthlyNeed")}:</span>
-                            <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
-                          </>
-                        )}
-                        <span>{t("tracking.allGoalsMonthlyNeed")}:</span>
-                        <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="text-[13px] text-[var(--fp-color-label)] my-auto">
-                  {t("tracking.yearSummaryEmpty", { year: String(viewYear) })}
-                </p>
-              )}
-            </Card>
+            </div>
+          </Card>
         </div>
       </div>
 

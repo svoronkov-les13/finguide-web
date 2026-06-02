@@ -1,7 +1,15 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from "vitest";
-import { anonymousPlanQueryKey, monthlyTrackerQueryKey, planQueryKeyForAuth, plansQueryKey, updateMonthlyTrackerCache, updatePlanManagementCaches } from "@/api/planQueries";
+import {
+  anonymousPlanQueryKey,
+  monthlyTrackerQueryKey,
+  monthlyTrackerQueryKeyForPlan,
+  planQueryKeyForAuth,
+  plansQueryKey,
+  updateMonthlyTrackerCache,
+  updatePlanManagementCaches,
+} from "@/api/planQueries";
 
 describe("planQueryKeyForAuth", () => {
   it("uses anonymous cache key when OIDC auth is disabled", () => {
@@ -30,6 +38,10 @@ describe("planQueryKeyForAuth", () => {
 });
 
 describe("mutation cache updates", () => {
+  it("partitions monthly tracker cache by plan id", () => {
+    expect(monthlyTrackerQueryKeyForPlan("plan-a")).toEqual(["monthly-tracker", "plan-a"]);
+    expect(monthlyTrackerQueryKeyForPlan("plan-b")).toEqual(["monthly-tracker", "plan-b"]);
+  });
 
   it("writes returned monthly tracker rows and invalidates plan progress immediately", () => {
     const queryClient = {
@@ -41,10 +53,10 @@ describe("mutation cache updates", () => {
     const rows = [{ month: "2026-05", status: "completed", amount: 150000, note: null }];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updateMonthlyTrackerCache(queryClient as any, planKey, rows as never);
+    updateMonthlyTrackerCache(queryClient as any, planKey, "plan-a", rows as never);
 
-    expect(queryClient.getQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey);
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, rows);
+    expect(queryClient.getQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKeyForPlan("plan-a"));
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKeyForPlan("plan-a"), rows);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
   });
 
@@ -76,10 +88,11 @@ describe("mutation cache updates", () => {
     const incoming = [{ month: "2027-01", status: "completed", amount: 80000, note: "bonus" }];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updateMonthlyTrackerCache(queryClient as any, planKey, incoming as never);
+    updateMonthlyTrackerCache(queryClient as any, planKey, "plan-a", incoming as never);
 
     // Should keep 2026 entries, replace 2027 entries
-    expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, [
+    expect(queryClient.getQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKeyForPlan("plan-a"));
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKeyForPlan("plan-a"), [
       existingRows[0], // 2026-05 kept
       incoming[0],     // 2027-01 replaced
     ]);
