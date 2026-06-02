@@ -136,6 +136,7 @@ export const ru = {
     scaleTitle: "Масштабируйте график",
     scaleDescription: "Двигайте ползунки внизу графика для приближения к нужному периоду.",
     capitalTooltip: "Капитал",
+    axisLabel: "млн ₽",
   },
   toast: {
     unlocked: "Достижение разблокировано!",
@@ -877,6 +878,7 @@ export const en = {
     scaleTitle: "Scale the chart",
     scaleDescription: "Move the sliders below the chart to zoom into the period you need.",
     capitalTooltip: "Capital",
+    axisLabel: "mln ₽",
   },
   toast: {
     unlocked: "Achievement unlocked!",

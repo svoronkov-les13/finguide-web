@@ -238,8 +238,16 @@ button {
   stroke-dasharray: 4 7;
 }
 
-.recharts-tooltip-wrapper {
-  outline: none;
+.recharts-wrapper,
+.recharts-surface,
+.recharts-legend-wrapper,
+.recharts-tooltip-wrapper,
+.recharts-default-tooltip,
+.recharts-brush,
+.recharts-brush-slide,
+.recharts-brush-traveller {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* =============================================

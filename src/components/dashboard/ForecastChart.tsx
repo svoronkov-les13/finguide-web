@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import * as Icons from "lucide-react";
 import { Eye, EyeOff, Lightbulb, Maximize2, Minimize2, X, ZoomIn, ZoomOut } from "lucide-react";
 import {
   Area,
@@ -19,8 +20,11 @@ import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatRub, cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
-import type { ForecastPoint, FinancialPlan } from "@/types/finance";
+import type { ForecastPoint, FinancialPlan, Goal } from "@/types/finance";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
+const TypedBrush = Brush as any;
 
 
 /* Style guide chart colors */
@@ -126,6 +130,43 @@ export function ForecastChart() {
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
 
+  const visibleData = useMemo(() => {
+    if (data.length === 0) return [];
+    const start = brushRange.start ?? 0;
+    const end = brushRange.end ?? (data.length - 1);
+    return data.slice(start, end + 1);
+  }, [data, brushRange]);
+
+  const goalsByYear = useMemo(() => {
+    const map = new Map<number, Goal[]>();
+    if (!plan?.goals) return map;
+    for (const goal of plan.goals) {
+      const list = map.get(goal.targetYear) || [];
+      list.push(goal);
+      map.set(goal.targetYear, list);
+    }
+    return map;
+  }, [plan?.goals]);
+
+  const goalReferenceLines = useMemo(() => {
+    if (!visibleSeries.goals || !plan?.goals) return [];
+    const groups: { targetYear: number; age: number; goals: Goal[] }[] = [];
+    goalsByYear.forEach((groupGoals, targetYear) => {
+      const age = targetYear - plan.settings.birthYear;
+      groups.push({ targetYear, age, goals: groupGoals });
+    });
+    return groups;
+  }, [goalsByYear, visibleSeries.goals, plan]);
+
+  const formatAge = (age: number) => {
+    const lastDigit = age % 10;
+    const lastTwoDigits = age % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return `${age} лет`;
+    if (lastDigit === 1) return `${age} год`;
+    if (lastDigit >= 2 && lastDigit <= 4) return `${age} года`;
+    return `${age} лет`;
+  };
+
   const handleZoomIn = () => {
     const len = data.length;
     if (len === 0) return;
@@ -170,6 +211,70 @@ export function ForecastChart() {
     const retirementPoint = data.find((point) => point.year === retirementYear);
     const retirementCapitalVal = retirementPoint ? (retirementPoint.capital / 1_000_000).toFixed(1) : "80.3";
     const pensionText = `${t("chart.pensionMarker").split(":")[0]}: ${retirementCapitalVal} млн`;
+
+    const renderRetirementLabel = (props: any) => {
+      const { viewBox } = props;
+      if (!viewBox) return null;
+      const { x, y } = viewBox;
+      return (
+        <g>
+          <rect
+            x={x - 65}
+            y={y + 10}
+            width={130}
+            height={24}
+            rx={12}
+            fill="var(--fp-color-card)"
+            stroke="var(--fp-color-border-strong)"
+            strokeWidth={1}
+          />
+          <text
+            x={x}
+            y={y + 26}
+            textAnchor="middle"
+            fill="var(--fp-color-muted-foreground)"
+            fontSize={10}
+            fontWeight="bold"
+          >
+            {pensionText}
+          </text>
+        </g>
+      );
+    };
+
+    const renderRetirementBottomLabel = (props: any) => {
+      const { viewBox } = props;
+      if (!viewBox) return null;
+      const { x, y } = viewBox;
+      return (
+        <g>
+          <rect
+            x={x - 30}
+            y={y + 10}
+            width={60}
+            height={20}
+            rx={10}
+            fill="var(--fp-color-card)"
+            stroke="var(--fp-color-border)"
+            strokeWidth={1}
+          />
+          <text
+            x={x}
+            y={y + 23}
+            textAnchor="middle"
+            fill="var(--fp-color-muted-foreground)"
+            fontSize={9}
+            fontWeight="bold"
+          >
+            {t("pension.pensionLine") || "Пенсия"}
+          </text>
+        </g>
+      );
+    };
+
+    /* Goal icons are rendered via a customized SVG layer (see below) to avoid
+       being covered by the ReferenceLine stroke. The reference lines themselves
+       intentionally have NO label — icons float above them. */
 
     return (
       <div className={cn("flex flex-col w-full", isModal && "h-full flex-1 min-h-0")}>
@@ -239,29 +344,23 @@ export function ForecastChart() {
           />
           <LegendPill
             color={CHART_COLORS.savings}
-            label={t("chart.baseFull")}
+            label={t("chart.savings")}
             line
             active={visibleSeries.savings}
             onClick={() => toggleSeries("savings")}
           />
           {plan.scenarioForecasts?.optimistic && (
-            <LegendPill
+            <LegendLabel
               color={CHART_COLORS.optimistic}
               label={t("chart.optimisticFull")}
-              line
               dashed
-              active={visibleSeries.savings}
-              onClick={() => toggleSeries("savings")}
             />
           )}
           {plan.scenarioForecasts?.pessimistic && (
-            <LegendPill
+            <LegendLabel
               color={CHART_COLORS.pessimistic}
               label={t("chart.pessimisticFull")}
-              line
               dashed
-              active={visibleSeries.savings}
-              onClick={() => toggleSeries("savings")}
             />
           )}
         </div>
@@ -283,15 +382,9 @@ export function ForecastChart() {
         )}
 
         {/* Top Chart: Capital Accumulation (Line chart) */}
-        <div className={cn("mt-4 w-full overflow-hidden relative", isModal ? "flex-1 min-h-[250px]" : "h-[250px]")}>
-          {/* Retirement Capital reference label */}
-          {retirementCapitalVal && (
-            <div className="absolute right-10 top-2 z-10 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/80 px-3 py-1 text-[11px] font-bold text-[var(--fp-color-muted-foreground)] shadow-[var(--fp-shadow-soft)]">
-              {pensionText}
-            </div>
-          )}
+        <div className={cn("mt-4 w-full overflow-visible relative z-20", isModal ? "flex-1 min-h-[320px]" : "h-[320px]")}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 0 }}>
+            <ComposedChart data={visibleData} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 8 }}>
               <CartesianGrid vertical={false} stroke="var(--fp-color-border)" strokeDasharray="3 3" />
               {plan.scenarioForecasts?.optimistic && plan.scenarioForecasts?.pessimistic ? (
                 <Area
@@ -303,148 +396,80 @@ export function ForecastChart() {
                   connectNulls
                 />
               ) : null}
-              <XAxis dataKey={xAxisMode} tickLine={false} axisLine={false} minTickGap={20} tick={false} />
+              <XAxis
+                dataKey={xAxisMode}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={20}
+                tickFormatter={(value) => (xAxisMode === "age" ? formatAge(Number(value)) : String(value))}
+                tick={false}
+                height={1}
+              />
               <YAxis
                 domain={[0, chartTop]}
                 ticks={ticks}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => (value === 0 ? "0.0" : String(value))}
+                tickFormatter={(value) => String(value)}
                 tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
-                width={58}
+                width={68}
+                label={{ value: t("chart.axisLabel"), position: 'top', offset: 8, style: { fontSize: 11, fill: 'var(--fp-color-muted-foreground)', fontWeight: 500 } }}
               />
               <ReferenceLine y={0} stroke={CHART_COLORS.zeroLine} strokeWidth={1.5} />
               <Tooltip
-                content={({ active, payload, label }) => {
+                cursor={{ stroke: 'var(--fp-color-border-strong)', strokeWidth: 1, strokeDasharray: '4 3', strokeOpacity: 0.5 }}
+                allowEscapeViewBox={{ x: false, y: true }}
+                content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const row = payload[0].payload as (typeof data)[number];
+                  const titleText = `${row.year} год`;
+                  const yearGoals = goalsByYear.get(row.year) ?? [];
                   return (
-                    <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)]">
-                      <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">
-                        {t("chart.tooltipTitle", {
-                          year: String(xAxisMode === "year" ? label : row.year),
-                          age: String(xAxisMode === "age" ? label : row.age),
-                        })}
+                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
+                      <div className="mb-2 font-bold text-[var(--fp-color-foreground)] text-sm">
+                        {titleText}
                       </div>
-                      <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">{t("chart.savings")}</div>
-                      <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2 border-l-2 border-[var(--fp-color-border)] pl-2">
-                        <span className="text-[var(--fp-color-foreground)] font-medium">— {t("chart.baseFull")}</span>
-                        <span className="font-semibold">{formatRub(row.capitalRubMln * 1_000_000, { compact: true })}</span>
-                        {row.capitalOptimisticRubMln !== undefined ? (
-                          <>
-                            <span className="text-[var(--fp-color-teal)]">-- {t("chart.optimisticFull")}</span>
-                            <span className="font-semibold">{formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}</span>
-                          </>
-                        ) : null}
+                      <div className="text-[var(--fp-color-muted-foreground)] mb-2 uppercase tracking-wider text-[10px] font-bold">
+                        {t("chart.savings")}
+                      </div>
+                      <div className="flex flex-col gap-2">
                         {row.capitalPessimisticRubMln !== undefined ? (
-                          <>
-                            <span className="text-[var(--fp-color-muted-foreground)]">— {t("chart.pessimisticFull")}</span>
-                            <span className="font-semibold">{formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}</span>
-                          </>
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: CHART_COLORS.pessimistic }} />
+                              <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.pessimisticFull")}</span>
+                            </div>
+                            <span className="font-bold text-[var(--fp-color-foreground)]">
+                              {formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}
+                            </span>
+                          </div>
                         ) : null}
+                        {row.capitalOptimisticRubMln !== undefined ? (
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: CHART_COLORS.optimistic }} />
+                              <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.optimisticFull")}</span>
+                            </div>
+                            <span className="font-bold text-[var(--fp-color-foreground)]">
+                              {formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}
+                            </span>
+                          </div>
+                        ) : null}
+                        <div className="flex items-center justify-between gap-6">
+                          <div className="flex items-center gap-2">
+                            <span className="h-0.5 w-3 rounded-full" style={{ backgroundColor: CHART_COLORS.savings }} />
+                            <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.baseFull")}</span>
+                          </div>
+                          <span className="font-bold text-[var(--fp-color-foreground)]">
+                            {formatRub(row.capitalRubMln * 1_000_000, { compact: true })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                }}
-              />
-              {retirementYear ? (
-                <ReferenceLine
-                  x={xAxisMode === "year" ? retirementYear : plan.settings.retirementAge}
-                  stroke={CHART_COLORS.reference}
-                  strokeDasharray="6 5"
-                />
-              ) : null}
-              <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
-              {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
-              {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Subtle dividing line */}
-        <div className="my-3 border-t border-[var(--fp-color-border)] opacity-60" />
-
-        {/* Bottom Chart: Cash Flows (Grouped Bars) */}
-        <div className={cn("mt-2 w-full overflow-hidden relative", isModal ? "flex-1 min-h-[220px]" : "h-[220px]")}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} syncId="finance" margin={{ top: 10, right: 22, left: 0, bottom: 8 }}>
-              <CartesianGrid vertical={false} stroke="var(--fp-color-border)" strokeDasharray="3 3" />
-              <XAxis dataKey={xAxisMode} tickLine={false} axisLine={false} minTickGap={20} tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }} />
-              
-              <YAxis
-                domain={[0, 'auto']}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => value === 0 ? "0.0" : String(value)}
-                tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
-                width={58}
-              />
-
-              <Tooltip
-                cursor={{ fill: 'var(--fp-color-surface-hover)' }}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const row = payload[0].payload as (typeof data)[number];
-                  
-                  // Helper to get active goal names
-                  const getActiveGoalNames = (year: number): string[] => {
-                    const list: string[] = [];
-                    if (plan?.goals) {
-                      plan.goals.forEach((g) => {
-                        if (g.targetYear === year) {
-                          list.push(g.name);
-                        }
-                      });
-                    }
-                    if (plan?.cashflows) {
-                      plan.cashflows.forEach((cf) => {
-                        if (cf.type === "goal" && cf.enabled && cf.startYear <= year && (cf.endYear === null || cf.endYear >= year)) {
-                          list.push(cf.name);
-                        }
-                      });
-                    }
-                    return list;
-                  };
-
-                  const activeGoals = getActiveGoalNames(row.year);
-
-                  return (
-                    <div className="rounded-[var(--fp-radius-xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-3 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[200px]">
-                      <div className="mb-3 font-bold text-[var(--fp-color-foreground)] border-b border-[var(--fp-color-border)] pb-2">
-                        {t("chart.tooltipTitleFlows", {
-                          year: String(xAxisMode === "year" ? label : row.year),
-                          age: String(xAxisMode === "age" ? label : row.age),
-                        })}
-                      </div>
-                      <div className="text-[var(--fp-color-muted-foreground)] mb-1 uppercase tracking-wider text-[10px]">{t("chart.flows")}</div>
-                      <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 ml-2 border-l-2 border-[var(--fp-color-border)] pl-2">
-                        {visibleSeries.income && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{background: CHART_COLORS.income}} />{t("chart.income")}</span>
-                            <span className="font-semibold">{formatRub(row.incomeRubMln * 1_000_000, { compact: true })}</span>
-                          </>
-                        )}
-                        {visibleSeries.expenses && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full" style={{background: CHART_COLORS.expenses}} />{t("chart.expenses")}</span>
-                            <span className="font-semibold">{formatRub(row.onlyExpensesRubMln * 1_000_000, { compact: true })}</span>
-                          </>
-                        )}
-                        {visibleSeries.goals && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full border border-[var(--fp-color-border)] bg-transparent" style={{borderColor: CHART_COLORS.goals, borderWidth: "1.5px", borderStyle: "dashed"}} />{t("chart.goals")}</span>
-                            <span className="font-semibold">{formatRub(row.goalsAbs * 1_000_000, { compact: true })}</span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Display names of active goals in this year exactly like in Figma! */}
-                      {activeGoals.length > 0 && visibleSeries.goals && (
-                        <div className="mt-3 pt-2 border-t border-[var(--fp-color-border)] flex flex-col gap-1.5 ml-2 pl-2 border-l-2 border-[var(--fp-color-border)]">
-                          {activeGoals.map((name, i) => (
-                            <div key={i} className="font-semibold text-[var(--fp-color-foreground)] flex items-center gap-1">
-                              <span className="size-1 rounded-full bg-[var(--fp-color-foreground)]" />
-                              {name}
+                      {yearGoals.length > 0 && visibleSeries.goals && (
+                        <div className="mt-2.5 pt-2.5 border-t border-[var(--fp-color-border)] flex flex-col gap-1">
+                          {yearGoals.map((g) => (
+                            <div key={g.id} className="font-semibold text-[var(--fp-color-foreground)] text-xs">
+                              {g.name}
                             </div>
                           ))}
                         </div>
@@ -456,16 +481,194 @@ export function ForecastChart() {
               {retirementYear ? (
                 <ReferenceLine
                   x={xAxisMode === "year" ? retirementYear : plan.settings.retirementAge}
-                  stroke={CHART_COLORS.reference}
-                  strokeDasharray="6 5"
+                  stroke="var(--fp-color-neutral-80)"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  label={renderRetirementLabel}
+                />
+              ) : null}
+              {goalReferenceLines.map((group) => (
+                <ReferenceLine
+                  key={group.targetYear}
+                  x={xAxisMode === "year" ? group.targetYear : group.age}
+                  stroke={CHART_COLORS.goals}
+                  strokeWidth={1}
+                  strokeDasharray="3 3"
+                />
+              ))}
+              {/* Invisible bars to force band scale matching the bottom chart —
+                  without these, Line uses point scale and Bar uses band scale,
+                  causing syncId pixel positions to diverge */}
+              <Bar dataKey="incomeRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
+              <Bar dataKey="onlyExpensesRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
+              <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
+              {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {/* Goal icons — placed AFTER Lines and Tooltip in JSX so they
+                  render above the cursor line in SVG paint order */}
+              {goalReferenceLines.map((group) => {
+                const sorted = [...group.goals].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+                return (
+                  <ReferenceLine
+                    key={`icon-${group.targetYear}`}
+                    x={xAxisMode === "year" ? group.targetYear : group.age}
+                    stroke="none"
+                    strokeWidth={0}
+                    ifOverflow="extendDomain"
+                    label={(props: any) => {
+                      const { viewBox } = props;
+                      if (!viewBox) return null;
+                      const { x: cx, y: cy } = viewBox;
+                      const radius = 14;
+                      const iconSz = 18;
+                      const gap = radius * 2.4;
+                      return (
+                        <g>
+                          {sorted.map((goal, idx) => {
+                            const Ic = iconMap[goal.icon] ?? Icons.Target;
+                            const oy = idx * gap;
+                            const clr = "var(--fp-color-neutral-80)";
+                            return (
+                              <g key={goal.id}>
+                                <circle cx={cx} cy={cy + 14 + oy} r={radius} fill="var(--fp-color-card)" stroke="var(--fp-color-border-strong)" strokeWidth={1} />
+                                <foreignObject x={cx - iconSz / 2} y={cy + 14 + oy - iconSz / 2} width={iconSz} height={iconSz}>
+                                  <Ic style={{ width: iconSz, height: iconSz, color: clr }} />
+                                </foreignObject>
+                              </g>
+                            );
+                          })}
+                        </g>
+                      );
+                    }}
+                  />
+                );
+              })}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Subtle dividing line */}
+        <div className="my-3 border-t border-[var(--fp-color-border)] opacity-60" />
+
+        {/* Bottom Chart: Cash Flows (Grouped Bars) */}
+        <div className={cn("mt-2 w-full overflow-visible relative z-10", isModal ? "flex-1 min-h-[280px]" : "h-[280px]")}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={visibleData} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 8 }}>
+              <CartesianGrid vertical={false} stroke="var(--fp-color-border)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey={xAxisMode}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={20}
+                tickFormatter={(value) => (xAxisMode === "age" ? formatAge(Number(value)) : String(value))}
+                tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
+              />
+              
+              <YAxis
+                domain={[0, 'auto']}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => String(value)}
+                tick={{ fontSize: 12, fill: 'var(--fp-color-muted-foreground)' }}
+                width={68}
+                label={{ value: t("chart.axisLabel"), position: 'top', offset: 8, style: { fontSize: 11, fill: 'var(--fp-color-muted-foreground)', fontWeight: 500 } }}
+              />
+
+              <Tooltip
+                cursor={{ fill: 'var(--fp-color-surface-hover)' }}
+                allowEscapeViewBox={{ x: false, y: true }}
+                offset={16}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const row = payload[0].payload as (typeof data)[number];
+                  const titleText = `${formatAge(row.age)} (${row.year} г.)`;
+
+                  const yearGoals = goalsByYear.get(row.year) ?? [];
+
+                  return (
+                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
+                      <div className="mb-3 font-bold text-[var(--fp-color-foreground)] text-sm">
+                        {titleText}
+                      </div>
+                      <div className="text-[var(--fp-color-muted-foreground)] mb-2 uppercase tracking-wider text-[10px] font-bold">
+                        {t("chart.flows")}
+                      </div>
+                      <div className="flex flex-col gap-2.5">
+                        {visibleSeries.income && (
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="size-2 rounded-full" style={{ backgroundColor: CHART_COLORS.income }} />
+                              <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.income")}</span>
+                            </div>
+                            <span className="font-bold text-[var(--fp-color-foreground)]">
+                              {formatRub(row.incomeRubMln * 1_000_000, { compact: true })}
+                            </span>
+                          </div>
+                        )}
+                        {visibleSeries.expenses && (
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="size-2 rounded-full" style={{ backgroundColor: CHART_COLORS.expenses }} />
+                              <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.expenses")}</span>
+                            </div>
+                            <span className="font-bold text-[var(--fp-color-foreground)]">
+                              {formatRub(row.onlyExpensesRubMln * 1_000_000, { compact: true })}
+                            </span>
+                          </div>
+                        )}
+                        {visibleSeries.goals && row.goalsAbs > 0 && (
+                          <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-2">
+                              <span className="size-2 rounded-full" style={{ backgroundColor: CHART_COLORS.goals }} />
+                              <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.goals")}</span>
+                            </div>
+                            <span className="font-bold text-[var(--fp-color-foreground)]">
+                              {formatRub(row.goalsAbs * 1_000_000, { compact: true })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Display names of active goals in this year */}
+                      {yearGoals.length > 0 && visibleSeries.goals && (
+                        <div className="mt-2.5 pt-2.5 border-t border-[var(--fp-color-border)] flex flex-col gap-1">
+                          {yearGoals.map((g) => (
+                            <div key={g.id} className="font-semibold text-[var(--fp-color-foreground)] text-xs">
+                              {g.name}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              />
+              {retirementYear ? (
+                <ReferenceLine
+                  x={xAxisMode === "year" ? retirementYear : plan.settings.retirementAge}
+                  stroke="var(--fp-color-neutral-80)"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  label={renderRetirementBottomLabel}
                 />
               ) : null}
               <Bar isAnimationActive={false} dataKey="incomeRubMln" barSize={14} radius={[4, 4, 0, 0]} fill={CHART_COLORS.income} fillOpacity={0.95} name={t("chart.income")} hide={!visibleSeries.income} />
               <Bar isAnimationActive={false} dataKey="onlyExpensesRubMln" barSize={14} radius={[4, 4, 0, 0]} fill={CHART_COLORS.expenses} fillOpacity={0.95} name={t("chart.expenses")} hide={!visibleSeries.expenses} />
-              <Brush
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Standalone Brush Timeline Horizon Slider */}
+        <div className="mt-3 w-full h-[24px] overflow-hidden relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 0, right: 22, left: 68, bottom: 0 }}>
+              <XAxis dataKey={xAxisMode} hide />
+              <YAxis hide />
+              <TypedBrush
+                data={data}
                 startIndex={brushRange.start}
                 endIndex={brushRange.end}
-                onChange={(e) => {
+                onChange={(e: any) => {
                   debounceBrush(e.startIndex ?? undefined, e.endIndex ?? undefined);
                 }}
                 dataKey={xAxisMode}
@@ -568,5 +771,31 @@ function LegendPill({
       {label}
       {active ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
     </button>
+  );
+}
+
+/** Non-interactive legend label for scenario lines (Optimistic / Pessimistic).
+ *  Matches the Figma design where these are plain indicators, not toggle buttons. */
+function LegendLabel({
+  color,
+  label,
+  dashed,
+}: {
+  color: string;
+  label: string;
+  dashed?: boolean;
+}) {
+  return (
+    <span className="inline-flex h-7 items-center gap-2 px-1 text-xs text-[var(--fp-color-muted-foreground)] font-medium">
+      <span
+        className="h-0 w-4"
+        style={{
+          borderColor: color,
+          borderStyle: dashed ? "dashed" : "solid",
+          borderWidth: "1.5px 0 0 0",
+        }}
+      />
+      {label}
+    </span>
   );
 }
