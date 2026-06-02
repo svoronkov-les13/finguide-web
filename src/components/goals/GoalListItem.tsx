@@ -1,10 +1,13 @@
-import { CheckCircle2, Edit2, Lock, Target, GripVertical, TrendingUp } from "lucide-react";
+import { CheckCircle2, Edit2, Target, GripVertical, TrendingUp } from "lucide-react";
+import * as Icons from "lucide-react";
 import type { Goal } from "@/types/finance";
 import { formatRub } from "@/lib/utils";
 import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
 
 import { cn } from "@/lib/utils";
+
+const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 interface GoalListItemProps {
   goal: Goal;
@@ -57,7 +60,10 @@ export function GoalListItem({
     >
       <GripVertical className="size-4 text-[var(--fp-color-muted-foreground)] opacity-50" />
       <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--fp-color-surface)] border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)]">
-         {isQueue ? <Lock className="size-3.5" /> : <Target className="size-3.5" />}
+         {(() => {
+           const GoalIcon = iconMap[goal.icon];
+           return GoalIcon ? <GoalIcon className="size-3.5" /> : <Target className="size-3.5" />;
+         })()}
       </div>
       
       <div className="flex flex-col min-w-[200px] flex-1">

@@ -110,65 +110,65 @@ export function CashflowModal({
           style={{ padding: "32px 0" }}
           onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false); }}
         >
-          <div className="mx-auto flex w-full max-w-[1100px] overflow-hidden rounded-[24px] bg-[var(--fp-color-background)] shadow-elevated" onClick={(e) => e.stopPropagation()}>
+          <div className="mx-auto flex w-full max-w-[1100px] overflow-hidden rounded-[32px] bg-[var(--fp-color-card)] shadow-elevated border border-[var(--fp-color-border)]" onClick={(e) => e.stopPropagation()}>
             {/* Left: Form */}
             <div className="flex flex-1 flex-col overflow-y-auto">
-              <div className="flex items-center justify-between px-10 pt-10 pb-2">
+              <div className="flex items-center justify-between p-8 md:p-10 pb-4">
                 <Dialog.Title className="text-xl font-bold text-[var(--fp-color-foreground)]">
                   {initialData?.id ? t("cashflow.editing") : t(`cashflow.modalTitle_${type}`)}
                 </Dialog.Title>
                 <Dialog.Close asChild>
-                  <button className="grid size-8 place-items-center rounded-full text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]">
+                  <button className="grid size-8 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]">
                     <X className="size-4" />
                   </button>
                 </Dialog.Close>
               </div>
 
-              <div className="flex-1 px-10 pb-10 pt-4">
-                <form id="cashflow-form" onSubmit={handleSubmit} className="grid gap-8">
+              <div className="flex-1 px-8 md:px-10 pb-6">
+                <form id="cashflow-form" onSubmit={handleSubmit} className="grid gap-6">
                   {/* Name */}
                   <div className="grid gap-2">
                     <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t(`cashflow.nameLabel_${type}`)}</Label>
                     <Input
                       placeholder={t(`cashflow.namePlaceholder_${type}`)}
                       {...form.register("name")}
-                      className="h-[48px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm"
+                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] placeholder:text-[var(--fp-color-text-muted)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                     />
                   </div>
 
                   {/* Amount + Currency + Type */}
-                  <div className="grid grid-cols-[1fr_auto_auto] items-end gap-4">
+                  <div className="grid grid-cols-[1fr_120px_270px] items-end gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.amount")}</Label>
                       <Input
                         type="number"
                         {...form.register("amount", { valueAsNumber: true })}
-                        className="h-[48px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm"
+                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.currency")}</Label>
                       <div className="relative">
                         <select
-                          className="h-[48px] w-[100px] appearance-none rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-4 pr-8 text-sm text-[var(--fp-color-foreground)] outline-none"
+                          className="h-12 w-full appearance-none rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 pr-10 text-sm text-[var(--fp-color-foreground)] font-semibold outline-none cursor-pointer hover:border-[var(--fp-color-border-strong)] focus:border-[var(--fp-color-border-strong)]"
                           {...form.register("currency")}
                         >
-                          <option value="RUB">₽</option>
-                          <option value="USD">$</option>
+                          <option value="RUB">RUB</option>
+                          <option value="USD">USD</option>
                         </select>
-                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
+                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
                       </div>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">
                         {t(`cashflow.typeLabel_${type}`)}
                       </Label>
-                      <div className="flex h-[48px] items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1">
+                      <div className="flex h-12 items-center gap-1 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1">
                         <button
                           type="button"
                           onClick={() => setFrequency("monthly")}
                           className={cn(
-                            "h-full rounded-full px-4 text-sm font-medium transition-all",
+                            "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isMonthly
                               ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
@@ -180,7 +180,7 @@ export function CashflowModal({
                           type="button"
                           onClick={() => setFrequency("yearly")}
                           className={cn(
-                            "h-full rounded-full px-4 text-sm font-medium transition-all",
+                            "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isYearly
                               ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
@@ -192,7 +192,7 @@ export function CashflowModal({
                           type="button"
                           onClick={() => setFrequency("onetime")}
                           className={cn(
-                            "h-full rounded-full px-4 text-sm font-medium transition-all",
+                            "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isOnetime
                               ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
@@ -211,7 +211,7 @@ export function CashflowModal({
                       <Input
                         type="number"
                         {...form.register("startYear", { valueAsNumber: true })}
-                        className="h-[48px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm"
+                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -220,7 +220,7 @@ export function CashflowModal({
                         type="number"
                         placeholder={t("cashflow.indefinite")}
                         {...form.register("endYear", { setValueAs: (v) => (v === "" || v === null ? null : Number(v)) })}
-                        className="h-[48px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm"
+                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                   </div>
@@ -229,13 +229,10 @@ export function CashflowModal({
                   <div className="grid gap-4">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.growthTitle")}</span>
-                      <span className="grid size-4 place-items-center rounded-full border border-[var(--fp-color-border)] text-[9px] text-[var(--fp-color-muted-foreground)]">
-                        ?
-                      </span>
                     </div>
 
                     {/* Inflation toggle */}
-                    <div className="flex items-center justify-between rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-5">
+                    <div className="flex items-center justify-between rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 p-5">
                       <div>
                         <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.growthInflation")}</div>
                         <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
@@ -251,7 +248,7 @@ export function CashflowModal({
                     </div>
 
                     {/* Range growth */}
-                    <div className="rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-5">
+                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 p-5">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
@@ -280,9 +277,8 @@ export function CashflowModal({
                                     <Input
                                       type="number"
                                       {...form.register(`growthRanges.${index}.startYear` as const, { valueAsNumber: true })}
-                                      className="h-[42px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 pr-8 text-sm"
+                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
-                                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
                                   </div>
                                 </div>
                                 <div className="grid gap-1.5">
@@ -294,9 +290,8 @@ export function CashflowModal({
                                       {...form.register(`growthRanges.${index}.endYear` as const, {
                                         setValueAs: (v) => (v === "" || v === null ? null : Number(v)),
                                       })}
-                                      className="h-[42px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 pr-8 text-sm"
+                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
-                                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
                                   </div>
                                 </div>
                                 <div className="grid gap-1.5">
@@ -306,7 +301,7 @@ export function CashflowModal({
                                       type="number"
                                       step="0.1"
                                       {...form.register(`growthRanges.${index}.growthPercent` as const, { valueAsNumber: true })}
-                                      className="h-[42px] rounded-full border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 pr-8 text-sm"
+                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 pr-8 text-sm text-[var(--fp-color-foreground)] text-center font-semibold focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
                                     <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">
                                       %
@@ -327,7 +322,7 @@ export function CashflowModal({
                                 <button
                                   type="button"
                                   onClick={() => removeRange(index)}
-                                  className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-3 py-1.5 text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:text-red-500"
+                                  className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-3 py-1.5 text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:text-red-500"
                                 >
                                   <Trash2 className="size-3" />
                                   {t("cashflow.delete")}
@@ -344,7 +339,7 @@ export function CashflowModal({
                                 growthPercent: 0,
                               })
                             }
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] py-3 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+                            className="flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-[var(--fp-color-border)] py-3 text-sm font-semibold text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
                           >
                             {t("cashflow.addRange")}
                           </button>
@@ -356,11 +351,11 @@ export function CashflowModal({
               </div>
 
               {/* Bottom buttons */}
-              <div className="flex items-center gap-3 px-10 pb-8">
+              <div className="flex items-center gap-4 px-8 md:px-10 pb-8 pt-4">
                 <button
                   type="submit"
                   form="cashflow-form"
-                  className="flex items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-[var(--fp-color-card)] transition hover:opacity-90"
                 >
                   <Check className="size-4" />
                   {initialData?.id ? t("cashflow.save") : t("cashflow.add")}
@@ -368,7 +363,7 @@ export function CashflowModal({
                 <button
                   type="button"
                   onClick={() => onOpenChange(false)}
-                  className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-6 py-3 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+                  className="inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-6 text-sm font-semibold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)]"
                 >
                   <X className="size-4" />
                   {t("cashflow.cancel")}
@@ -377,7 +372,7 @@ export function CashflowModal({
                   <button
                     type="button"
                     onClick={onDelete}
-                    className="ml-auto flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
+                    className="ml-auto inline-flex h-12 items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-6 text-sm font-semibold text-red-600 transition hover:bg-red-500/20"
                   >
                     <Trash2 className="size-4" />
                     {t("cashflow.delete")}
@@ -387,13 +382,13 @@ export function CashflowModal({
             </div>
 
             {/* Right: Instruction panel */}
-            <div className="hidden w-[320px] shrink-0 flex-col overflow-y-auto border-l border-[var(--fp-color-border)] bg-[var(--fp-color-background)] p-8 lg:flex">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold" style={{ color: type === "income" ? "#2D8B5E" : "#C75D3A" }}>
+            <div className="hidden w-[360px] shrink-0 flex-col bg-[var(--fp-color-surface)] p-8 md:p-10 md:flex border-l border-[var(--fp-color-border)] overflow-y-auto">
+              <div className="mb-4 flex items-center gap-2 text-sm font-bold" style={{ color: type === "income" ? "var(--fp-color-teal)" : "var(--fp-color-coral)" }}>
                 <BookOpen className="size-4" />
                 {t("cashflow.instructionLabel")}
               </div>
 
-              <p className="mb-6 text-sm leading-relaxed text-[var(--fp-color-muted-foreground)]">
+              <p className="mb-6 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
                 {t(`cashflow.instructionIntro_${type}`)}
               </p>
 
@@ -402,7 +397,7 @@ export function CashflowModal({
                   <div key={key} className="flex items-start gap-3">
                     <span
                       className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: type === "income" ? "#2D8B5E" : "#C75D3A" }}
+                      style={{ backgroundColor: type === "income" ? "var(--fp-color-teal)" : "var(--fp-color-coral)" }}
                     >
                       {i + 1}
                     </span>
@@ -418,21 +413,21 @@ export function CashflowModal({
                 ))}
               </div>
 
-              <div className="my-6 border-t border-[var(--fp-color-border)]" />
+              <div className="mt-auto">
+                <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--fp-color-muted-foreground)]">
+                  <Lightbulb className="size-4" />
+                  <span>{t("cashflow.tipsLabel")}</span>
+                </div>
 
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--fp-color-muted-foreground)]">
-                <Lightbulb className="size-4" />
-                {t("cashflow.tipsLabel")}
+                <ul className="flex flex-col gap-2.5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--fp-color-primary)] opacity-50" />
+                      <span>{t(`cashflow.tip${i}_${type}` as Parameters<typeof t>[0])}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              <ul className="flex flex-col gap-2.5">
-                {[1, 2, 3, 4].map((i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                    <span className="mt-0.5 text-[10px]">→</span>
-                    <span>{t(`cashflow.tip${i}_${type}` as Parameters<typeof t>[0])}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </Dialog.Content>
