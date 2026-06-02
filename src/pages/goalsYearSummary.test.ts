@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalYearSummary, goalProjectedCost } from "@/pages/goalsYearSummary";
+import { goalPortfolioSummary, goalYearSummary, goalProjectedCost } from "@/pages/goalsYearSummary";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {
@@ -38,6 +38,21 @@ describe("goalYearSummary", () => {
       totalProjectedCost: 1_420_000,
       remaining: 1_200_000,
       monthlyUntilYearEnd: 171_429,
+    });
+  });
+});
+
+describe("goalPortfolioSummary", () => {
+  it("uses inflation-adjusted projected costs for the total goals amount", () => {
+    const goals = [
+      goal({ id: "car", cost: 1_000_000, projectedCost: 1_180_000, saved: 180_000 }),
+      goal({ id: "trip", cost: 240_000, saved: 40_000 }),
+    ];
+
+    expect(goalPortfolioSummary(goals)).toEqual({
+      totalProjectedCost: 1_420_000,
+      totalSaved: 220_000,
+      accumulatedPercent: 15,
     });
   });
 });

@@ -9,9 +9,8 @@ import type { Goal } from "@/types/finance";
 import { GoalListItem } from "@/components/goals/GoalListItem";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
-import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
+import { goalPortfolioSummary, goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
 import { trackingActiveGoal } from "@/pages/trackingGoal";
 
 export function GoalsPage() {
@@ -132,9 +131,7 @@ export function GoalsPage() {
   const currentYear = now.getFullYear();
   const currentMonthIdx = now.getMonth();
   const monthsInYear = plan.settings.monthsInYear ?? 12;
-  const totalCost = goals.reduce((sum, goal) => sum + goalProgress(goal).cost, 0);
-  const totalSaved = goals.reduce((sum, goal) => sum + goalProgress(goal).saved, 0);
-  const accumulatedPercent = totalCost > 0 ? Math.min(100, Math.round((totalSaved / totalCost) * 100)) : 0;
+  const { totalProjectedCost: totalCost, accumulatedPercent } = goalPortfolioSummary(goals);
   
   const filteredGoals = goals.filter((goal) => {
     const matchesSearch = goal.name.toLowerCase().includes(searchQuery.toLowerCase());

@@ -16,13 +16,14 @@ export function nearestGoalMonthlyTarget(goals: Goal[] | undefined, currentYear:
 }
 
 export function goalSavingNeeds(goals: Goal[] | undefined, currentYear: number, currentMonthIdx: number, monthsInYear = 12) {
-  const activeGoals = (goals ?? []).filter((goal) => goalTargetCost(goal) <= 0 || goal.saved < goalTargetCost(goal));
+  const activeGoals = orderedTrackingGoals(goals).filter((goal) => goalTargetCost(goal) <= 0 || goal.saved < goalTargetCost(goal));
   const currentYearGoals = activeGoals.filter((goal) => goal.targetYear === currentYear);
+  const summaryGoals = currentYearGoals.length > 0 ? currentYearGoals : activeGoals.slice(0, 1);
 
   return {
-    currentYearSaved: sumSaved(currentYearGoals),
-    currentYearTotal: sumTargetCost(currentYearGoals),
-    currentYearMonthly: sumMonthlyNeed(currentYearGoals, currentYear, currentMonthIdx, monthsInYear),
+    currentYearSaved: sumSaved(summaryGoals),
+    currentYearTotal: sumTargetCost(summaryGoals),
+    currentYearMonthly: sumMonthlyNeed(summaryGoals, currentYear, currentMonthIdx, monthsInYear),
     allGoalsMonthly: sumMonthlyNeed(activeGoals, currentYear, currentMonthIdx, monthsInYear),
   };
 }
