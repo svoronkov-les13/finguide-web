@@ -57,7 +57,7 @@ const backendFirstClient = {
   saveWhatIfScenario: (input: Parameters<typeof backendPlanClient.saveWhatIfScenario>[0]) =>
     activeClient().saveWhatIfScenario(input),
   // Monthly tracker — always hit backend
-  getMonthlyTracker: (planId: string) => backendPlanClient.getMonthlyTracker(planId),
+  getMonthlyTracker: (planId: string, year?: number) => backendPlanClient.getMonthlyTracker(planId, year),
   saveMonthlyTrackerEntry: (planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
     backendPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
 };

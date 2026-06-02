@@ -731,8 +731,9 @@ export const backendPlanClient = {
 
   // ─── Monthly Tracker ──────────────────────────────────────────────────────
 
-  async getMonthlyTracker(planId: string): Promise<MonthlyTrackerEntry[]> {
-    const raw = await backendJson<unknown[]>(`/plans/${planId}/calendar/monthly-tracker`, undefined, "GET /monthly-tracker");
+  async getMonthlyTracker(planId: string, year?: number): Promise<MonthlyTrackerEntry[]> {
+    const yearParam = year != null ? `?year=${year}` : "";
+    const raw = await backendJson<unknown[]>(`/plans/${planId}/calendar/monthly-tracker${yearParam}`, undefined, "GET /monthly-tracker");
     return raw.map(monthlyTrackerFromApi);
   },
 
@@ -742,7 +743,8 @@ export const backendPlanClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ month, status, amount: amount ?? undefined, note: note ?? undefined }),
     }, "POST /monthly-tracker");
-    return backendPlanClient.getMonthlyTracker(planId);
+    const year = Number(month.split("-")[0]) || undefined;
+    return backendPlanClient.getMonthlyTracker(planId, year);
   },
 };
 
