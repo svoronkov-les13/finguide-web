@@ -199,7 +199,11 @@ export function updatePlanManagementCaches(queryClient: QueryClient, queryKey: r
 }
 
 export function updateMonthlyTrackerCache(queryClient: QueryClient, queryKey: readonly unknown[], data: MonthlyTrackerEntry[]) {
-  queryClient.setQueryData(monthlyTrackerQueryKey, data);
+  // Merge: replace entries for the affected year(s) while keeping others intact
+  const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(monthlyTrackerQueryKey) ?? [];
+  const incomingYears = new Set(data.map((e) => e.month.split("-")[0]));
+  const kept = existing.filter((e) => !incomingYears.has(e.month.split("-")[0]));
+  queryClient.setQueryData(monthlyTrackerQueryKey, [...kept, ...data]);
   queryClient.invalidateQueries({ queryKey });
 }
 
@@ -257,5 +261,35 @@ export function useSaveMonthlyTrackerMutation() {
     mutationFn: ({ planId, month, status, amount, note }: { planId: string; month: string; status: MonthlyStatus; amount?: number | null; note?: string | null }) =>
       financialPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
     onSuccess: (data) => updateMonthlyTrackerCache(queryClient, queryKey, data),
+  });
+}
+
+/**
+ * Fetches tracker data for a specific year and merges it into the shared cache.
+ * Use in TrackingPage to load data when the user switches the viewed year.
+ */
+export function useMonthlyTrackerForYear(year: number) {
+  const auth = useAuth();
+  const { data: plan } = usePlanQuery();
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: [...monthlyTrackerQueryKey, year] as const,
+    queryFn: async () => {
+      try {
+        const data = await financialPlanClient.getMonthlyTracker(plan!.planId!, year);
+        // Merge into the shared cache so the grid picks it up
+        const existing = queryClient.getQueryData<MonthlyTrackerEntry[]>(monthlyTrackerQueryKey) ?? [];
+        const yearStr = String(year);
+        const kept = existing.filter((e) => e.month.split("-")[0] !== yearStr);
+        queryClient.setQueryData(monthlyTrackerQueryKey, [...kept, ...data]);
+        return data;
+      } catch {
+        return [] as MonthlyTrackerEntry[];
+      }
+    },
+    enabled: (!auth.enabled || auth.authenticated) && !!plan?.planId,
+    staleTime: 30_000,
+    retry: false,
   });
 }

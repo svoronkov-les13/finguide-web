@@ -33,6 +33,7 @@ describe("mutation cache updates", () => {
 
   it("writes returned monthly tracker rows and invalidates plan progress immediately", () => {
     const queryClient = {
+      getQueryData: vi.fn().mockReturnValue([]),
       setQueryData: vi.fn(),
       invalidateQueries: vi.fn(),
     };
@@ -42,6 +43,7 @@ describe("mutation cache updates", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateMonthlyTrackerCache(queryClient as any, planKey, rows as never);
 
+    expect(queryClient.getQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey);
     expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, rows);
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
   });
@@ -58,5 +60,28 @@ describe("mutation cache updates", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: plansQueryKey });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: monthlyTrackerQueryKey });
+  });
+
+  it("merges year-scoped data without discarding entries from other years", () => {
+    const existingRows = [
+      { month: "2026-05", status: "completed", amount: 100000, note: null },
+      { month: "2027-01", status: "partial", amount: 50000, note: null },
+    ];
+    const queryClient = {
+      getQueryData: vi.fn().mockReturnValue(existingRows),
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    };
+    const planKey = ["financial-plan", "auth", "user-123"] as const;
+    const incoming = [{ month: "2027-01", status: "completed", amount: 80000, note: "bonus" }];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updateMonthlyTrackerCache(queryClient as any, planKey, incoming as never);
+
+    // Should keep 2026 entries, replace 2027 entries
+    expect(queryClient.setQueryData).toHaveBeenCalledWith(monthlyTrackerQueryKey, [
+      existingRows[0], // 2026-05 kept
+      incoming[0],     // 2027-01 replaced
+    ]);
   });
 });

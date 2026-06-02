@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Page } from "@/components/layout/Page";
 import { CheckCircle2, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { usePlanQuery, useMonthlyTrackerQuery, useSaveMonthlyTrackerMutation } from "@/api/planQueries";
+import { usePlanQuery, useMonthlyTrackerQuery, useMonthlyTrackerForYear, useSaveMonthlyTrackerMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatRub, cn } from "@/lib/utils";
@@ -20,9 +20,10 @@ interface MonthFormProps {
   open: boolean;
   onClose: () => void;
   t: ReturnType<typeof useI18n>["t"];
+  isFuture?: boolean;
 }
 
-function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, t }: MonthFormProps) {
+function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, t, isFuture }: MonthFormProps) {
   const saveMutation = useSaveMonthlyTrackerMutation();
   const [amount, setAmount] = useState<string>(String(month.amount ?? monthlyTarget));
   const [note, setNote] = useState<string>("");
@@ -49,7 +50,7 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
   const yearLabel = monthKey.split("-")[0];
   const monthIdx = parseInt(monthKey.split("-")[1]) - 1;
   const monthLabel = MONTH_NAMES_RU[monthIdx] ?? month.name;
-  const isPast = month.status !== "current" && month.status !== "pending";
+  const isPast = !isFuture && month.status !== "current" && month.status !== "pending";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -65,7 +66,7 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
                   {monthLabel} {yearLabel}
                 </DialogTitle>
                 <div className="text-[12px] text-[var(--fp-color-label)]">
-                  {isPast ? t("tracking.pastMonth") : t("tracking.currentMonth")}
+                  {isFuture ? t("tracking.plannedMonth") : isPast ? t("tracking.pastMonth") : t("tracking.currentMonth")}
                 </div>
               </div>
             </div>
@@ -188,6 +189,9 @@ export function TrackingPage() {
   const [viewYear, setViewYear] = useState(currentYear);
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
 
+  // Fetch tracker data for the currently viewed year (merges into shared cache)
+  useMonthlyTrackerForYear(viewYear);
+
   const activeGoal = trackingActiveGoal(plan?.goals);
   const activeGoalTargetCost = activeGoal ? goalTargetCost(activeGoal) : 0;
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
@@ -249,6 +253,16 @@ export function TrackingPage() {
   function getStatusLabel(m: MonthData) {
     const monthIdx = parseInt(m.id) - 1;
     const isPastMonth = viewYear < currentYear || (viewYear === currentYear && monthIdx < currentMonthIdx);
+    const isFutureMonth = viewYear > currentYear || (viewYear === currentYear && monthIdx > currentMonthIdx);
+
+    // Future months can't be "completed" — show as planned
+    if (isFutureMonth) {
+      return (
+        <span className="text-[11px] text-[var(--fp-color-muted-foreground)]">
+          {t("tracking.ahead")}
+        </span>
+      );
+    }
 
     switch (m.status) {
       case "completed": 
@@ -276,6 +290,14 @@ export function TrackingPage() {
     }
   }
 
+  function getCardStyleForMonth(m: MonthData) {
+    const monthIdx = parseInt(m.id) - 1;
+    const isFutureMonth = viewYear > currentYear || (viewYear === currentYear && monthIdx > currentMonthIdx);
+    // Future months always get pending styling, regardless of backend status
+    if (isFutureMonth) return getCardStyle("pending");
+    return getCardStyle(m.status);
+  }
+
   const selectedMonth = selectedMonthId ? months.find((m) => m.id === selectedMonthId) : null;
 
   return (
@@ -287,7 +309,7 @@ export function TrackingPage() {
       </header>
 
       {/* Top cards */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 mb-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:min-h-[380px] mb-6">
         {/* Left column: Active Goal + Monthly Norm stacked */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           {/* Active goal */}
@@ -328,7 +350,7 @@ export function TrackingPage() {
           </Card>
 
           {/* Monthly norm card */}
-          <Card className="p-5 flex flex-col justify-between min-h-[190px]">
+          <Card className="p-5 flex-1 flex flex-col justify-between">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--fp-color-label)]">
                 {t("tracking.monthlyNorm")} — {t("tracking.incomeMinusExpenses")}
@@ -385,8 +407,10 @@ export function TrackingPage() {
                   <span className="text-[14px] font-semibold text-[var(--fp-color-foreground)]">
                     {MONTH_NAMES_RU[currentMonthIdx]} {currentYear}
                   </span>
+                  <span className="rounded-full bg-[var(--fp-color-foreground)]/8 px-2 py-px text-[10px] font-semibold text-[var(--fp-color-label)]">
+                    {t("tracking.current")}
+                  </span>
                 </div>
-                <div className="mt-0.5 text-[11px] text-[var(--fp-color-label)]">{t("tracking.currentMonth")}</div>
               </div>
               {(currentMonthData?.status === "pending" || currentMonthData?.status === "current") && (
                 <button
@@ -418,23 +442,52 @@ export function TrackingPage() {
           </Card>
 
           {/* Year summary */}
-          <Card className="p-5">
-            <div className="mb-3 font-semibold text-[var(--fp-color-foreground)]">
-              {t("tracking.yearSummary", { year: String(viewYear) })}
-            </div>
-            <div className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-3 text-[12px]">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2 text-[var(--fp-color-label)]">
-                <span>{t("tracking.currentYearGoalsNeed")}:</span>
-                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">
-                  {formatRub(savingNeeds.currentYearSaved)} {t("tracking.outOf")} {formatRub(savingNeeds.currentYearTotal)}
-                </span>
-                <span>{t("tracking.currentYearMonthlyNeed")}:</span>
-                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
-                <span>{t("tracking.allGoalsMonthlyNeed")}:</span>
-                <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
+            <Card className="p-5 flex-1 flex flex-col justify-between">
+              <div className="mb-2 font-semibold text-[var(--fp-color-foreground)]">
+                {t("tracking.yearSummary", { year: String(viewYear) })}
               </div>
-            </div>
-          </Card>
+              {(completedMonths.length + partialMonths.length + missedMonths.length) > 0 ? (
+                <>
+                  <p className="text-[13px] text-[var(--fp-color-label)]">
+                    {t("tracking.yearSummaryText", {
+                      year: String(viewYear),
+                      total: String(completedMonths.length + partialMonths.length + missedMonths.length),
+                      completed: String(completedMonths.length),
+                      partial: String(partialMonths.length),
+                    })}
+                  </p>
+                  <div className="mt-3 space-y-2 text-[13px] text-[var(--fp-color-label)] pt-2 border-t border-[var(--fp-color-border)]/40">
+                    <div>
+                      {t("tracking.totalSavings")}: {" "}
+                      <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(totalSaved)}</span>
+                      {" "}{t("tracking.outOfPlanned")}{" "}
+                      <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(totalPlanned)}</span>
+                      {" "}({totalPercent}%)
+                    </div>
+                    <div className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-3 text-[12px]">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 gap-y-2 text-[var(--fp-color-label)]">
+                        {savingNeeds.currentYearTotal > 0 && (
+                          <>
+                            <span>{t("tracking.currentYearGoalsNeed")}:</span>
+                            <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">
+                              {formatRub(savingNeeds.currentYearSaved)} {t("tracking.outOf")} {formatRub(savingNeeds.currentYearTotal)}
+                            </span>
+                            <span>{t("tracking.currentYearMonthlyNeed")}:</span>
+                            <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.currentYearMonthly)}</span>
+                          </>
+                        )}
+                        <span>{t("tracking.allGoalsMonthlyNeed")}:</span>
+                        <span className="text-right font-semibold tabular-nums text-[var(--fp-color-foreground)]">{formatRub(savingNeeds.allGoalsMonthly)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-[13px] text-[var(--fp-color-label)] my-auto">
+                  {t("tracking.yearSummaryEmpty", { year: String(viewYear) })}
+                </p>
+              )}
+            </Card>
         </div>
       </div>
 
@@ -477,20 +530,34 @@ export function TrackingPage() {
           {months.map((m) => {
             const isSelected = selectedMonthId === m.id;
             const canMark = m.status === "current" || m.status === "pending" || m.status === "missed" || m.status === "partial" || m.status === "completed";
+            const monthIdx = parseInt(m.id) - 1;
+            const isPastOrCurrent = viewYear < currentYear || (viewYear === currentYear && monthIdx <= currentMonthIdx);
+            const isFuture = !isPastOrCurrent;
             return (
               <button
                 key={m.id}
                 onClick={() => canMark ? setSelectedMonthId(isSelected ? null : m.id) : undefined}
                 className={cn(
                   "group relative rounded-[14px] border p-4 text-left transition-all hover:shadow-sm flex items-center justify-between min-h-[72px]",
-                  getCardStyle(m.status),
+                  getCardStyleForMonth(m),
+                  isFuture && "border-dashed opacity-75",
                   isSelected && "ring-2 ring-[var(--fp-color-teal)]",
                 )}
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[13px] font-bold text-[var(--fp-color-foreground)]">
-                    {MONTH_NAMES_RU[parseInt(m.id) - 1]}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-bold text-[var(--fp-color-foreground)]">
+                      {MONTH_NAMES_RU[monthIdx]}
+                    </span>
+                    <span className={cn(
+                      "rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider",
+                      isPastOrCurrent
+                        ? "bg-[var(--fp-color-foreground)]/8 text-[var(--fp-color-foreground)]"
+                        : "bg-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)]"
+                    )}>
+                      {isPastOrCurrent ? t("tracking.factBadge") : t("tracking.planBadge")}
+                    </span>
+                  </div>
                   {m.amount ? (
                     <span className="text-[12px] font-semibold text-[var(--fp-color-foreground)] opacity-90">
                       {formatRub(m.amount)}
@@ -525,6 +592,10 @@ export function TrackingPage() {
           open={!!selectedMonthId}
           onClose={() => setSelectedMonthId(null)}
           t={t}
+          isFuture={(() => {
+            const idx = parseInt(selectedMonth.id) - 1;
+            return viewYear > currentYear || (viewYear === currentYear && idx > currentMonthIdx);
+          })()}
         />
       )}
     </Page>
