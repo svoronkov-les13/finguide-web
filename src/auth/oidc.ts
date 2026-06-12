@@ -1,6 +1,7 @@
 const AUTH_SESSION_KEY = "finguide.auth.session";
 const OIDC_STATE_KEY = "finguide.oidc.state";
 const TOKEN_EXPIRY_SKEW_MS = 30_000;
+const DEFAULT_API_BASE_URL = "/finguide-api/api/v1";
 
 export type AuthSession = {
   accessToken: string;
@@ -28,6 +29,13 @@ type TokenResponse = {
   id_token?: string;
   token_type?: string;
   expires_in?: number;
+};
+
+type RegistrationRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
 };
 
 export const oidcAuthEnabled = import.meta.env.VITE_FINGUIDE_AUTH_ENABLED === "true";
@@ -220,6 +228,22 @@ export async function loginWithCredentials(email: string, password: string) {
   return storeTokenResponse(token);
 }
 
+export async function registerWithCredentials(request: RegistrationRequest) {
+  const response = await fetch(`${apiBaseUrl()}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const errorMessage = (errorBody as { error?: { message?: string } }).error?.message;
+    throw new Error(errorMessage || `Registration failed with HTTP ${response.status}`);
+  }
+
+  return loginWithCredentials(request.email, request.password);
+}
+
 /**
  * Build the Keycloak registration URL (redirects user to Keycloak's registration form).
  */
@@ -302,6 +326,10 @@ function appBasePath() {
   const value = import.meta.env.VITE_FINGUIDE_BASE_PATH || "/";
   const normalized = value.endsWith("/") ? value.slice(0, -1) : value;
   return normalized === "/" ? "" : normalized;
+}
+
+function apiBaseUrl() {
+  return trimTrailingSlash(import.meta.env.VITE_FINGUIDE_API_BASE_URL || DEFAULT_API_BASE_URL);
 }
 
 function trimTrailingSlash(value: string) {
