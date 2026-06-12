@@ -183,6 +183,7 @@ export const ru = {
       submit: "Зарегистрироваться",
       hasAccount: "Уже есть аккаунт?",
       login: "Войти",
+      error: "Не удалось зарегистрироваться",
     },
     callback: {
       title: "Завершаем вход",
@@ -944,6 +945,7 @@ export const en = {
       submit: "Sign up",
       hasAccount: "Already have an account?",
       login: "Sign in",
+      error: "Registration failed",
     },
     callback: {
       title: "Completing sign-in",
