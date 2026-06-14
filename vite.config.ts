@@ -11,6 +11,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const backendUrl = env.VITE_FINGUIDE_BACKEND_URL ?? "http://localhost:8080";
 
+  const keycloakUrl = (() => {
+    const issuer = env.VITE_FINGUIDE_OIDC_ISSUER_URL;
+    if (issuer) {
+      try { return new URL(issuer).origin; } catch { /* fall through */ }
+    }
+    return backendUrl;
+  })();
+
   return {
     base: env.VITE_FINGUIDE_BASE_PATH ?? "/",
     plugins: [react(), tailwindcss()],
@@ -39,7 +47,7 @@ export default defineConfig(({ mode }) => {
         },
         // Only proxy Keycloak realm paths — NOT /auth/callback which is a React route.
         "/auth/realms": {
-          target: backendUrl,
+          target: keycloakUrl,
           changeOrigin: true,
           secure: false,
         },

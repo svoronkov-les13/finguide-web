@@ -16,6 +16,7 @@ interface InstructionStepProps {
 
 interface InstructionTipProps {
   children: React.ReactNode;
+  tipsTitle?: string;
 }
 
 export function InstructionPanel({ title, children, className }: InstructionPanelProps) {
@@ -56,11 +57,11 @@ export function InstructionStep({ number, title, children }: InstructionStepProp
   );
 }
 
-export function InstructionTips({ children }: InstructionTipProps) {
+export function InstructionTips({ children, tipsTitle = "💡 Tips" }: InstructionTipProps) {
   return (
     <div className="mt-4 border-t border-[var(--fp-color-divider)] pt-4">
       <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-[var(--fp-color-accent-gold)]">
-        💡 Советы
+        {tipsTitle}
       </p>
       <ul className="space-y-1.5 text-xs leading-5 text-[var(--fp-color-muted-foreground)]">
         {children}

@@ -4,11 +4,12 @@ import { CheckCircle2, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { usePlanQuery, useMonthlyTrackerQuery, useMonthlyTrackerForYear, useSaveMonthlyTrackerMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatRub, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalSavingNeeds, goalTargetCost, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
 import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
+import { useFormat } from "@/lib/useFormat";
 
 // ─── Month Form Dialog ────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ interface MonthFormProps {
 
 function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, t, isFuture }: MonthFormProps) {
   const saveMutation = useSaveMonthlyTrackerMutation();
+  const { formatRub } = useFormat();
   const [amount, setAmount] = useState<string>(String(month.amount ?? monthlyTarget));
   const [note, setNote] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,9 +95,9 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
                 step="1000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-4 py-2.5 pr-8 text-[15px] font-semibold text-[var(--fp-color-foreground)] outline-none focus:border-[var(--fp-color-teal)] focus:ring-1 focus:ring-[var(--fp-color-teal)]"
+                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-5 pr-8 text-sm font-semibold text-[var(--fp-color-foreground)] outline-none transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[var(--fp-color-label)]">₽</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--fp-color-label)]">₽</span>
             </div>
             <div className="text-[12px] text-[var(--fp-color-label)]">
               {t("tracking.monthFormNorm", { amount: formatRub(monthlyTarget) })}
@@ -112,7 +114,7 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("tracking.monthFormNotePlaceholder")}
-              className="rounded-[10px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-4 py-2.5 text-[14px] text-[var(--fp-color-foreground)] placeholder:text-[var(--fp-color-label)] outline-none focus:border-[var(--fp-color-teal)] focus:ring-1 focus:ring-[var(--fp-color-teal)]"
+              className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-5 text-sm text-[var(--fp-color-foreground)] placeholder:text-[var(--fp-color-text-muted)] outline-none transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
             />
           </label>
 
@@ -152,7 +154,7 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
                 submit(status);
               }}
               disabled={saveMutation.isPending}
-              className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-[var(--fp-color-foreground)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fp-color-background)] hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--fp-color-foreground)] px-4 py-3 text-sm font-semibold text-[var(--fp-color-background)] hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               <CheckCircle2 className="size-4" />
               {saveMutation.isPending ? t("tracking.monthFormSaving") : t("tracking.monthFormSave")}
@@ -165,7 +167,7 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[10px] border border-[var(--fp-color-border)] px-4 py-2.5 text-[14px] font-semibold text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)] transition-colors"
+              className="rounded-2xl border border-[var(--fp-color-border)] px-4 py-3 text-sm font-semibold text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)] transition-colors"
             >
               {t("tracking.monthFormCancel")}
             </button>
@@ -182,6 +184,7 @@ export function TrackingPage() {
   const { data: plan } = usePlanQuery();
   const { data: trackerData = [] } = useMonthlyTrackerQuery();
   const { t } = useI18n();
+  const { formatRub } = useFormat();
 
   const currentYear = new Date().getFullYear();
   const currentMonthIdx = new Date().getMonth(); // 0-indexed

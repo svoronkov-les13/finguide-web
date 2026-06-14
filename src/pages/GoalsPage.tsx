@@ -4,7 +4,7 @@ import { Plus, Target, Download, Search } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn, formatRub } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Goal } from "@/types/finance";
 import { GoalListItem } from "@/components/goals/GoalListItem";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
@@ -12,9 +12,11 @@ import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalPortfolioSummary, goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
 import { trackingActiveGoal } from "@/pages/trackingGoal";
+import { useFormat } from "@/lib/useFormat";
 
 export function GoalsPage() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const { data: plan } = usePlanQuery();
   const addGoal = useAddGoalMutation();
   const updateGoal = useUpdateGoalMutation();
@@ -300,7 +302,7 @@ export function GoalsPage() {
                 placeholder={t("goals.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-[48px] w-full rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] pl-10 pr-4 text-sm font-medium text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-muted-foreground)] focus:border-[var(--fp-color-primary)]"
+                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-10 pr-5 text-sm font-medium text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
               />
             </div>
             
@@ -409,9 +411,9 @@ export function GoalsPage() {
                         {isAccumulation ? (
                           <span className="rounded bg-white/50 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-accent-gold-text)] uppercase">{t("goals.accumulationBadge")}</span>
                         ) : isCompleted ? (
-                          <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-emerald-600 uppercase">{t("goals.completedBadge")}</span>
+                          <span className="rounded bg-[var(--fp-color-teal)]/10 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-teal)] uppercase">{t("goals.completedBadge")}</span>
                         ) : (
-                          <span className="rounded bg-sky-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-sky-600 uppercase">{t("goals.queueBadge")}</span>
+                          <span className="rounded bg-[var(--fp-color-label)]/10 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-label)] uppercase">{t("goals.queueBadge")}</span>
                         )}
                         <span className="text-sm font-bold opacity-70 ml-2">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
                       </div>
@@ -420,7 +422,7 @@ export function GoalsPage() {
                       </p>
                     </div>
 
-                    <div className="grid min-w-[320px] gap-3 rounded-2xl border border-white/20 bg-white/40 px-4 py-3 sm:grid-cols-3">
+                    <div className="grid min-w-[320px] gap-3 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/40 px-4 py-3 sm:grid-cols-3">
                       <YearSummaryMetric label={t("goals.yearTotalProjected")} value={formatRub(yearSummary.totalProjectedCost)} emphasis={isAccumulation} />
                       <YearSummaryMetric label={t("goals.yearRemaining")} value={formatRub(yearSummary.remaining)} emphasis={isAccumulation} />
                       <YearSummaryMetric label={t("goals.yearMonthlyUntilEnd")} value={formatRub(yearSummary.monthlyUntilYearEnd)} emphasis={isAccumulation} />

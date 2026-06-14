@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { settingsSchema, type SettingsFormValues } from "@/forms/settingsSchema";
-import { formatRub } from "@/lib/utils";
+
 import { useI18n } from "@/i18n/I18nProvider";
 import { Page } from "@/components/layout/Page";
+import { useFormat } from "@/lib/useFormat";
 
 export function GeneralDataPage() {
   const { t } = useI18n();
@@ -129,11 +130,11 @@ export function GeneralDataPage() {
 
           {/* Temporary visible fields (Not in Figma) */}
           <FormSection
-            icon={<Info className="size-4 text-amber-500" />}
+            icon={<Info className="size-4 text-[var(--fp-color-orange)]" />}
             title={
-              <div className="flex items-center gap-2 text-amber-600">
+              <div className="flex items-center gap-2 text-[var(--fp-color-orange)]">
                 {t("general.tempFields")}
-                <span className="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">{t("general.tempBadge")}</span>
+                <span className="rounded bg-[var(--fp-color-orange)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-orange)]">{t("general.tempBadge")}</span>
               </div>
             }
             description={t("general.tempFieldsDesc")}
@@ -204,6 +205,7 @@ function SummaryCard(props: {
   retirementAge: number;
 }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2 font-semibold">
@@ -266,7 +268,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
     <label className="grid gap-2">
       <Label>{label}</Label>
       {children}
-      {error ? <span className="text-xs text-rose-700">{error}</span> : hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+      {error ? <span className="text-xs text-[var(--fp-color-danger)]">{error}</span> : hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </label>
   );
 }
