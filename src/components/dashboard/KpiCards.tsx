@@ -2,12 +2,14 @@ import { Sparkles, CheckCircle2, TrendingUp } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { formatRub } from "@/lib/utils";
+
 import { computeGoalFeasibility } from "@/engine/goalFeasibility";
 import { useI18n } from "@/i18n/I18nProvider";
+import { useFormat } from "@/lib/useFormat";
 
 export function KpiCards() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const { data: plan } = usePlanQuery();
   if (!plan) return <KpiSkeleton />;
 
@@ -53,7 +55,7 @@ export function KpiCards() {
       {/* Нужно откладывать & Хватает на */}
       <div className="flex flex-col gap-4">
         {/* Нужно откладывать */}
-        <Card className="p-5 border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface)] flex-1 flex flex-col justify-center">
+        <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="label-caps flex items-center gap-1 mb-2 text-[var(--fp-color-muted-foreground)]">
             {t("dashboard.needToSave")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
           </div>
@@ -67,7 +69,7 @@ export function KpiCards() {
         </Card>
 
         {/* Хватает на */}
-        <Card className="p-5 border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface)] flex-1 flex flex-col justify-center">
+        <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="label-caps flex items-center gap-1 mb-2 text-[var(--fp-color-muted-foreground)]">
             {t("dashboard.capitalSufficiency")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
           </div>
@@ -87,7 +89,7 @@ export function KpiCards() {
       {/* Выполнимость целей & Заполненность модели */}
       <div className="flex flex-col gap-4">
         {/* Выполнимость целей */}
-        <Card className="p-5 border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface)] flex-1 flex flex-col justify-center">
+        <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="label-caps flex items-center gap-1 text-[var(--fp-color-muted-foreground)]">
               {t("dashboard.goalFeasibility")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
@@ -116,7 +118,7 @@ export function KpiCards() {
         </Card>
 
         {/* Заполненность модели */}
-        <Card className="p-5 border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface)] flex-1 flex flex-col justify-center">
+        <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="flex items-center justify-between mb-2">
             <div className="label-caps flex items-center gap-1.5 text-[var(--fp-color-muted-foreground)]">
               <CheckCircle2 className="size-3.5 text-[var(--fp-color-teal)]" />

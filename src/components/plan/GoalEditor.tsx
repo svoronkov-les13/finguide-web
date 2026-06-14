@@ -5,8 +5,9 @@ import { goalProgress } from "@/components/goals/goalProgress";
 import { SurfaceRow } from "@/components/plan/DataPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatRub } from "@/lib/utils";
+
 import type { Goal } from "@/types/finance";
+import { useFormat } from "@/lib/useFormat";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
@@ -28,16 +29,17 @@ export function GoalEditor({ goals, onUpdate, onDelete }: GoalEditorProps) {
 
 function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (id: string, patch: Partial<Goal>) => void; onDelete: (id: string) => void }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const Icon = iconMap[goal.icon] ?? Icons.Target;
   const progress = goalProgress(goal);
 
   return (
     <SurfaceRow className="bg-card/42">
       <div className="flex items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-[14px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-700">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[14px] border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]">
           <Icon className="size-4" />
         </span>
-        <Input className="h-10 min-w-0 flex-1 bg-card/90 font-semibold" defaultValue={goal.name} onBlur={(event) => onUpdate(goal.id, { name: event.currentTarget.value })} />
+        <Input className="h-10 min-w-0 flex-1 bg-[var(--fp-color-input)] font-semibold" defaultValue={goal.name} onBlur={(event) => onUpdate(goal.id, { name: event.currentTarget.value })} />
         <Button variant="danger" size="iconSm" onClick={() => onDelete(goal.id)} aria-label={`${t("common.delete")} ${goal.name}`}>
           <Icons.Trash2 className="size-3.5" />
         </Button>
@@ -47,12 +49,12 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
         <div className="flex items-end justify-between gap-3 text-xs">
           <div>
             <div className="font-semibold text-foreground">{formatRub(goal.saved, { compact: true })}</div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">{t("goals.outOf") || "из"} {formatRub(goal.cost, { compact: true })}</div>
+            <div className="mt-0.5 text-[11px] text-muted-foreground">{t("goals.outOf")} {formatRub(goal.cost, { compact: true })}</div>
           </div>
           <div className="rounded-full border border-border/75 bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{progress.percent}%</div>
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${progress.percent}%` }} />
+          <div className="h-full rounded-full bg-[var(--fp-color-teal)]/70" style={{ width: `${progress.percent}%` }} />
         </div>
       </div>
 

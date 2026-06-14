@@ -6,6 +6,7 @@ import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n/I18nProvider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as Icons from "lucide-react";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
@@ -122,9 +123,8 @@ export function GoalModal({
                       {...form.register("name", {
                         required: t("goals.validation.nameRequired"),
                       })}
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] placeholder:text-[var(--fp-color-text-muted)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                     />
-                    {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
+                    {errors.name && <span className="text-xs text-[var(--fp-color-danger)]">{errors.name.message}</span>}
                   </div>
 
                   {/* Cost, Currency, Type */}
@@ -138,31 +138,29 @@ export function GoalModal({
                           valueAsNumber: true,
                           min: { value: 1, message: t("goals.validation.costMin") },
                         })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
-                      {errors.cost && <span className="text-xs text-red-500">{errors.cost.message}</span>}
+                      {errors.cost && <span className="text-xs text-[var(--fp-color-danger)]">{errors.cost.message}</span>}
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.currency")}</Label>
-                      <div className="relative">
-                        <select
-                          disabled
-                          className="h-12 w-full appearance-none rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 pr-10 text-sm text-[var(--fp-color-foreground)] font-semibold outline-none cursor-not-allowed opacity-60"
-                        >
-                          <option value="RUB">RUB</option>
-                        </select>
-                        <Icons.ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
-                      </div>
+                      <Select disabled value="RUB">
+                          <SelectTrigger className="opacity-60 cursor-not-allowed bg-[var(--fp-color-input-disabled)]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="RUB">RUB</SelectItem>
+                          </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.colType")}</Label>
-                      <div className="flex h-12 items-center gap-1 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1">
+                      <div className="flex h-12 items-center gap-1 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] p-1">
                         <button
                           type="button"
                           onClick={() => form.setValue("type", "onetime")}
                           className={`flex-1 rounded-full text-sm font-semibold transition-all h-full ${
                             typeValue === "onetime"
-                              ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
+                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           }`}
                         >
@@ -173,7 +171,7 @@ export function GoalModal({
                           onClick={() => form.setValue("type", "periodic")}
                           className={`flex-1 rounded-full text-sm font-semibold transition-all h-full ${
                             typeValue === "periodic"
-                              ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
+                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           }`}
                         >
@@ -225,23 +223,24 @@ export function GoalModal({
                           valueAsNumber: true,
                           min: { value: currentYear, message: t("goals.validation.yearMin") },
                         })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
-                      {errors.targetYear && <span className="text-xs text-red-500">{errors.targetYear.message}</span>}
+                      {errors.targetYear && <span className="text-xs text-[var(--fp-color-danger)]">{errors.targetYear.message}</span>}
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.targetMonth")}</Label>
-                      <div className="relative">
-                        <select
-                          {...form.register("targetMonth", { valueAsNumber: true })}
-                          className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] pl-5 pr-10 text-sm text-[var(--fp-color-foreground)] outline-none appearance-none cursor-pointer font-semibold hover:border-[var(--fp-color-border-strong)] focus:border-[var(--fp-color-border-strong)]"
+                      <Select
+                          value={String(form.watch("targetMonth"))}
+                          onValueChange={(v) => form.setValue("targetMonth", Number(v))}
                         >
-                          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                            <option key={m} value={m}>{t(`goals.monthNames.${m}` as Parameters<typeof t>[0])}</option>
-                          ))}
-                        </select>
-                        <Icons.ChevronDown className="absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)] pointer-events-none" />
-                      </div>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                              <SelectItem key={m} value={String(m)}>{t(`goals.monthNames.${m}` as Parameters<typeof t>[0])}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.saved")}</Label>
@@ -252,9 +251,8 @@ export function GoalModal({
                           valueAsNumber: true,
                           min: { value: 0, message: t("goals.validation.savedMin") },
                         })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
-                      {errors.saved && <span className="text-xs text-red-500">{errors.saved.message}</span>}
+                      {errors.saved && <span className="text-xs text-[var(--fp-color-danger)]">{errors.saved.message}</span>}
                     </div>
                   </div>
 
@@ -302,9 +300,9 @@ export function GoalModal({
                               {...form.register("growth", {
                                 valueAsNumber: true,
                               })}
-                              className="h-[38px] w-[80px] rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-3 text-sm text-center font-semibold focus:border-[var(--fp-color-border-strong)] focus:ring-0 outline-none"
+                              className="h-[38px] w-[80px] rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-3 text-sm text-center font-semibold hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-0 outline-none"
                             />
-                            <span className="text-xs text-[var(--fp-color-muted-foreground)] font-medium">% в год</span>
+                            <span className="text-xs text-[var(--fp-color-muted-foreground)] font-medium">{t("format.percentPerYear")}</span>
                           </div>
                         )}
                       </div>
@@ -316,7 +314,7 @@ export function GoalModal({
                   <div className="flex items-center gap-4 pt-4">
                     <button
                       type="submit"
-                      className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-[var(--fp-color-card)] transition hover:opacity-90"
+                      className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-white transition hover:opacity-90"
                     >
                       <Check className="size-4" />
                       {initialData?.id ? t("goals.saveBtnEdit") : t("goals.saveBtnAdd")}
@@ -332,11 +330,11 @@ export function GoalModal({
                       <div className="ml-auto">
                         {isDeleting ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-red-600">{t("common.confirmDelete")}</span>
+                            <span className="text-sm font-medium text-[var(--fp-color-danger)]">{t("common.confirmDelete")}</span>
                             <button
                               type="button"
                               onClick={() => { onDelete(initialData.id!); onOpenChange(false); }}
-                              className="inline-flex h-[40px] items-center rounded-full bg-red-600 px-4 text-xs font-bold text-white hover:bg-red-700"
+                              className="inline-flex h-[40px] items-center rounded-full bg-[var(--fp-color-danger)] px-4 text-xs font-bold text-white hover:opacity-90"
                             >
                               {t("goals.confirmYes")}
                             </button>
@@ -352,7 +350,7 @@ export function GoalModal({
                           <button
                             type="button"
                             onClick={() => setIsDeleting(true)}
-                            className="inline-flex h-12 place-items-center rounded-full border border-red-500/20 bg-red-500/10 px-6 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/20"
+                            className="inline-flex h-12 place-items-center rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-6 text-sm font-semibold text-[var(--fp-color-danger)] transition-colors hover:bg-[var(--fp-color-danger)]/20"
                           >
                             {t("goals.deleteGoalBtn")}
                           </button>

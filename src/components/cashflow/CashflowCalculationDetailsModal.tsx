@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Calculator, Info } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
-import { formatRub } from "@/lib/utils";
+import { useFormat } from "@/lib/useFormat";
 
 interface CashflowCalculationDetailsModalProps {
   open: boolean;
@@ -25,6 +25,7 @@ export function CashflowCalculationDetailsModal({
   startYear,
 }: CashflowCalculationDetailsModalProps) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const accentColor = type === "income" ? "#2D8B5E" : "#C75D3A";
 
   return (

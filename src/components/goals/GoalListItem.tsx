@@ -1,12 +1,13 @@
 import { CheckCircle2, Edit2, Target, GripVertical, TrendingUp } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { Goal } from "@/types/finance";
-import { formatRub } from "@/lib/utils";
+
 import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalProjectedCost } from "@/pages/goalsYearSummary";
 
 import { cn } from "@/lib/utils";
+import { useFormat } from "@/lib/useFormat";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
@@ -40,6 +41,7 @@ export function GoalListItem({
   isDragOver,
 }: GoalListItemProps) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const progress = goalProgress(goal);
   const isPeriodic = goal.type === "periodic";
   const month = goal.targetMonth ?? 12;
@@ -72,13 +74,13 @@ export function GoalListItem({
         <div className="flex items-center gap-2">
           <h3 className="truncate transition-colors duration-200 text-[var(--text-heading)]" style={{ fontSize: "13px", fontWeight: 500 }}>{goal.name}</h3>
           {progress.achieved && (
-            <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600"><CheckCircle2 className="size-3" />{t("goals.achieved")}</span>
+            <span className="inline-flex items-center gap-1 rounded bg-[var(--fp-color-teal)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--fp-color-teal)]"><CheckCircle2 className="size-3" />{t("goals.achieved")}</span>
           )}
           {!progress.achieved && isAccumulation && (
             <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]">{t("goals.accumulationLabel")}</span>
           )}
           {isQueue && (
-            <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-sky-600">{t("goals.queueLabel")}</span>
+            <span className="rounded bg-[var(--fp-color-label)]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-label)]">{t("goals.queueLabel")}</span>
           )}
         </div>
         <div className="text-xs text-[var(--fp-color-muted-foreground)]">
@@ -94,7 +96,7 @@ export function GoalListItem({
            </div>
          </div>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
-           <div className={`h-full transition-all ${progress.achieved ? "bg-emerald-500" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
+           <div className={`h-full transition-all ${progress.achieved ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
          </div>
          <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)] w-8 text-right num">
            {progress.percent > 0 ? `${progress.percent}%` : "—"}

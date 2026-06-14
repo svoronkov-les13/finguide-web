@@ -1,7 +1,7 @@
 import { CheckCircle2, ChevronDown, GripVertical, Target, TriangleAlert } from "lucide-react";
 import type { Goal } from "@/types/finance";
-import { formatRub } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useFormat } from "@/lib/useFormat";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalProgress } from "@/components/goals/goalProgress";
 import * as Icons from "lucide-react";
@@ -18,6 +18,7 @@ export function GoalCard({
   compact?: boolean;
 }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const Icon = iconMap[item.icon] ?? Target;
   
   const progress = goalProgress(item);
@@ -26,7 +27,7 @@ export function GoalCard({
     <div
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 rounded-2xl border bg-[var(--fp-color-card)] px-4 transition-all hover:border-[var(--fp-color-border-hover)] hover:shadow-[var(--fp-shadow-card)]",
-        item.reachable ? "border-[var(--fp-color-border)]" : "border-red-500/30",
+        item.reachable ? "border-[var(--fp-color-border)]" : "border-[var(--fp-color-coral)]/30",
         compact ? "py-2" : "py-4"
       )}
       onClick={onClick}
@@ -38,7 +39,7 @@ export function GoalCard({
       <div className={cn(
         "grid shrink-0 place-items-center rounded-[14px]",
         compact ? "size-7" : "size-10",
-        item.reachable ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500" : "border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-500"
+        item.reachable ? "border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "border border-[var(--fp-color-coral)]/20 bg-[var(--fp-color-coral)]/10 text-[var(--fp-color-coral)]"
       )}>
         <Icon className={cn(compact ? "size-3.5" : "size-5")} />
       </div>
@@ -49,9 +50,9 @@ export function GoalCard({
           <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-[15px]")}>{item.name}</div>
           {!compact && (
             item.reachable ? (
-              <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+              <CheckCircle2 className="size-3.5 text-[var(--fp-color-teal)] shrink-0" />
             ) : (
-              <TriangleAlert className="size-3.5 text-red-500 shrink-0" />
+              <TriangleAlert className="size-3.5 text-[var(--fp-color-coral)] shrink-0" />
             )
           )}
         </div>
@@ -66,7 +67,7 @@ export function GoalCard({
         {!compact && (
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fp-color-muted)]">
             <div 
-              className={cn("h-full rounded-full", progress.achieved || item.reachable ? "bg-emerald-500" : "bg-red-500")}
+              className={cn("h-full rounded-full", progress.achieved || item.reachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]")}
               style={{ width: `${progress.percent}%` }}
             />
           </div>

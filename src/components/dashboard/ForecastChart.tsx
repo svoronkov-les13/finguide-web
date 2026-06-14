@@ -18,14 +18,14 @@ import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/I18nProvider";
-import { formatRub, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
 import type { ForecastPoint, FinancialPlan, Goal } from "@/types/finance";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useFormat } from "@/lib/useFormat";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 const TypedBrush = Brush as any;
-
 
 /* Style guide chart colors */
 const CHART_COLORS = {
@@ -47,11 +47,14 @@ export function buildForecastChartData(forecast: ForecastPoint[] | undefined, sc
   return (forecast ?? []).map((point) => {
     const optimistic = optimisticByYear.get(point.year);
     const pessimistic = pessimisticByYear.get(point.year);
+    const capMln = point.capital / 1_000_000;
     return {
       ...point,
       expensesAbs: Math.abs(point.expenses),
       goalsAbs: Math.abs(point.goals) / 1_000_000,
-      capitalRubMln: point.capital / 1_000_000,
+      capitalRubMln: capMln,
+      capitalPositiveRubMln: Math.max(capMln, 0),
+      capitalNegativeRubMln: Math.min(capMln, 0),
       capitalOptimisticRubMln: optimistic ? optimistic.capital / 1_000_000 : undefined,
       capitalPessimisticRubMln: pessimistic ? pessimistic.capital / 1_000_000 : undefined,
       capitalRange: [
@@ -100,6 +103,7 @@ function chartTicks(top: number) {
 export function ForecastChart() {
   const { data: plan } = usePlanQuery();
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const hintVisible = useUiStore((state) => state.hintVisible);
   const setHintVisible = useUiStore((state) => state.setHintVisible);
   const [xAxisMode, setXAxisMode] = useState<"year" | "age">("year");
@@ -161,10 +165,10 @@ export function ForecastChart() {
   const formatAge = (age: number) => {
     const lastDigit = age % 10;
     const lastTwoDigits = age % 100;
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return `${age} лет`;
-    if (lastDigit === 1) return `${age} год`;
-    if (lastDigit >= 2 && lastDigit <= 4) return `${age} года`;
-    return `${age} лет`;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return `${age} ${t("format.yearsSuffix")}`;
+    if (lastDigit === 1) return `${age} ${t("format.yearsSuffix1")}`;
+    if (lastDigit >= 2 && lastDigit <= 4) return `${age} ${t("format.yearsSuffix234")}`;
+    return `${age} ${t("format.yearsSuffix")}`;
   };
 
   const handleZoomIn = () => {
@@ -210,7 +214,7 @@ export function ForecastChart() {
     // Determine the dynamic retirement capital value
     const retirementPoint = data.find((point) => point.year === retirementYear);
     const retirementCapitalVal = retirementPoint ? (retirementPoint.capital / 1_000_000).toFixed(1) : "80.3";
-    const pensionText = `${t("chart.pensionMarker").split(":")[0]}: ${retirementCapitalVal} млн`;
+    const pensionText = `${t("chart.pensionMarker").split(":")[0]}: ${retirementCapitalVal} ${t("format.million")}`;
 
     const renderRetirementLabel = (props: any) => {
       const { viewBox } = props;
@@ -266,7 +270,7 @@ export function ForecastChart() {
             fontSize={9}
             fontWeight="bold"
           >
-            {t("pension.pensionLine") || "Пенсия"}
+            {t("pension.pensionLine")}
           </text>
         </g>
       );
@@ -394,6 +398,7 @@ export function ForecastChart() {
                   stroke="none"
                   fill="rgba(26, 20, 27, 0.04)"
                   connectNulls
+                  hide={!visibleSeries.savings}
                 />
               ) : null}
               <XAxis
@@ -422,7 +427,7 @@ export function ForecastChart() {
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const row = payload[0].payload as (typeof data)[number];
-                  const titleText = `${row.year} год`;
+                  const titleText = `${row.year} ${t("format.yearSuffix")}`;
                   const yearGoals = goalsByYear.get(row.year) ?? [];
                   return (
                     <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
@@ -501,6 +506,28 @@ export function ForecastChart() {
                   causing syncId pixel positions to diverge */}
               <Bar dataKey="incomeRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
               <Bar dataKey="onlyExpensesRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
+              {/* Green shading: area between zero and the base line when capital > 0 */}
+              <Area
+                isAnimationActive={false}
+                type="monotone"
+                dataKey="capitalPositiveRubMln"
+                stroke="none"
+                fill="rgba(60, 138, 117, 0.18)"
+                baseValue={0}
+                hide={!visibleSeries.savings}
+                legendType="none"
+              />
+              {/* Red shading: area between zero and the base line when capital < 0 */}
+              <Area
+                isAnimationActive={false}
+                type="monotone"
+                dataKey="capitalNegativeRubMln"
+                stroke="none"
+                fill="rgba(176, 92, 80, 0.18)"
+                baseValue={0}
+                hide={!visibleSeries.savings}
+                legendType="none"
+              />
               <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
               {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
               {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
@@ -689,7 +716,7 @@ export function ForecastChart() {
   return (
     <>
       {!isFullscreen && (
-        <Card className="w-full p-6 border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface)] shadow-sm">
+        <Card className="w-full p-6 border-[var(--fp-color-border-strong)] shadow-sm">
           {renderUnifiedChart(false)}
 
           {/* Scale hint footer */}
