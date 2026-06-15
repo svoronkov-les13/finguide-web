@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronLeft, ChevronUp, Info, Settings2, WalletCards, Shi
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
+import { PensionSkeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -43,7 +44,7 @@ export function PensionPage() {
     }
   }, [plan?.settings]);
 
-  if (!plan) return <Card className="h-[600px] max-w-[1256px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+  if (!plan) return <PensionSkeleton />;
 
   const settings = plan.settings;
   const currentYear = new Date().getFullYear();

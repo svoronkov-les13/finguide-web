@@ -8,6 +8,7 @@ import {
 import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SummarySkeleton } from "@/components/ui/skeleton";
 
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Cashflow, Goal } from "@/types/finance";
@@ -19,7 +20,7 @@ export function SummaryPage() {
   const { t } = useI18n();
   const { formatRub, formatPercent } = useFormat();
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+  if (!plan) return <SummarySkeleton />;
 
   const currentYear = new Date().getFullYear();
   const currentForecast = plan.forecast.find(p => p.year === currentYear) || plan.forecast[0];

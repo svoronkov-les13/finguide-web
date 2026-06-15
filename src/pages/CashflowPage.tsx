@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Page } from "@/components/layout/Page";
 import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
-import { Card } from "@/components/ui/card";
+import { CashflowSkeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cashflow } from "@/types/finance";
 import { CashflowCard } from "@/components/cashflow/CashflowCard";
@@ -133,7 +133,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDragOverItemId(null);
   };
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan) return <CashflowSkeleton />;
 
   const items = plan.cashflows.filter((item) => item.type === type);
   const nextRoute = type === "income" ? "/expenses" : "/goals";

@@ -17,10 +17,10 @@
   --fp-color-primary: #1a141e;
   --fp-color-primary-foreground: #ffffff;
   --fp-color-deep-plum: #1c0e25;
-  --fp-color-surface: #f4f1ea;
-  --fp-color-surface-hover: #ebe8e0;
-  --fp-color-background: #f4f1ea;
-  --fp-color-card: #f4f1ea;
+  --fp-color-surface: #fbf9f3;
+  --fp-color-surface-hover: #f1efe9;
+  --fp-color-background: #fbf9f3;
+  --fp-color-card: #fbf9f3;
   --fp-color-foreground: #1a141e;
   --text-heading: var(--fp-color-foreground);
 
@@ -47,8 +47,8 @@
   --fp-color-divider: rgba(26, 20, 30, 0.06);
 
   /* --- Input --- */
-  --fp-color-input: #f4f1ea;
-  --fp-color-input-disabled: #ebe8e0;
+  --fp-color-input: #f5f3ed;
+  --fp-color-input-disabled: #f1efe9;
 
   /* --- Misc semantic --- */
   --fp-color-orange: #c4842d;
