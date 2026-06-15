@@ -506,28 +506,36 @@ export function ForecastChart() {
                   causing syncId pixel positions to diverge */}
               <Bar dataKey="incomeRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
               <Bar dataKey="onlyExpensesRubMln" barSize={14} fill="none" stroke="none" hide legendType="none" />
-              {/* Green shading: area between zero and the base line when capital > 0 */}
-              <Area
-                isAnimationActive={false}
-                type="monotone"
-                dataKey="capitalPositiveRubMln"
-                stroke="none"
-                fill="rgba(60, 138, 117, 0.18)"
-                baseValue={0}
-                hide={!visibleSeries.savings}
-                legendType="none"
-              />
-              {/* Red shading: area between zero and the base line when capital < 0 */}
-              <Area
-                isAnimationActive={false}
-                type="monotone"
-                dataKey="capitalNegativeRubMln"
-                stroke="none"
-                fill="rgba(176, 92, 80, 0.18)"
-                baseValue={0}
-                hide={!visibleSeries.savings}
-                legendType="none"
-              />
+              {/* Green/Red shading: single Area using same dataKey as the line,
+                  with an SVG gradient that splits at the zero crossing point */}
+              {(() => {
+                const dataMax = Math.max(...visibleData.map(d => d.capitalRubMln));
+                const dataMin = Math.min(...visibleData.map(d => d.capitalRubMln));
+                // Where 0 falls between dataMax and dataMin as a fraction [0,1]
+                const gradientOffset = dataMax <= 0 ? 0 : dataMin >= 0 ? 1 : dataMax / (dataMax - dataMin);
+                return (
+                  <>
+                    <defs>
+                      <linearGradient id="capitalFillGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset={0} stopColor="rgba(60, 138, 117, 0.18)" />
+                        <stop offset={gradientOffset} stopColor="rgba(60, 138, 117, 0.18)" />
+                        <stop offset={gradientOffset} stopColor="rgba(176, 92, 80, 0.18)" />
+                        <stop offset={1} stopColor="rgba(176, 92, 80, 0.18)" />
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      isAnimationActive={false}
+                      type="monotone"
+                      dataKey="capitalRubMln"
+                      stroke="none"
+                      fill="url(#capitalFillGradient)"
+                      baseValue={0}
+                      hide={!visibleSeries.savings}
+                      legendType="none"
+                    />
+                  </>
+                );
+              })()}
               <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
               {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
               {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
