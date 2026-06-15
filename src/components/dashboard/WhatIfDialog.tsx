@@ -21,7 +21,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
   
   const presets = {
     optimistic: {
-      title: t("chart.optimisticFull") || "Оптимистичный",
+      title: t("chart.optimisticFull"),
       tone: "positive",
       values: {
         incomeChangePercent: 15,
@@ -31,10 +31,10 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
         retirementAgeShift: -2,
         goalsCostChangePercent: 0,
       },
-      description: t("dashboard.whatifOptimisticDesc") || "Благоприятные условия: доходы растут быстрее, расходы - медленнее",
+      description: t("dashboard.whatifOptimisticDesc"),
     },
     pessimistic: {
-      title: t("chart.pessimisticFull") || "Пессимистичный",
+      title: t("chart.pessimisticFull"),
       tone: "negative",
       values: {
         incomeChangePercent: -10,
@@ -44,7 +44,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
         retirementAgeShift: 3,
         goalsCostChangePercent: 15,
       },
-      description: t("dashboard.whatifPessimisticDesc") || "Стресс-тест: снижение доходов и рост расходов",
+      description: t("dashboard.whatifPessimisticDesc"),
     },
   } as const;
 
@@ -75,7 +75,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
       inflationDelta: next.inflationDeltaPercent / 100,
       retirementAgeShift: next.retirementAgeShift,
       goalsCostDelta: next.goalsCostChangePercent / 100,
-      description: t("dashboard.whatifCustomDesc") || "Пользовательский сценарий",
+      description: t("dashboard.whatifCustomDesc"),
     });
     onOpenChange(false);
   });
@@ -96,15 +96,15 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
             <BrainCircuit className="size-6" />
           </span>
           <DialogHeader className="min-w-0 flex-1">
-            <DialogTitle className="text-[28px] leading-tight max-[760px]:text-xl">{t("dashboard.whatifTitle") || "Моделирование сценариев"}</DialogTitle>
+            <DialogTitle className="text-[28px] leading-tight max-[760px]:text-xl">{t("dashboard.whatifTitle")}</DialogTitle>
             <DialogDescription className="text-base max-[760px]:text-sm">
-              {t("dashboard.whatifDescription") || "Базовые пресеты и пользовательские сценарии с полной кастомизацией"}
+              {t("dashboard.whatifDescription")}
             </DialogDescription>
           </DialogHeader>
         </div>
 
         <form className="scrollbar-thin max-h-[calc(100vh-186px)] overflow-auto px-7 py-6 max-[760px]:px-5" onSubmit={onSubmit}>
-          <SectionTitle>{t("dashboard.whatifBase") || "Базовые пресеты"}</SectionTitle>
+          <SectionTitle>{t("dashboard.whatifBase")}</SectionTitle>
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             {Object.values(presets).map((preset) => (
               <button
@@ -130,7 +130,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
             ))}
           </div>
 
-          <SectionTitle className="mt-8">{t("dashboard.whatifCustom") || "Пользовательский сценарий"}</SectionTitle>
+          <SectionTitle className="mt-8">{t("dashboard.whatifCustom")}</SectionTitle>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <ScenarioSlider label={t("dashboard.whatifIncome")} min={-50} max={100} step={1} value={values.incomeChangePercent} suffix="%" {...form.register("incomeChangePercent")} />
             <ScenarioSlider label={t("dashboard.whatifExpenses")} min={-50} max={100} step={1} value={values.expenseChangePercent} suffix="%" {...form.register("expenseChangePercent")} />
@@ -143,7 +143,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
           <div className="sticky bottom-0 -mx-7 mt-7 flex justify-center border-t border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/95 px-7 py-5 backdrop-blur max-[760px]:-mx-5 max-[760px]:px-5">
             <Button type="submit" size="lg" className="min-w-64 rounded-[28px]" disabled={saveScenario.isPending}>
               <CheckCircle2 className="size-4" />
-              {t("dashboard.applyAndClose") || "Применить и закрыть"}
+              {t("dashboard.applyAndClose")}
             </Button>
           </div>
         </form>

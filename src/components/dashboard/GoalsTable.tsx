@@ -5,15 +5,17 @@ import { goalProgress } from "@/components/goals/goalProgress";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { formatRub } from "@/lib/utils";
+
 import { computeDashboardGoalCounts, sortDashboardGoals } from "@/components/dashboard/dashboardGoals";
 import type { Goal } from "@/types/finance";
 import { useI18n } from "@/i18n/I18nProvider";
+import { useFormat } from "@/lib/useFormat";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 export function GoalsTable() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const navigate = useNavigate();
   const { data: plan } = usePlanQuery();
   const goals = sortDashboardGoals(plan?.goals ?? []);
@@ -80,6 +82,7 @@ export function GoalsTable() {
 
 function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const Icon = iconMap[goal.icon] ?? Icons.Target;
   const progress = goalProgress(goal);
   const month = goal.targetMonth ?? 12;

@@ -8,14 +8,16 @@ import {
 import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatRub, formatPercent } from "@/lib/utils";
+
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Cashflow, Goal } from "@/types/finance";
+import { useFormat } from "@/lib/useFormat";
 
 export function SummaryPage() {
   const { data: plan } = usePlanQuery();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { formatRub, formatPercent } = useFormat();
 
   if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
 
@@ -80,7 +82,7 @@ export function SummaryPage() {
               <span className="text-[15px] font-medium text-[var(--fp-color-label)]">{t("summary.perYear")}</span>
             </div>
             <div className="text-[13px] font-medium text-[var(--fp-color-label)]">
-              ср. {balance > 0 ? "+" : ""}{formatRub(balance / 12)}{t("summary.perMonth")}
+              {t("summary.avg")} {balance > 0 ? "+" : ""}{formatRub(balance / 12)}{t("summary.perMonth")}
             </div>
           </div>
           <div className={`mt-6 text-[13px] p-4 rounded-[14px] font-medium leading-relaxed ${balance >= 0 ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)]"}`}>
@@ -198,6 +200,7 @@ function CashflowTable({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
+  const { formatRub } = useFormat();
 
   const freqLabel = (f: Cashflow["frequency"]) => {
     if (f === "monthly") return t("summary.monthly");
@@ -294,6 +297,7 @@ function GoalsTable({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
+  const { formatRub } = useFormat();
 
   return (
     <Card className="overflow-hidden rounded-[20px] border-[var(--fp-color-border)] shadow-sm">

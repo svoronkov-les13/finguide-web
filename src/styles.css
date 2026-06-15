@@ -25,6 +25,7 @@
   --color-teal: var(--fp-color-teal);
   --color-coral: var(--fp-color-coral);
   --color-danger: var(--fp-color-danger);
+  --color-input: var(--fp-color-input);
 
   /* Shadows */
   --shadow-card: var(--fp-shadow-card);
@@ -65,6 +66,21 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+select {
+  color-scheme: light;
+}
+
+select option {
+  background: var(--fp-color-card);
+  color: var(--fp-color-foreground);
+  padding: 8px 12px;
+}
+
+select option:checked {
+  background: var(--fp-color-surface-hover);
+  color: var(--fp-color-foreground);
 }
 
 ::selection {

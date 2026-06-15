@@ -164,7 +164,7 @@ export function Topbar() {
 
                 <DropdownMenu.Item
                   onClick={() => auth.logout()}
-                  className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm text-red-500 outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"
+                  className="flex cursor-pointer items-center gap-2 rounded-[var(--fp-radius-md)] px-3 py-2.5 text-sm text-[var(--fp-color-danger)] outline-none transition-colors hover:bg-[var(--fp-color-surface-hover)] focus:bg-[var(--fp-color-surface-hover)]"
                 >
                   <LogOut className="size-4 opacity-70" />
                   <span className="font-medium">{t("sidebar.logout")}</span>
@@ -205,10 +205,10 @@ export function Topbar() {
                 value={planNameInput}
                 onChange={(event) => setPlanNameInput(event.target.value)}
                 placeholder={t("topbar.planNamePlaceholder")}
-                className="h-11 w-full rounded-[var(--fp-radius-md)] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-3 text-sm text-[var(--fp-color-foreground)] outline-none transition focus:border-[var(--fp-color-primary)] focus:ring-2 focus:ring-[var(--fp-color-primary)]/20"
+                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-5 text-sm text-[var(--fp-color-foreground)] outline-none transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
               />
             </label>
-            {planError && <div className="rounded-[var(--fp-radius-md)] bg-red-50 px-3 py-2 text-sm text-red-600">{t("topbar.planMutationError")}</div>}
+            {planError && <div className="rounded-[var(--fp-radius-md)] bg-[var(--fp-color-danger)]/10 px-3 py-2 text-sm text-[var(--fp-color-danger)]">{t("topbar.planMutationError")}</div>}
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"

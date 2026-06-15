@@ -3,7 +3,7 @@ import { Page } from "@/components/layout/Page";
 import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
-import { cn, formatRub } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Cashflow } from "@/types/finance";
 import { CashflowCard } from "@/components/cashflow/CashflowCard";
 import { CashflowModal } from "@/components/cashflow/CashflowModal";
@@ -12,6 +12,7 @@ import { CashflowInstructionModal } from "@/components/cashflow/CashflowInstruct
 import { CashflowCalculationDetailsModal } from "@/components/cashflow/CashflowCalculationDetailsModal";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
+import { useFormat } from "@/lib/useFormat";
 
 type CashflowColumn = {
   id: "monthly" | "yearly" | "onetime";
@@ -40,6 +41,7 @@ const setStoredOrder = (planId: string, type: string, frequency: string, order: 
 
 export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const router = useRouter();
   const { data: plan } = usePlanQuery();
   const addCashflow = useAddCashflowMutation();
@@ -179,8 +181,6 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDrawerOpen(true);
   };
 
-
-
   const handleSubmit = (data: Partial<Cashflow>) => {
     const frequency = data.frequency || "monthly";
     const category = data.category || t(`cashflow.defaultCategoryMonthly_${type}` as Parameters<typeof t>[0]);
@@ -288,7 +288,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
             className={cn(
               "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
               activeFilter === "all"
-                ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-white"
+                ? "border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] font-bold"
                 : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
             )}
           >
@@ -301,7 +301,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
               className={cn(
                 "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                 activeFilter === col.id
-                  ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-white"
+                  ? "border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] font-bold"
                   : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
               )}
             >
@@ -446,6 +446,7 @@ function CashflowColumn({
   startYear,
 }: CashflowColumnProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { formatRub } = useFormat();
   const [showScrollbar, setShowScrollbar] = useState(false);
   const [thumbHeight, setThumbHeight] = useState(0);
   const [thumbTop, setThumbTop] = useState(0);

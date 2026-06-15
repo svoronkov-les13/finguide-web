@@ -97,17 +97,17 @@ function IllustrationDashboard() {
         <div style={cardStyle}>
           <span style={metaStyle}>{t("cashflow.income")}</span>
           <span style={valueStyle}>₽ 405 000</span>
-          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
+          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
         <div style={cardStyle}>
           <span style={metaStyle}>{t("cashflow.expense")}</span>
           <span style={valueStyle}>₽ 178 000</span>
-          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
+          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
         <div style={cardStyle}>
           <span style={metaStyle}>{t("chart.savings")}</span>
           <span style={valueStyle}>₽ 227 000</span>
-          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>/мес</span>
+          <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
       </div>
 
@@ -161,13 +161,13 @@ function IllustrationDashboard() {
         }}
       >
         <div style={{ fontSize: 9, color: "var(--fp-color-muted-foreground)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.8px" }}>
-          Главный ответ
+          {t("onboardingDemo.mainAnswer")}
         </div>
         <div style={{ fontSize: 18, fontWeight: 700, color: "var(--fp-color-foreground)" }}>
-          ₽ 38 000 /мес
+          {t("onboardingDemo.savingsAmount")}
         </div>
         <div style={{ fontSize: 9, color: "var(--fp-color-muted-foreground)" }}>
-          нужно откладывать
+          {t("onboardingDemo.needToSave")}
         </div>
       </div>
     </div>
@@ -176,10 +176,11 @@ function IllustrationDashboard() {
 
 /** Step 2: Goals list (Автомобиль, Образование, Квартира) */
 function IllustrationGoals() {
+  const { t } = useI18n();
   const goals = [
-    { name: "Автомобиль", amount: "₽ 1 200 000", year: 2029, pct: 85, monthly: "~₽ 28 000/мес", ok: true },
-    { name: "Образование", amount: "₽ 2 000 000", year: 2033, pct: 62, monthly: "~₽ 22 000/мес", ok: true },
-    { name: "Квартира", amount: "₽ 3 000 000", year: 2036, pct: 40, monthly: "~₽ 25 000/мес", ok: false },
+    { name: t("onboardingDemo.goalCar"), amount: "₽ 1 200 000", year: 2029, pct: 85, monthly: "~₽ 28 000" + t("format.perMonth"), ok: true },
+    { name: t("onboardingDemo.goalEducation"), amount: "₽ 2 000 000", year: 2033, pct: 62, monthly: "~₽ 22 000" + t("format.perMonth"), ok: true },
+    { name: t("onboardingDemo.goalApartment"), amount: "₽ 3 000 000", year: 2036, pct: 40, monthly: "~₽ 25 000" + t("format.perMonth"), ok: false },
   ];
 
   return (
@@ -226,7 +227,7 @@ function IllustrationGoals() {
                 color: g.ok ? "var(--fp-color-foreground)" : "var(--fp-color-coral)",
               }}
             >
-              {g.ok ? "Достижима" : "Под вопросом"}
+              {g.ok ? t("onboardingDemo.reachable") : t("onboardingDemo.atRisk")}
             </span>
           </div>
           {/* Progress bar */}
@@ -248,7 +249,7 @@ function IllustrationGoals() {
               color: "var(--fp-color-muted-foreground)",
             }}
           >
-            <span>{g.pct}% накоплено</span>
+            <span>{g.pct}% {t("onboardingDemo.accumulated")}</span>
             <span>{g.monthly}</span>
           </div>
         </div>
@@ -266,10 +267,10 @@ function IllustrationGoals() {
         }}
       >
         <span style={{ fontSize: 13, color: "var(--fp-color-sidebar-text-muted)" }}>
-          Итого откладывать
+          {t("onboardingDemo.totalToSave")}
         </span>
         <span style={{ fontSize: 18, fontWeight: 700, color: "var(--fp-color-sidebar-text)" }}>
-          ₽ 75 000 /мес
+          {t("onboardingDemo.totalAmount")}
         </span>
       </div>
     </div>
@@ -280,9 +281,9 @@ function IllustrationGoals() {
 function IllustrationScenarios() {
   const { t } = useI18n();
   const scenarios = [
-    { label: "Базовый", value: "₽ 8.2 млн", year: "к 2046 году", active: true },
-    { label: "Оптимистичный", value: "₽ 12.4 млн", year: "к 2046 году", active: false },
-    { label: "Консервативный", value: "₽ 5.6 млн", year: "к 2046 году", active: false },
+    { label: t("onboardingDemo.scenarioBase"), value: "₽ 8.2 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: true },
+    { label: t("onboardingDemo.scenarioOptimistic"), value: "₽ 12.4 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
+    { label: t("onboardingDemo.scenarioConservative"), value: "₽ 5.6 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
   ];
 
   return (
@@ -327,7 +328,7 @@ function IllustrationScenarios() {
       >
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fp-color-foreground)" }}>
-            Прогноз накоплений
+            {t("onboardingDemo.forecastTitle")}
           </span>
           <span style={{ fontSize: 11, color: "var(--fp-color-accent-gold-text)" }}>{t("onboarding.byYears")}</span>
         </div>
@@ -371,11 +372,12 @@ function IllustrationScenarios() {
 
 /** Step 4: Setup checklist (Общие данные, Доходы, Цели, Пенсия) */
 function IllustrationSetup() {
+  const { t } = useI18n();
   const items = [
-    { icon: <BarChart3 style={{ width: 18, height: 18 }} />, title: "Общие данные", sub: "Возраст, валюта, горизонт", done: true },
-    { icon: <TrendingUp style={{ width: 18, height: 18 }} />, title: "Доходы", sub: "Зарплата, фриланс, аренда", done: false },
-    { icon: <Target style={{ width: 18, height: 18 }} />, title: "Цели", sub: "Квартира, авто, образование", done: false },
-    { icon: <Minus style={{ width: 18, height: 18 }} />, title: "Пенсия", sub: "Желаемый возраст и доход", done: false },
+    { icon: <BarChart3 style={{ width: 18, height: 18 }} />, title: t("onboardingDemo.checklistGeneral"), sub: t("onboardingDemo.checklistGeneralSub"), done: true },
+    { icon: <TrendingUp style={{ width: 18, height: 18 }} />, title: t("onboardingDemo.checklistIncome"), sub: t("onboardingDemo.checklistIncomeSub"), done: false },
+    { icon: <Target style={{ width: 18, height: 18 }} />, title: t("onboardingDemo.checklistGoals"), sub: t("onboardingDemo.checklistGoalsSub"), done: false },
+    { icon: <Minus style={{ width: 18, height: 18 }} />, title: t("onboardingDemo.checklistPension"), sub: t("onboardingDemo.checklistPensionSub"), done: false },
   ];
 
   return (
