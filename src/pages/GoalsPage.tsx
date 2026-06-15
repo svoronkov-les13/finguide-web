@@ -3,6 +3,7 @@ import { Page } from "@/components/layout/Page";
 import { Plus, Target, Download, Search } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
+import { GoalsSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Goal } from "@/types/finance";
@@ -126,7 +127,7 @@ export function GoalsPage() {
     setDragOverGoalId(null);
   };
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan) return <GoalsSkeleton />;
 
   const goals = plan.goals ?? [];
   const now = new Date();

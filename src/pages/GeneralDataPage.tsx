@@ -7,6 +7,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useAuth } from "@/auth/AuthProvider";
 import { Card } from "@/components/ui/card";
+import { GeneralDataSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,7 @@ export function GeneralDataPage() {
     });
   });
 
-  if (!plan || !settings) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan || !settings) return <GeneralDataSkeleton />;
 
   return (
     <Page>

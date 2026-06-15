@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalSavingNeeds, goalTargetCost, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, MONTH_NAMES_RU, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
 
@@ -51,7 +51,8 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
 
   const yearLabel = monthKey.split("-")[0];
   const monthIdx = parseInt(monthKey.split("-")[1]) - 1;
-  const monthLabel = MONTH_NAMES_RU[monthIdx] ?? month.name;
+  const monthNames = getMonthNames(t);
+  const monthLabel = monthNames[monthIdx] ?? month.name;
   const isPast = !isFuture && month.status !== "current" && month.status !== "pending";
 
   return (
@@ -204,7 +205,8 @@ export function TrackingPage() {
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {
-    const base = makeEmptyYear(viewYear, currentYear, currentMonthIdx);
+    const localizedMonths = getMonthNames(t);
+    const base = makeEmptyYear(viewYear, currentYear, currentMonthIdx, localizedMonths);
     trackerData.forEach((entry) => {
       const [entryYear, entryMonth] = entry.month.split("-");
       if (Number(entryYear) !== viewYear) return;
@@ -408,7 +410,7 @@ export function TrackingPage() {
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-[var(--fp-color-label)]" />
                   <span className="text-[14px] font-semibold text-[var(--fp-color-foreground)]">
-                    {MONTH_NAMES_RU[currentMonthIdx]} {currentYear}
+                    {t(`goals.monthNames.${currentMonthIdx + 1}` as Parameters<typeof t>[0])} {currentYear}
                   </span>
                   <span className="rounded-full bg-[var(--fp-color-foreground)]/8 px-2 py-px text-[10px] font-semibold text-[var(--fp-color-label)]">
                     {t("tracking.current")}
@@ -521,7 +523,7 @@ export function TrackingPage() {
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-bold text-[var(--fp-color-foreground)]">
-                      {MONTH_NAMES_RU[monthIdx]}
+                      {t(`goals.monthNames.${monthIdx + 1}` as Parameters<typeof t>[0])}
                     </span>
                     <span className={cn(
                       "rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-wider",

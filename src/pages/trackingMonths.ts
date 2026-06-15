@@ -23,12 +23,12 @@ export const MONTH_NAMES_SHORT = [
  * Build month names from i18n t() function.
  * Usage: `getMonthNames(t)` returns localized full month names.
  */
-export function getMonthNames(t: (key: string) => string): string[] {
-  return Array.from({ length: 12 }, (_, i) => t(`goals.monthNames.${i + 1}`));
+export function getMonthNames(t: (key: never) => string): string[] {
+  return Array.from({ length: 12 }, (_, i) => t(`goals.monthNames.${i + 1}` as never));
 }
 
-export function getMonthNamesShort(t: (key: string) => string): string[] {
-  return Array.from({ length: 12 }, (_, i) => t(`goals.monthShort.${i + 1}`));
+export function getMonthNamesShort(t: (key: never) => string): string[] {
+  return Array.from({ length: 12 }, (_, i) => t(`goals.monthShort.${i + 1}` as never));
 }
 
 export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx: number, monthNames?: string[]): MonthData[] {
