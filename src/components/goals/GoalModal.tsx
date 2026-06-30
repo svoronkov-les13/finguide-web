@@ -28,12 +28,14 @@ export function GoalModal({
   open,
   onOpenChange,
   initialData,
+  defaultGrowth,
   onSubmit,
   onDelete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData: Partial<Goal> | null;
+  defaultGrowth?: number;
   onSubmit: (data: Partial<Goal>) => void;
   onDelete?: (id: string) => void;
 }) {
@@ -55,7 +57,8 @@ export function GoalModal({
   useEffect(() => {
     if (open) {
       const targetYear = currentYear + 5;
-      const initialGrowth = initialData?.growth !== undefined ? initialData.growth : 0.04;
+      const initialGrowth = initialData?.growth !== undefined ? initialData.growth : (defaultGrowth ?? 0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- modal form state is reset when a new goal/edit target opens.
       setInflationEnabled(initialGrowth > 0);
       form.reset({
         ...initialData,
@@ -65,12 +68,12 @@ export function GoalModal({
         targetMonth: initialData?.targetMonth ?? 12,
         cost: initialData?.cost || 0,
         saved: initialData?.saved || 0,
-        growth: initialGrowth > 0 ? initialGrowth * 100 : 4.0,
+        growth: resolveGoalDefaultGrowthPercent(initialData, defaultGrowth ?? 0),
         reachable: initialData?.reachable ?? true,
         type: initialData?.type || "onetime",
       } as GoalFormData);
     }
-  }, [open, initialData, form, currentYear]);
+  }, [open, initialData, defaultGrowth, form, currentYear]);
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit({
@@ -82,6 +85,7 @@ export function GoalModal({
 
   const typeValue = useWatch({ control: form.control, name: "type" });
   const iconValue = useWatch({ control: form.control, name: "icon" });
+  const targetMonthValue = useWatch({ control: form.control, name: "targetMonth" });
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) setIsDeleting(false);
@@ -229,7 +233,7 @@ export function GoalModal({
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.targetMonth")}</Label>
                       <Select
-                          value={String(form.watch("targetMonth"))}
+                          value={String(targetMonthValue)}
                           onValueChange={(v) => form.setValue("targetMonth", Number(v))}
                         >
                           <SelectTrigger>
@@ -278,7 +282,7 @@ export function GoalModal({
                               if (!nextVal) {
                                 form.setValue("growth", 0);
                               } else {
-                                form.setValue("growth", 4.0);
+                                form.setValue("growth", resolveGoalDefaultGrowthPercent(null, defaultGrowth ?? 0));
                               }
                             }}
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
@@ -443,4 +447,9 @@ export function GoalModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+export function resolveGoalDefaultGrowthPercent(initialData: Partial<Goal> | null, defaultGrowth: number) {
+  const growth = initialData?.growth !== undefined ? initialData.growth : defaultGrowth;
+  return growth > 0 ? Math.round(growth * 1000) / 10 : 0;
 }
