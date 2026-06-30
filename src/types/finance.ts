@@ -94,6 +94,8 @@ export interface PlanSettings {
   birthYear: number;
   currentAge: number;
   retirementAge: number;
+  pensionCalculationYears: number;
+  dashboardCalculationYears: number;
   monthsInYear: number;
   inflation: number;
   investmentReturn: number;

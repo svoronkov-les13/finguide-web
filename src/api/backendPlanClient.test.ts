@@ -137,6 +137,53 @@ describe("backendPlanClient settings mutations", () => {
       expectedReturnPct: 12,
     });
   });
+
+  it("saves separate pension and dashboard calculation periods from general settings", async () => {
+    const requests: Array<{ url: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      requests.push({ url, body });
+
+      if (url.endsWith("/plans/current") && method === "GET") return jsonResponse({ data: planState([]) });
+      if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
+      if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    await backendPlanClient.updateSettings({
+      birthYear: 1990,
+      pensionCalculationYears: 25,
+      dashboardCalculationYears: 15,
+    });
+
+    const assumptionsPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/analytics/assumptions"))?.body as {
+      birthYear?: number;
+      horizonYears?: number;
+    };
+    const pensionPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/pension"))?.body as {
+      currentAge?: number;
+      retirementAge?: number;
+    };
+
+    expect(assumptionsPatch).toMatchObject({
+      birthYear: 1990,
+      horizonYears: 15,
+    });
+    expect(pensionPatch).toMatchObject({
+      currentAge: 36,
+      retirementAge: 61,
+    });
+  });
 });
 
 describe("backendPlanClient cashflow growth ranges", () => {

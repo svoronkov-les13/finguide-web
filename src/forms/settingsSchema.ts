@@ -5,6 +5,8 @@ export const settingsSchema = z.object({
   birthYear: z.coerce.number().int().min(1900).max(2100),
   monthsInYear: z.coerce.number().int().min(1).max(12),
   retirementAge: z.coerce.number().int().min(35).max(90),
+  pensionCalculationYears: z.coerce.number().int().min(1).max(80),
+  dashboardCalculationYears: z.coerce.number().int().min(1).max(80),
   inflationPercent: z.coerce.number().min(0).max(30),
   investmentReturnPercent: z.coerce.number().min(-20).max(50),
   startingCapital: z.coerce.number().min(0),

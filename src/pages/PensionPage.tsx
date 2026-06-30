@@ -22,12 +22,9 @@ export function PensionPage() {
   const [spendingScenario, setSpendingScenario] = useState<"save" | "spend">("spend");
   const [paramsOpen, setParamsOpen] = useState(true);
   const [scenariosOpen, setScenariosOpen] = useState(true);
-  const [retirementMode, setRetirementMode] = useState<"age" | "year">("age");
 
   // Local state for the form so we can edit it before hitting "Calculate"
   const [formState, setFormState] = useState({
-    currentAge: 30,
-    retirementAge: 60,
     targetMonthlySpend: 100000,
     investmentReturn: 0.1,
     statePensionEnabled: true,
@@ -37,8 +34,6 @@ export function PensionPage() {
   useEffect(() => {
     if (plan?.settings) {
       setFormState({
-        currentAge: plan.settings.currentAge,
-        retirementAge: plan.settings.retirementAge,
         targetMonthlySpend: plan.settings.targetMonthlySpend,
         investmentReturn: plan.settings.pensionInvestmentReturn,
         statePensionEnabled: plan.settings.statePensionEnabled,
@@ -51,8 +46,8 @@ export function PensionPage() {
   if (!plan) return <PensionSkeleton />;
 
   const settings = plan.settings;
-  const currentYear = new Date().getFullYear();
-  const yearsToRetirement = formState.retirementAge - formState.currentAge;
+  const currentYear = settings.startYear;
+  const yearsToRetirement = Math.max(0, settings.retirementAge - settings.currentAge);
   const retirementYear = currentYear + yearsToRetirement;
   
   const targetMonthlySpend = formState.targetMonthlySpend;
@@ -72,8 +67,6 @@ export function PensionPage() {
 
   const handleCalculate = () => {
     updateSettings({
-      currentAge: formState.currentAge,
-      retirementAge: formState.retirementAge,
       targetMonthlySpend: formState.targetMonthlySpend,
       pensionInvestmentReturn: formState.investmentReturn,
       withdrawalStrategy: spendingScenario === "save" ? "preserve_capital" : "spend_down_30y",
@@ -120,9 +113,9 @@ export function PensionPage() {
                   <div className="relative">
                     <input 
                       type="number" 
-                      value={formState.currentAge} 
-                      onChange={(e) => setFormState(s => ({ ...s, currentAge: Number(e.target.value) }))}
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-14 outline-none font-medium text-sm transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30" 
+                      readOnly
+                      value={settings.currentAge} 
+                      className="h-12 w-full rounded-2xl border border-transparent bg-[var(--fp-color-input-disabled)] pl-5 pr-14 outline-none font-medium text-sm text-[var(--fp-color-label)] opacity-70" 
                     />
                     <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.years")}</span>
                   </div>
@@ -130,39 +123,14 @@ export function PensionPage() {
                 
                 <div>
                   <label className="text-[13px] text-[var(--fp-color-label)] mb-2 block leading-tight">{t("pension.retirementAge")}</label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <input 
-                        type="number" 
-                        value={retirementMode === "age" ? formState.retirementAge : (plan.settings.birthYear + formState.retirementAge)} 
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          if (retirementMode === "age") {
-                            setFormState(s => ({ ...s, retirementAge: val }));
-                          } else {
-                            setFormState(s => ({ ...s, retirementAge: val - plan.settings.birthYear }));
-                          }
-                        }}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-14 outline-none font-medium text-sm transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30" 
-                      />
-                      <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">
-                        {retirementMode === "age" ? t("pension.years") : t("pension.year")}
-                      </span>
-                    </div>
-                    <div className="flex bg-[var(--fp-color-input)] border border-[var(--fp-color-border)] rounded-2xl p-1 items-center h-12">
-                      <button 
-                        onClick={() => setRetirementMode("age")}
-                        className={`h-full px-3.5 rounded-xl text-[13px] font-medium transition-colors ${retirementMode === "age" ? "bg-[var(--fp-color-surface-hover)] shadow-sm text-[var(--fp-color-foreground)] font-bold" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.age")}
-                      </button>
-                      <button 
-                        onClick={() => setRetirementMode("year")}
-                        className={`h-full px-3.5 rounded-xl text-[13px] font-medium transition-colors ${retirementMode === "year" ? "bg-[var(--fp-color-surface-hover)] shadow-sm text-[var(--fp-color-foreground)] font-bold" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.year")}
-                      </button>
-                    </div>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      readOnly
+                      value={settings.retirementAge} 
+                      className="h-12 w-full rounded-2xl border border-transparent bg-[var(--fp-color-input-disabled)] pl-5 pr-14 outline-none font-medium text-sm text-[var(--fp-color-label)] opacity-70" 
+                    />
+                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.years")}</span>
                   </div>
                 </div>
 

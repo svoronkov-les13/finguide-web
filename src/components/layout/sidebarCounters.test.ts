@@ -9,6 +9,8 @@ const basePlan: FinancialPlan = {
     birthYear: 1990,
     currentAge: 36,
     retirementAge: 60,
+    pensionCalculationYears: 24,
+    dashboardCalculationYears: 12,
     monthsInYear: 12,
     inflation: 0.06,
     investmentReturn: 0.08,
