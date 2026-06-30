@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Page } from "@/components/layout/Page";
+import { Button } from "@/components/ui/button";
 import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
 import { CashflowSkeleton } from "@/components/ui/skeleton";
@@ -230,24 +231,35 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
           >
             <Info className="size-3" />
           </button>
-          <button className="hidden sm:block rounded-full border border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] px-5 py-2 text-sm font-medium text-[var(--fp-color-background)] transition-colors hover:opacity-90">
-            {t("cashflow.viewExample")}
-          </button>
         </div>
-        {items.length > 0 && (
-          <button 
-            onClick={() => setIsCompact(!isCompact)}
-            className={cn(
-              "flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
-              isCompact 
-                ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)]" 
-                : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
-            )}
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            className="max-[760px]:hidden"
+            onClick={() => setInstructionOpen(true)}
           >
-            <Sparkles className="size-4" />
-            <span className="hidden sm:inline">{t("cashflow.compact")}</span>
-          </button>
-        )}
+            {t("cashflow.viewExample")}
+          </Button>
+
+          <Button
+            variant="default"
+            onClick={() => handleAddItem("monthly")}
+          >
+            <Plus className="size-4 shrink-0" />
+            {t("cashflow.add")}
+          </Button>
+
+          {items.length > 0 && (
+            <Button
+              variant={isCompact ? "active" : "secondary"}
+              onClick={() => setIsCompact(!isCompact)}
+            >
+              <Sparkles className="size-4" />
+              <span className="hidden sm:inline">{t("cashflow.compact")}</span>
+            </Button>
+          )}
+        </div>
       </header>
 
       {/* Stats bar */}
@@ -606,7 +618,7 @@ function CashflowColumn({
       {/* Add button */}
       <button
         onClick={() => onAddItem(column.defaultFrequency)}
-        className="mb-3 ml-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+        className="mb-3 ml-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
       >
         <Plus className="size-4" />
         {t("cashflow.add")}
