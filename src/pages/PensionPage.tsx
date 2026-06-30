@@ -19,7 +19,6 @@ export function PensionPage() {
   const { t } = useI18n();
   const { formatRub, formatPercent } = useFormat();
   
-  const [isCalculated, setIsCalculated] = useState(false);
   const [spendingScenario, setSpendingScenario] = useState<"save" | "spend">("spend");
   const [paramsOpen, setParamsOpen] = useState(true);
   const [scenariosOpen, setScenariosOpen] = useState(true);
@@ -80,7 +79,6 @@ export function PensionPage() {
       statePensionEnabled: formState.statePensionEnabled,
       statePensionMonthly: formState.statePensionMonthly,
     });
-    setIsCalculated(true);
   };
 
   return (
@@ -357,9 +355,8 @@ export function PensionPage() {
         </div>
       </div>
 
-      {/* Results Section - Hidden until calculated */}
-      {isCalculated && (
-        <div className="mt-8 grid gap-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
+      {/* Results Section */}
+      <div className="mt-8 grid gap-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
           <Card className="overflow-hidden bg-[var(--fp-color-card)] border-[var(--fp-color-border)] rounded-[24px]">
             <div className="p-8 pb-6 border-b border-[var(--fp-color-border)]">
               <p className="text-[15px] font-medium text-[var(--fp-color-label)] mb-3">
@@ -479,8 +476,7 @@ export function PensionPage() {
               </ResponsiveContainer>
             </div>
           </Card>
-        </div>
-      )}
+      </div>
     </Page>
   );
 }
