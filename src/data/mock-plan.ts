@@ -15,8 +15,12 @@ export const mockPlan: FinancialPlan = {
     monthsInYear: 12,
     inflation: 0.031,
     investmentReturn: 0.06,
+    pensionInvestmentReturn: 0.09,
     startingCapital: 2_500_000,
     targetMonthlySpend: 10_000,
+    withdrawalStrategy: "spend_down_30y",
+    statePensionEnabled: true,
+    statePensionMonthly: 22_000,
   },
   activeScenario: "base",
   dashboardSnapshot: {

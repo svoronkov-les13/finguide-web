@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { backendPlanClient, goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest, unwrapData } from "@/api/backendPlanClient";
+import { backendPlanClient, cashflowGrowthRangesFromSchedule, cashflowGrowthScheduleFromRanges, goalFromApi, goalRequestFromGoal, mapDashboardSnapshot, mapMonthlyForecastPoint, mapScenarioComparisonForecasts, monthlyTrackerFromApi, trackerEntryFromApi, trackerEntryRequest, unwrapData } from "@/api/backendPlanClient";
 import type { TrackerEntry } from "@/types/finance";
 
 afterEach(() => {
@@ -81,6 +81,85 @@ describe("backendPlanClient settings mutations", () => {
       inflationSchedule?: Array<{ year: number; ratePct: number }>;
     };
     expect(assumptionsPatch.inflationSchedule).toEqual([{ year: 2026, ratePct: 9 }]);
+  });
+
+  it("saves pension-specific state without resetting general inflation", async () => {
+    const requests: Array<{ url: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      requests.push({ url, body });
+
+      if (url.endsWith("/plans/current") && method === "GET") return jsonResponse({ data: planState([], { pension: { inflationPct: 0 } }) });
+      if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
+      if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    await backendPlanClient.updateSettings({
+      pensionInvestmentReturn: 0.12,
+      retirementAge: 62,
+      statePensionMonthly: 35_000,
+      statePensionEnabled: true,
+      withdrawalStrategy: "preserve_capital",
+    });
+
+    const assumptionsPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/analytics/assumptions"))?.body as {
+      investmentReturnPct?: number;
+      inflationSchedule?: Array<{ year: number; ratePct: number }>;
+    };
+    const pensionPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/pension"))?.body as {
+      inflationPct?: number;
+      retirementAge?: number;
+      statePensionMonthly?: number;
+      statePensionEnabled?: boolean;
+      withdrawalStrategy?: string;
+      expectedReturnPct?: number;
+    };
+
+    expect(assumptionsPatch.investmentReturnPct).toBe(10);
+    expect(assumptionsPatch.inflationSchedule).toEqual([{ year: 2026, ratePct: 7 }]);
+    expect(pensionPatch).toMatchObject({
+      inflationPct: 7,
+      retirementAge: 62,
+      statePensionMonthly: 35_000,
+      statePensionEnabled: true,
+      withdrawalStrategy: "preserve_capital",
+      expectedReturnPct: 12,
+    });
+  });
+});
+
+describe("backendPlanClient cashflow growth ranges", () => {
+  it("maps growth schedules to UI ranges and expands ranges back to per-year rates", () => {
+    expect(cashflowGrowthRangesFromSchedule([
+      { year: 2026, ratePct: 3 },
+      { year: 2027, ratePct: 3 },
+      { year: 2028, ratePct: 5 },
+      { year: 2029, ratePct: 5 },
+    ])).toEqual([
+      { startYear: 2026, endYear: 2028, growthPercent: 3 },
+      { startYear: 2028, endYear: 2030, growthPercent: 5 },
+    ]);
+
+    expect(cashflowGrowthScheduleFromRanges([
+      { startYear: 2026, endYear: 2028, growthPercent: 3 },
+      { startYear: 2028, endYear: 2030, growthPercent: 5 },
+    ], 2030)).toEqual([
+      { year: 2026, ratePct: 3 },
+      { year: 2027, ratePct: 3 },
+      { year: 2028, ratePct: 5 },
+      { year: 2029, ratePct: 5 },
+    ]);
   });
 });
 
@@ -360,8 +439,8 @@ function apiGoal(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function planState(goals: unknown[]) {
-  return {
+function planState(goals: unknown[], overrides: { pension?: Record<string, unknown> } = {}) {
+  const state = {
     id: "plan-1",
     name: "Основной",
     profile: {
@@ -377,6 +456,9 @@ function planState(goals: unknown[]) {
       desiredMonthlyExpensesCurrentPrices: 150_000,
       expectedReturnPct: 10,
       inflationPct: 7,
+      withdrawalStrategy: "spend_down_30y",
+      statePensionEnabled: false,
+      statePensionMonthly: 0,
     },
     modelAssumptions: {
       startYear: 2026,
@@ -390,6 +472,13 @@ function planState(goals: unknown[]) {
     incomes: [],
     expenses: [],
     goals,
+  };
+  return {
+    ...state,
+    pension: {
+      ...state.pension,
+      ...overrides.pension,
+    },
   };
 }
 

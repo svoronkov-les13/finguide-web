@@ -20,7 +20,6 @@ export function PensionPage() {
   
   const [isCalculated, setIsCalculated] = useState(false);
   const [spendingScenario, setSpendingScenario] = useState<"save" | "spend">("spend");
-  const [useGovPension, setUseGovPension] = useState(true);
   const [paramsOpen, setParamsOpen] = useState(true);
   const [scenariosOpen, setScenariosOpen] = useState(true);
   const [retirementMode, setRetirementMode] = useState<"age" | "year">("age");
@@ -31,6 +30,8 @@ export function PensionPage() {
     retirementAge: 60,
     targetMonthlySpend: 100000,
     investmentReturn: 0.1,
+    statePensionEnabled: true,
+    statePensionMonthly: 0,
   });
 
   useEffect(() => {
@@ -39,8 +40,11 @@ export function PensionPage() {
         currentAge: plan.settings.currentAge,
         retirementAge: plan.settings.retirementAge,
         targetMonthlySpend: plan.settings.targetMonthlySpend,
-        investmentReturn: plan.settings.investmentReturn,
+        investmentReturn: plan.settings.pensionInvestmentReturn,
+        statePensionEnabled: plan.settings.statePensionEnabled,
+        statePensionMonthly: plan.settings.statePensionMonthly,
       });
+      setSpendingScenario(plan.settings.withdrawalStrategy === "preserve_capital" ? "save" : "spend");
     }
   }, [plan?.settings]);
 
@@ -71,7 +75,10 @@ export function PensionPage() {
       currentAge: formState.currentAge,
       retirementAge: formState.retirementAge,
       targetMonthlySpend: formState.targetMonthlySpend,
-      investmentReturn: formState.investmentReturn,
+      pensionInvestmentReturn: formState.investmentReturn,
+      withdrawalStrategy: spendingScenario === "save" ? "preserve_capital" : "spend_down_30y",
+      statePensionEnabled: formState.statePensionEnabled,
+      statePensionMonthly: formState.statePensionMonthly,
     });
     setIsCalculated(true);
   };
@@ -336,16 +343,31 @@ export function PensionPage() {
                 </div>
               </label>
 
-              <div className="flex items-center justify-between mt-4 pl-2">
-                <label className="flex items-center gap-4 cursor-pointer" onClick={() => setUseGovPension(!useGovPension)}>
-                  <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${useGovPension ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                    <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${useGovPension ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
+              <div className="grid gap-4 rounded-[18px] border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] p-4">
+                <label className="flex items-center gap-4 cursor-pointer" onClick={() => setFormState(s => ({ ...s, statePensionEnabled: !s.statePensionEnabled }))}>
+                  <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${formState.statePensionEnabled ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
+                    <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${formState.statePensionEnabled ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
                   </div>
                   <div className="pt-0.5">
                     <h3 className="font-semibold text-[15px] mb-0.5 text-[var(--fp-color-foreground)]">{t("pension.useGovPensionTitle")}</h3>
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.useGovPensionDesc")}</p>
                   </div>
                 </label>
+                {formState.statePensionEnabled && (
+                  <div className="relative max-w-[360px]">
+                    <input
+                      type="number"
+                      value={formState.statePensionMonthly || ""}
+                      onChange={(e) => setFormState(s => ({ ...s, statePensionMonthly: Number(e.target.value) }))}
+                      placeholder={t("pensionFormat.enterAmount")}
+                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-20 outline-none font-medium text-sm transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
+                    />
+                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.perMonth")}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end mt-2">
                 <button 
                   className="h-[46px] px-8 rounded-full bg-[var(--fp-color-primary)] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2" 
                   onClick={handleCalculate}
@@ -377,7 +399,7 @@ export function PensionPage() {
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
                 <span>{t("pension.yearsToSave", { years: yearsToRetirement })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
-                <span>{t("pension.annualReturn", { percent: formatPercent(settings.investmentReturn) })}</span>
+                <span>{t("pension.annualReturn", { percent: formatPercent(settings.pensionInvestmentReturn) })}</span>
               </div>
             </div>
             <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>

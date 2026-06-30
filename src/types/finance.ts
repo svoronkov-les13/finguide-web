@@ -97,8 +97,12 @@ export interface PlanSettings {
   monthsInYear: number;
   inflation: number;
   investmentReturn: number;
+  pensionInvestmentReturn: number;
   startingCapital: number;
   targetMonthlySpend: number;
+  withdrawalStrategy: "preserve_capital" | "spend_down_30y";
+  statePensionEnabled: boolean;
+  statePensionMonthly: number;
 }
 
 export interface FinancialPlan {

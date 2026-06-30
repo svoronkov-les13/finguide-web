@@ -40,7 +40,8 @@ export function GeneralDataPage() {
 
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
-  const horizon = Math.max(0, values.retirementAge - age);
+  const retirementAge = settings?.retirementAge ?? values.retirementAge;
+  const horizon = Math.max(0, retirementAge - age);
   const realReturn = values.investmentReturnPercent - values.inflationPercent;
 
   const onSubmit = form.handleSubmit((next) => {
@@ -48,7 +49,6 @@ export function GeneralDataPage() {
       startYear: next.startYear,
       birthYear: next.birthYear,
       monthsInYear: next.monthsInYear,
-      retirementAge: next.retirementAge,
       inflation: next.inflationPercent / 100,
       investmentReturn: next.investmentReturnPercent / 100,
       startingCapital: next.startingCapital,
@@ -144,9 +144,6 @@ export function GeneralDataPage() {
               <Field label={t("general.birthYear")} hint={t("general.birthYearHint")} error={form.formState.errors.birthYear?.message}>
                 <Input type="number" {...form.register("birthYear", { valueAsNumber: true })} />
               </Field>
-              <Field label={t("general.retirementAge")} hint={t("general.retirementAgeHint")} error={form.formState.errors.retirementAge?.message}>
-                <Input type="number" {...form.register("retirementAge", { valueAsNumber: true })} />
-              </Field>
             </div>
           </FormSection>
 
@@ -181,7 +178,7 @@ export function GeneralDataPage() {
             inflationPct={values.inflationPercent}
             realReturn={realReturn}
             horizon={horizon}
-            retirementAge={values.retirementAge}
+            retirementAge={retirementAge}
           />
           <HelpBlock title={t("general.baseCurrency")}>{t("general.helpCurrency")}</HelpBlock>
           <HelpBlock title={t("general.startingCapital")}>{t("general.helpCapital")}</HelpBlock>
