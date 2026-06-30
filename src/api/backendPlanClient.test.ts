@@ -45,6 +45,45 @@ describe("backendPlanClient plan management", () => {
   });
 });
 
+describe("backendPlanClient settings mutations", () => {
+  it("updates the model inflation schedule when general inflation changes", async () => {
+    const requests: Array<{ url: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      requests.push({ url, body });
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({ data: planState([]) });
+      }
+      if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") {
+        return jsonResponse({ data: body });
+      }
+      if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") {
+        return jsonResponse({ data: body });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    await backendPlanClient.updateSettings({ inflation: 0.09 });
+
+    const assumptionsPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/analytics/assumptions"))?.body as {
+      inflationSchedule?: Array<{ year: number; ratePct: number }>;
+    };
+    expect(assumptionsPatch.inflationSchedule).toEqual([{ year: 2026, ratePct: 9 }]);
+  });
+});
+
 describe("backendPlanClient goal mutations", () => {
   it("updates cached goals from mutation responses without rereading heavy analytics", async () => {
     const initialGoal = apiGoal({ id: "goal-1", name: "Подушка", priority: 1 });

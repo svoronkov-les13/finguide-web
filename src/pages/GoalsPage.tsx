@@ -485,6 +485,7 @@ export function GoalsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         initialData={editingItem}
+        defaultGrowth={plan?.settings.inflation}
         onSubmit={handleModalSubmit}
         onDelete={(id) => deleteGoal.mutate(id)}
       />

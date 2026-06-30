@@ -583,7 +583,9 @@ export const backendPlanClient = {
           monthsPerYear: patch.monthsInYear ?? currentAssumptions.monthsPerYear,
           initialCapital: patch.startingCapital ?? currentAssumptions.initialCapital,
           investmentReturnPct: patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : currentAssumptions.investmentReturnPct,
-          inflationSchedule: currentAssumptions.inflationSchedule,
+          inflationSchedule: patch.inflation !== undefined
+            ? updateInflationSchedule(currentAssumptions, patch.inflation * 100)
+            : currentAssumptions.inflationSchedule,
         },
         await requestOptions(),
       ), "PATCH /analytics/assumptions");
@@ -775,6 +777,13 @@ export const backendPlanClient = {
     return backendPlanClient.getMonthlyTracker(planId, year);
   },
 };
+
+function updateInflationSchedule(assumptions: ModelAssumptions, inflationPct: number) {
+  if (assumptions.inflationSchedule.length === 0) {
+    return [{ year: assumptions.startYear, ratePct: inflationPct }];
+  }
+  return assumptions.inflationSchedule.map((point) => ({ ...point, ratePct: inflationPct }));
+}
 
 function planSummaryFromApi(raw: ApiPlanSummary): PlanSummary {
   return {
