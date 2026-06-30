@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalSavingNeeds, goalTargetCost, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/pages/trackingGoal";
 import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
 import type { MonthlyStatus } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
@@ -197,7 +197,7 @@ export function TrackingPage() {
   useMonthlyTrackerForYear(viewYear);
 
   const activeGoal = trackingActiveGoal(plan?.goals);
-  const activeGoalTargetCost = activeGoal ? goalTargetCost(activeGoal) : 0;
+  const activeGoalProgress = activeGoal ? trackingGoalProgress(activeGoal) : null;
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ monthlyTarget, nearestGoalTarget });
@@ -328,13 +328,13 @@ export function TrackingPage() {
                   <div className="mt-2 flex items-baseline justify-between gap-2">
                     <div className="text-[16px] font-bold text-[var(--fp-color-foreground)] truncate">{activeGoal.name}</div>
                     <div className="shrink-0 text-[15px] font-bold text-[var(--fp-color-teal)]">
-                      {activeGoalTargetCost > 0 ? Math.round((activeGoal.saved / activeGoalTargetCost) * 100) : 0}%
+                      {activeGoalProgress?.percent ?? 0}%
                     </div>
                   </div>
                   <div className="mt-1.5 h-1.5 rounded-full bg-[var(--fp-color-border)]">
                     <div
                       className="h-full rounded-full bg-[var(--fp-color-teal)] transition-all"
-                      style={{ width: `${activeGoalTargetCost > 0 ? Math.min(100, Math.round((activeGoal.saved / activeGoalTargetCost) * 100)) : 0}%` }}
+                      style={{ width: `${activeGoalProgress?.percent ?? 0}%` }}
                     />
                   </div>
                 </>
@@ -345,7 +345,7 @@ export function TrackingPage() {
             {activeGoal && (
               <div className="mt-2 flex justify-between text-[11px] text-[var(--fp-color-label)] pt-1 border-t border-[var(--fp-color-border)]/40">
                 <div>
-                  {formatRub(activeGoal.saved)} {t("tracking.outOf")} {formatRub(activeGoalTargetCost)}
+                  {formatRub(activeGoalProgress?.saved ?? 0)} {t("tracking.outOf")} {formatRub(activeGoalProgress?.cost ?? 0)}
                 </div>
                 <div>
                   {t("tracking.goalYear", { year: String(activeGoal.targetYear) })}

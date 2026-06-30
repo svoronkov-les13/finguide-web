@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/pages/trackingGoal";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {
@@ -80,6 +80,20 @@ describe("trackingActiveGoal", () => {
       currentYearTotal: 2_000_000,
       currentYearMonthly: 100_000,
       allGoalsMonthly: 100_000,
+    });
+  });
+
+  it("includes projected cashflow allocation in active goal progress", () => {
+    expect(trackingGoalProgress(goal({
+      id: "active",
+      cost: 550_000,
+      saved: 0,
+      projectedSaved: 120_000,
+    }))).toEqual({
+      cost: 550_000,
+      saved: 120_000,
+      percent: 22,
+      achieved: false,
     });
   });
 });
