@@ -33,12 +33,12 @@ describe("computeGoalFeasibility", () => {
     expect(result.totalCount).toBe(3);
   });
 
-  it("computes weighted percentage from projected fields", () => {
+  it("computes weighted percentage from actual saved plus projected allocation", () => {
     const goals = [
-      makeGoal({ id: "g1", projectedCost: 1_000_000, projectedSaved: 500_000 }),
-      makeGoal({ id: "g2", projectedCost: 500_000, projectedSaved: 500_000 }),
+      makeGoal({ id: "g1", saved: 100_000, projectedCost: 1_000_000, projectedSaved: 400_000 }),
+      makeGoal({ id: "g2", saved: 0, projectedCost: 500_000, projectedSaved: 500_000 }),
     ];
-    // Total projected cost = 1.5M, total projected saved = 1M → 67%
+    // Total projected cost = 1.5M, total saved + projected allocation = 1M → 67%
     const result = computeGoalFeasibility(goals, 50_000, 2026);
     expect(result.weightedPct).toBe(67);
   });
@@ -50,7 +50,7 @@ describe("computeGoalFeasibility", () => {
   });
 
   it("caps weighted percentage at 100", () => {
-    const goals = [makeGoal({ projectedCost: 100_000, projectedSaved: 200_000 })];
+    const goals = [makeGoal({ saved: 50_000, projectedCost: 100_000, projectedSaved: 200_000 })];
     const result = computeGoalFeasibility(goals, 50_000, 2026);
     expect(result.weightedPct).toBe(100);
   });

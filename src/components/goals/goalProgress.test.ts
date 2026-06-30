@@ -18,19 +18,28 @@ const baseGoal: Goal = {
 };
 
 describe("goalProgress", () => {
-  it("uses contribution-backed saved amount instead of projected allocation", () => {
+  it("combines contribution-backed saved amount with projected cashflow allocation", () => {
     expect(goalProgress(baseGoal)).toEqual({
-      cost: 1_500_000,
-      saved: 0,
-      percent: 0,
+      cost: 1_605_000,
+      saved: 1_605_000,
+      percent: 100,
+      achieved: true,
+    });
+  });
+
+  it("keeps initial saved amount separate from projected cashflow allocation", () => {
+    expect(goalProgress({ ...baseGoal, saved: 500_000, projectedSaved: 250_000 })).toEqual({
+      cost: 1_605_000,
+      saved: 750_000,
+      percent: 47,
       achieved: false,
     });
   });
 
-  it("marks a goal achieved when contribution-backed saved amount reaches cost", () => {
-    expect(goalProgress({ ...baseGoal, saved: 1_500_000 })).toEqual({
-      cost: 1_500_000,
-      saved: 1_500_000,
+  it("marks a goal achieved when actual plus projected allocation reaches projected cost", () => {
+    expect(goalProgress({ ...baseGoal, saved: 1_000_000, projectedSaved: 605_000 })).toEqual({
+      cost: 1_605_000,
+      saved: 1_605_000,
       percent: 100,
       achieved: true,
     });
