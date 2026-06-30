@@ -211,9 +211,9 @@ describe("backendPlanClient cashflow growth ranges", () => {
 });
 
 describe("backendPlanClient goal mutations", () => {
-  it("updates cached goals from mutation responses without rereading heavy analytics", async () => {
+  it("rereads analytics after adding a goal so the nearest goal and dashboard forecast recalculate immediately", async () => {
     const initialGoal = apiGoal({ id: "goal-1", name: "Подушка", priority: 1 });
-    const createdGoal = apiGoal({ id: "goal-2", name: "Отпуск", priority: 2, currentCost: 500_000 });
+    const createdGoal = apiGoal({ id: "goal-2", name: "Отпуск", priority: 2, targetYear: 2026, currentCost: 500_000 });
     let mutationPhase = false;
     const heavyRequestsAfterMutation: string[] = [];
 
@@ -223,14 +223,26 @@ describe("backendPlanClient goal mutations", () => {
 
       if (mutationPhase && isHeavyPlanRead(url)) {
         heavyRequestsAfterMutation.push(url);
-        throw new Error(`Unexpected heavy read after goal mutation: ${url}`);
       }
 
       if (url.endsWith("/plans/current") && method === "GET") {
-        return jsonResponse({ data: planState([initialGoal]) });
+        return jsonResponse({ data: planState(mutationPhase ? [initialGoal, createdGoal] : [initialGoal]) });
       }
-      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/dashboard")) {
+        return jsonResponse({
+          data: {
+            ...dashboardMetrics(),
+            monthlyGoalContribution: mutationPhase ? 500_000 : 100_000,
+          },
+        });
+      }
+      if (url.endsWith("/analytics/cashflow")) {
+        return jsonResponse({
+          data: mutationPhase
+            ? [{ year: 2026, age: 33, totalIncome: 1_000_000, totalExpenses: 100_000, totalGoalExpenses: 500_000, netSavings: 400_000, capitalEndOfYear: 2_400_000 }]
+            : [],
+        });
+      }
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -258,9 +270,12 @@ describe("backendPlanClient goal mutations", () => {
       type: "onetime",
     });
 
-    expect(heavyRequestsAfterMutation).toEqual([]);
+    expect(heavyRequestsAfterMutation.some((url) => url.endsWith("/dashboard"))).toBe(true);
+    expect(heavyRequestsAfterMutation.some((url) => url.endsWith("/analytics/cashflow"))).toBe(true);
+    expect(updated.dashboardSnapshot?.monthlyTargetRub).toBe(500_000);
+    expect(updated.forecast[0]).toMatchObject({ year: 2026, goals: -500_000 });
     expect(updated.goals.map((goal) => goal.id)).toEqual(["goal-1", "goal-2"]);
-    expect(updated.goals.at(-1)).toMatchObject({ id: "goal-2", name: "Отпуск", cost: 500_000 });
+    expect(updated.goals.at(-1)).toMatchObject({ id: "goal-2", name: "Отпуск", targetYear: 2026, cost: 500_000 });
   });
 });
 
