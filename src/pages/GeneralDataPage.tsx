@@ -31,6 +31,8 @@ export function GeneralDataPage() {
       birthYear: settings?.birthYear ?? 1993,
       monthsInYear: settings?.monthsInYear ?? 12,
       retirementAge: settings?.retirementAge ?? 60,
+      pensionCalculationYears: settings?.pensionCalculationYears ?? Math.max(1, (settings?.retirementAge ?? 60) - (settings?.currentAge ?? 30)),
+      dashboardCalculationYears: settings?.dashboardCalculationYears ?? 12,
       inflationPercent: Math.round((settings?.inflation ?? 0.07) * 100),
       investmentReturnPercent: Math.round((settings?.investmentReturn ?? 0.09) * 100),
       startingCapital: settings?.startingCapital ?? 0,
@@ -40,8 +42,8 @@ export function GeneralDataPage() {
 
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
-  const retirementAge = settings?.retirementAge ?? values.retirementAge;
-  const horizon = Math.max(0, retirementAge - age);
+  const retirementAge = age + values.pensionCalculationYears;
+  const horizon = values.dashboardCalculationYears;
   const realReturn = values.investmentReturnPercent - values.inflationPercent;
 
   const onSubmit = form.handleSubmit((next) => {
@@ -49,6 +51,8 @@ export function GeneralDataPage() {
       startYear: next.startYear,
       birthYear: next.birthYear,
       monthsInYear: next.monthsInYear,
+      pensionCalculationYears: next.pensionCalculationYears,
+      dashboardCalculationYears: next.dashboardCalculationYears,
       inflation: next.inflationPercent / 100,
       investmentReturn: next.investmentReturnPercent / 100,
       startingCapital: next.startingCapital,
@@ -143,6 +147,12 @@ export function GeneralDataPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <Field label={t("general.birthYear")} hint={t("general.birthYearHint")} error={form.formState.errors.birthYear?.message}>
                 <Input type="number" {...form.register("birthYear", { valueAsNumber: true })} />
+              </Field>
+              <Field label={t("general.pensionCalculationYears")} hint={t("general.pensionCalculationYearsHint")} error={form.formState.errors.pensionCalculationYears?.message}>
+                <Input type="number" {...form.register("pensionCalculationYears", { valueAsNumber: true })} />
+              </Field>
+              <Field label={t("general.dashboardCalculationYears")} hint={t("general.dashboardCalculationYearsHint")} error={form.formState.errors.dashboardCalculationYears?.message}>
+                <Input type="number" {...form.register("dashboardCalculationYears", { valueAsNumber: true })} />
               </Field>
             </div>
           </FormSection>

@@ -12,6 +12,8 @@ export const mockPlan: FinancialPlan = {
     birthYear: 1993,
     currentAge: 33,
     retirementAge: 50,
+    pensionCalculationYears: 17,
+    dashboardCalculationYears: 12,
     monthsInYear: 12,
     inflation: 0.031,
     investmentReturn: 0.06,

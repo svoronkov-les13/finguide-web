@@ -237,12 +237,16 @@ export function mapScenarioComparisonForecasts(comparison: ApiScenarioComparison
 function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undefined) {
   const startYear = assumptions?.startYear ?? new Date().getFullYear();
   const birthYear = assumptions?.birthYear ?? (planState.profile.age ? startYear - planState.profile.age : startYear - planState.pension.currentAge);
+  const currentAge = Math.max(0, startYear - birthYear);
+  const pensionCalculationYears = Math.max(1, planState.pension.retirementAge - currentAge);
 
   return {
     startYear,
     birthYear,
-    currentAge: planState.profile.age ?? planState.pension.currentAge,
+    currentAge,
     retirementAge: planState.pension.retirementAge,
+    pensionCalculationYears,
+    dashboardCalculationYears: assumptions?.horizonYears ?? 12,
     monthsInYear: assumptions?.monthsPerYear ?? 12,
     inflation: firstRate(assumptions?.inflationSchedule, planState.pension.inflationPct) / 100,
     investmentReturn: (assumptions?.investmentReturnPct ?? planState.pension.expectedReturnPct) / 100,
@@ -614,6 +618,11 @@ export const backendPlanClient = {
     const planId = currentPlanId();
     const current = lastPlanState ?? unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
     const currentAssumptions = current.modelAssumptions;
+    const startYear = patch.startYear ?? currentAssumptions?.startYear ?? new Date().getFullYear();
+    const birthYear = patch.birthYear ?? currentAssumptions?.birthYear ?? (current.profile.age ? startYear - current.profile.age : startYear - current.pension.currentAge);
+    const currentAge = Math.max(0, startYear - birthYear);
+    const pensionCalculationYears = patch.pensionCalculationYears ?? Math.max(1, current.pension.retirementAge - currentAge);
+    const retirementAge = patch.retirementAge ?? currentAge + pensionCalculationYears;
     const pensionInflationPct = patch.inflation !== undefined
       ? patch.inflation * 100
       : firstRate(currentAssumptions?.inflationSchedule, current.pension.inflationPct);
@@ -623,8 +632,9 @@ export const backendPlanClient = {
         planId,
         {
           ...currentAssumptions,
-          startYear: patch.startYear ?? currentAssumptions.startYear,
-          birthYear: patch.birthYear ?? currentAssumptions.birthYear,
+          startYear,
+          birthYear,
+          horizonYears: patch.dashboardCalculationYears ?? currentAssumptions.horizonYears,
           monthsPerYear: patch.monthsInYear ?? currentAssumptions.monthsPerYear,
           initialCapital: patch.startingCapital ?? currentAssumptions.initialCapital,
           investmentReturnPct: patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : currentAssumptions.investmentReturnPct,
@@ -640,7 +650,8 @@ export const backendPlanClient = {
       planId,
       {
         ...current.pension,
-        retirementAge: patch.retirementAge ?? current.pension.retirementAge,
+        currentAge,
+        retirementAge,
         desiredMonthlyExpensesCurrentPrices: patch.targetMonthlySpend ?? current.pension.desiredMonthlyExpensesCurrentPrices,
         monthlyExpenses: patch.targetMonthlySpend ?? current.pension.monthlyExpenses,
         expectedReturnPct: patch.pensionInvestmentReturn !== undefined
