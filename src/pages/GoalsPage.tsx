@@ -12,7 +12,7 @@ import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalPortfolioSummary, goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
-import { trackingActiveGoal } from "@/pages/trackingGoal";
+import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
 
 export function GoalsPage() {
@@ -164,7 +164,7 @@ export function GoalsPage() {
       if (sortField === "name") result = a.name.localeCompare(b.name);
       if (sortField === "cost") result = a.cost - b.cost;
       if (sortField === "type") result = String(a.type).localeCompare(String(b.type));
-      if (sortField === "year") result = (a.priority ?? 0) - (b.priority ?? 0);
+      if (sortField === "year") result = compareGoalTargetOrder(a, b);
       return sortDirection === "asc" ? result : -result;
     });
   });

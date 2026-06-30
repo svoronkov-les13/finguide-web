@@ -58,10 +58,17 @@ function monthsToTarget(goal: Goal, currentYear: number, currentMonthIdx: number
 }
 
 function orderedTrackingGoals(goals: Goal[] | undefined) {
-  return [...(goals ?? [])].sort((left, right) => {
-    if (left.targetYear !== right.targetYear) return left.targetYear - right.targetYear;
-    const leftPriority = left.priority ?? Number.MAX_SAFE_INTEGER;
-    const rightPriority = right.priority ?? Number.MAX_SAFE_INTEGER;
-    return leftPriority - rightPriority || left.id.localeCompare(right.id);
-  });
+  return [...(goals ?? [])].sort(compareGoalTargetOrder);
+}
+
+export function compareGoalTargetOrder(left: Goal, right: Goal) {
+  if (left.targetYear !== right.targetYear) return left.targetYear - right.targetYear;
+
+  const leftMonth = left.targetMonth ?? 12;
+  const rightMonth = right.targetMonth ?? 12;
+  if (leftMonth !== rightMonth) return leftMonth - rightMonth;
+
+  const leftPriority = left.priority ?? Number.MAX_SAFE_INTEGER;
+  const rightPriority = right.priority ?? Number.MAX_SAFE_INTEGER;
+  return leftPriority - rightPriority || left.id.localeCompare(right.id);
 }
