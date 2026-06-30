@@ -43,7 +43,6 @@ export function GeneralDataPage() {
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
   const retirementAge = age + values.pensionCalculationYears;
-  const horizon = values.dashboardCalculationYears;
   const realReturn = values.investmentReturnPercent - values.inflationPercent;
 
   const onSubmit = form.handleSubmit((next) => {
@@ -129,7 +128,6 @@ export function GeneralDataPage() {
                 <Input type="number" step="0.1" {...form.register("inflationPercent")} />
               </Field>
               <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${realReturn.toFixed(1)}%`} detail={t("general.realReturnDetail")} />
-              <MetricBox label={t("general.horizon")} value={`${horizon} ${t("general.years")}`} detail={t("general.horizonDetail")} />
             </div>
           </FormSection>
 
@@ -187,7 +185,6 @@ export function GeneralDataPage() {
             returnPct={values.investmentReturnPercent}
             inflationPct={values.inflationPercent}
             realReturn={realReturn}
-            horizon={horizon}
             retirementAge={retirementAge}
           />
           <HelpBlock title={t("general.baseCurrency")}>{t("general.helpCurrency")}</HelpBlock>
@@ -209,7 +206,6 @@ function SummaryCard(props: {
   returnPct: number;
   inflationPct: number;
   realReturn: number;
-  horizon: number;
   retirementAge: number;
 }) {
   const { t } = useI18n();
@@ -228,7 +224,6 @@ function SummaryCard(props: {
         <SummaryRow label={t("general.returnPct")} value={`${props.returnPct}%`} tone="positive" />
         <SummaryRow label={t("general.inflationPct")} value={`${props.inflationPct}%`} tone="negative" />
         <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${props.realReturn.toFixed(1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
-        <SummaryRow label={t("general.horizon")} value={`${props.horizon} ${t("general.years")}`} />
         <SummaryRow label={t("general.pensionIn")} value={`${props.retirementAge} ${t("general.years")}`} />
       </dl>
     </Card>
