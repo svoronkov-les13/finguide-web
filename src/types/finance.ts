@@ -50,6 +50,7 @@ export interface Goal {
   projectedSaved?: number;
   projectedProgressPct?: number;
   growth: number;
+  growthType?: "inflation" | "custom";
   reachable: boolean;
   type?: "onetime" | "periodic";
 }

@@ -15,7 +15,7 @@ export interface GoalFeasibility {
  * Computes goal feasibility metrics from the backend-projected fields.
  *
  * - `reachableCount` — goals where `projectedReachable` or `reachable` is true
- * - `weightedPct` — sum(projectedSaved or saved) / sum(projectedCost or cost) * 100
+ * - `weightedPct` — sum(saved + projectedSaved) / sum(projectedCost or cost) * 100
  * - `monthlyDeficit` — (totalRemainingCost / remainingMonths) - currentMonthlySavings
  *
  * @param goals        Array of Goal objects with backend-computed projections
@@ -36,7 +36,7 @@ export function computeGoalFeasibility(
 
   // Weighted by cost: how much of the total projected cost is covered by projected savings
   const totalProjectedCost = goals.reduce((sum, g) => sum + (g.projectedCost ?? g.cost), 0);
-  const totalProjectedSaved = goals.reduce((sum, g) => sum + (g.projectedSaved ?? g.saved), 0);
+  const totalProjectedSaved = goals.reduce((sum, g) => sum + g.saved + (g.projectedSaved ?? 0), 0);
   const weightedPct = totalProjectedCost > 0
     ? Math.min(100, Math.round((totalProjectedSaved / totalProjectedCost) * 100))
     : 0;
@@ -44,7 +44,7 @@ export function computeGoalFeasibility(
   // Monthly deficit: what extra per month is needed to cover all remaining costs
   const totalRemaining = goals.reduce((sum, g) => {
     const cost = g.projectedCost ?? g.cost;
-    const saved = g.projectedSaved ?? g.saved;
+    const saved = g.saved + (g.projectedSaved ?? 0);
     return sum + Math.max(0, cost - saved);
   }, 0);
 

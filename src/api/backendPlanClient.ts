@@ -363,6 +363,7 @@ export function goalFromApi(goal: ApiGoal, lastForecastYear: number): Goal {
     projectedSaved: goal.projectedSavedAmount,
     projectedProgressPct: goal.projectedProgressPct,
     growth: goal.growthPct / 100,
+    growthType: goal.growthType === "inflation" ? "inflation" : "custom",
     reachable: goal.projectedReachable ?? (goal.savedAmount >= goal.currentCost || goal.targetYear <= lastForecastYear),
     type: goal.type === "recurring" ? "periodic" : "onetime",
   };
