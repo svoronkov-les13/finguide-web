@@ -1,3 +1,4 @@
+import { goalProgress } from "@/components/goals/goalProgress";
 import type { Goal } from "@/types/finance";
 
 export function trackingActiveGoal(goals: Goal[] | undefined) {
@@ -30,6 +31,10 @@ export function goalSavingNeeds(goals: Goal[] | undefined, currentYear: number, 
 
 export function goalTargetCost(goal: Goal) {
   return goal.projectedCost ?? goal.cost;
+}
+
+export function trackingGoalProgress(goal: Goal) {
+  return goalProgress(goal);
 }
 
 function sumSaved(goals: Goal[]) {
