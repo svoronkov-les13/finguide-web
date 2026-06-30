@@ -39,6 +39,13 @@ describe("trackingActiveGoal", () => {
     expect(trackingActiveGoal([first, apartment, car])).toBe(car);
   });
 
+  it("uses target month before manual priority within the same year", () => {
+    const decemberGoal = goal({ id: "december", name: "December", targetYear: 2027, targetMonth: 12, priority: 1 });
+    const augustGoal = goal({ id: "august", name: "August", targetYear: 2027, targetMonth: 8, priority: 2 });
+
+    expect(trackingActiveGoal([decemberGoal, augustGoal])).toBe(augustGoal);
+  });
+
   it("computes the monthly target for the nearest incomplete goal", () => {
     const first = goal({ id: "first", targetYear: 2027, cost: 1_500_000, saved: 0, projectedCost: 1_605_000 });
     const second = goal({ id: "second", targetYear: 2029, cost: 5_000_000, saved: 0, projectedCost: 6_298_560 });
