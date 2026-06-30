@@ -29,6 +29,8 @@ interface CashflowFormData {
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
 
+type GrowthRangeFormData = CashflowFormData["growthRanges"][number];
+
 
 
 export function CashflowModal({
@@ -96,6 +98,7 @@ export function CashflowModal({
   };
 
   const frequencyValue = useWatch({ control: form.control, name: "frequency" });
+  const currencyValue = useWatch({ control: form.control, name: "currency" });
   const isMonthly = frequencyValue === "monthly";
   const isYearly = frequencyValue === "yearly";
   const isOnetime = frequencyValue === "onetime";
@@ -148,7 +151,7 @@ export function CashflowModal({
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.currency")}</Label>
                       <Select
-                          value={form.watch("currency")}
+                          value={currencyValue}
                           onValueChange={(v) => form.setValue("currency", v as "RUB" | "USD")}
                         >
                           <SelectTrigger>
@@ -333,7 +336,7 @@ export function CashflowModal({
                             type="button"
                             onClick={() =>
                               appendRange({
-                                startYear: new Date().getFullYear(),
+                                startYear: nextGrowthRangeStartYear(growthRangesValues, form.getValues("startYear")),
                                 endYear: null,
                                 growthPercent: 0,
                               })
@@ -433,4 +436,9 @@ export function CashflowModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+export function nextGrowthRangeStartYear(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {
+  const previousRange = ranges?.at(-1);
+  return previousRange?.endYear ?? fallbackStartYear;
 }
