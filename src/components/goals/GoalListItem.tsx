@@ -92,7 +92,7 @@ export function GoalListItem({
          <div className="min-w-[128px]">
            <div className="whitespace-nowrap text-sm font-semibold text-[var(--fp-color-foreground)] num">{formatRub(progress.cost)}</div>
            <div className="mt-0.5 whitespace-nowrap text-[10px] font-medium text-[var(--fp-color-muted-foreground)] num">
-             {t("goals.projectedCost", { year: String(goal.targetYear), amount: formatRub(projectedCost, { compact: true }) })}
+             {t("goals.projectedCost", { year: String(goal.targetYear), amount: formatRub(projectedCost, { compact: false }) })}
            </div>
          </div>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">

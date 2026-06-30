@@ -30,6 +30,7 @@ import type {
   PensionSettings,
   PlanState,
   Scenario as ApiScenario,
+  YearRatePoint,
 } from "@/shared/api/generated/model";
 import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, PlanSummary, Scenario, ScenarioId, TrackerEntry } from "@/types/finance";
 import { calculateForecast } from "@/engine/calculateForecast";
@@ -245,8 +246,12 @@ function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undef
     monthsInYear: assumptions?.monthsPerYear ?? 12,
     inflation: firstRate(assumptions?.inflationSchedule, planState.pension.inflationPct) / 100,
     investmentReturn: (assumptions?.investmentReturnPct ?? planState.pension.expectedReturnPct) / 100,
+    pensionInvestmentReturn: planState.pension.expectedReturnPct / 100,
     startingCapital: assumptions?.initialCapital ?? planState.profile.initialBalance,
     targetMonthlySpend: planState.pension.desiredMonthlyExpensesCurrentPrices ?? planState.pension.monthlyExpenses,
+    withdrawalStrategy: planState.pension.withdrawalStrategy,
+    statePensionEnabled: planState.pension.statePensionEnabled,
+    statePensionMonthly: planState.pension.statePensionMonthly,
   };
 }
 
@@ -299,6 +304,8 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
+    growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
+    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
   };
@@ -315,6 +322,8 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
     endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
     growth: source.growthPct / 100,
+    growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
+    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "one_time" ? "Разовые расходы" : "Ежегодные расходы",
   };
@@ -460,16 +469,49 @@ function endDateFromYear(year: number) {
   return `${year}-12-31`;
 }
 
+export function cashflowGrowthRangesFromSchedule(schedule: YearRatePoint[] | undefined): Cashflow["growthRanges"] {
+  if (!schedule?.length) return [];
+  const sorted = schedule.slice().sort((a, b) => a.year - b.year);
+  const ranges: NonNullable<Cashflow["growthRanges"]> = [];
+
+  for (const point of sorted) {
+    const last = ranges.at(-1);
+    if (last && last.growthPercent === point.ratePct && last.endYear === point.year) {
+      last.endYear = point.year + 1;
+    } else {
+      ranges.push({ startYear: point.year, endYear: point.year + 1, growthPercent: point.ratePct });
+    }
+  }
+
+  return ranges;
+}
+
+export function cashflowGrowthScheduleFromRanges(ranges: Cashflow["growthRanges"], fallbackEndYear: number): YearRatePoint[] {
+  if (!ranges?.length) return [];
+  const points: YearRatePoint[] = [];
+  for (const range of ranges) {
+    const endYear = range.endYear ?? fallbackEndYear;
+    for (let year = range.startYear; year < endYear; year += 1) {
+      points.push({ year, ratePct: range.growthPercent });
+    }
+  }
+  return points;
+}
+
 function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
   const effectiveEndYear = input.endYear ?? input.startYear + 30;
+  const growthSchedule = input.growthType === "ranges" || input.growthRanges?.length
+    ? cashflowGrowthScheduleFromRanges(input.growthRanges, effectiveEndYear)
+    : [];
   return {
     id: input.id,
     name: input.name,
     amount: input.amount,
     currency: input.currency,
     frequency: input.frequency === "onetime" ? "one_time" : input.frequency,
-    growthType: "manual",
+    growthType: input.growthType === "inflation" ? "inflation" : "manual",
     growthPct: input.growth * 100,
+    growthSchedule,
     startDate: startDateFromYear(input.startYear),
     endDate: endDateFromYear(effectiveEndYear),
     startYear: input.startYear,
@@ -572,6 +614,9 @@ export const backendPlanClient = {
     const planId = currentPlanId();
     const current = lastPlanState ?? unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
     const currentAssumptions = current.modelAssumptions;
+    const pensionInflationPct = patch.inflation !== undefined
+      ? patch.inflation * 100
+      : firstRate(currentAssumptions?.inflationSchedule, current.pension.inflationPct);
 
     if (currentAssumptions) {
       unwrapData<ModelAssumptions>(await patchPlansPlanIdAnalyticsAssumptions(
@@ -598,8 +643,13 @@ export const backendPlanClient = {
         retirementAge: patch.retirementAge ?? current.pension.retirementAge,
         desiredMonthlyExpensesCurrentPrices: patch.targetMonthlySpend ?? current.pension.desiredMonthlyExpensesCurrentPrices,
         monthlyExpenses: patch.targetMonthlySpend ?? current.pension.monthlyExpenses,
-        expectedReturnPct: patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : current.pension.expectedReturnPct,
-        inflationPct: patch.inflation !== undefined ? patch.inflation * 100 : current.pension.inflationPct,
+        expectedReturnPct: patch.pensionInvestmentReturn !== undefined
+          ? patch.pensionInvestmentReturn * 100
+          : patch.investmentReturn !== undefined ? patch.investmentReturn * 100 : current.pension.expectedReturnPct,
+        inflationPct: pensionInflationPct,
+        withdrawalStrategy: patch.withdrawalStrategy ?? current.pension.withdrawalStrategy,
+        statePensionEnabled: patch.statePensionEnabled ?? current.pension.statePensionEnabled,
+        statePensionMonthly: patch.statePensionMonthly ?? current.pension.statePensionMonthly,
       },
       await requestOptions(),
     ), "PATCH /pension");
