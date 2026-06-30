@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
+import { pensionExpenseComparison } from "@/pages/pensionComparison";
 
 export function PensionPage() {
   const { data: plan } = usePlanQuery();
@@ -51,8 +52,14 @@ export function PensionPage() {
   const retirementYear = currentYear + yearsToRetirement;
   
   const targetMonthlySpend = formState.targetMonthlySpend;
-  const inflationMultiplier = Math.pow(1 + settings.inflation, yearsToRetirement);
-  const futureMonthlySpend = targetMonthlySpend * inflationMultiplier;
+  const expenseComparison = pensionExpenseComparison({
+    cashflows: plan.cashflows,
+    currentYear,
+    inflation: settings.inflation,
+    targetMonthlySpend,
+    yearsToRetirement,
+  });
+  const futureMonthlySpend = expenseComparison.plannedMonthlyAtRetirement;
   
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
   const retirementCapital = plan.forecast.find(p => p.age === settings.retirementAge)?.capital || 2373688270;
@@ -401,7 +408,7 @@ export function PensionPage() {
                   </div>
                   <div className="text-[12px] text-[var(--fp-color-muted-foreground)] mb-3">{t("pension.ifMaintained")}</div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold tracking-tight text-[var(--fp-color-label)]">{formatRub(targetMonthlySpend * 2.05)}</span>
+                    <span className="text-3xl font-bold tracking-tight text-[var(--fp-color-label)]">{formatRub(expenseComparison.currentMonthlyAtRetirement)}</span>
                     <span className="text-[15px] text-[var(--fp-color-muted-foreground)]">{t("pension.perMonthShort")}</span>
                   </div>
                 </div>
@@ -411,7 +418,7 @@ export function PensionPage() {
                   <div>
                     <p className="text-[14px] font-semibold text-[var(--fp-color-foreground)]">{t("pension.spendLessTitle")}</p>
                     <p className="text-[13px] text-[var(--fp-color-label)] mt-1.5 leading-snug">
-                      {t("pension.spendLessDesc", { percent: "49" })}
+                      {t("pension.spendLessDesc", { percent: String(expenseComparison.plannedPercentOfCurrent) })}
                     </p>
                   </div>
                 </div>
