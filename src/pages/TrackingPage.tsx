@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { CheckCircle2, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePlanQuery, useMonthlyTrackerQuery, useMonthlyTrackerForYear, useSaveMonthlyTrackerMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
@@ -307,11 +307,10 @@ export function TrackingPage() {
 
   return (
     <Page>
-      {/* Page title */}
-      <header>
-        <h1 className="page-title">{t("tracking.title")}</h1>
-        <p className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">{t("tracking.subtitle")}</p>
-      </header>
+      <PageHeader
+        title={t("tracking.title")}
+        description={t("tracking.subtitle")}
+      />
 
       {/* Top cards */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:min-h-[380px] mb-6">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { Plus, Target, Download, Search } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
@@ -201,35 +201,21 @@ export function GoalsPage() {
   return (
     <Page>
       {/* Header */}
-      <header className="flex items-start justify-between gap-5 max-[760px]:flex-col">
-        <div className="flex min-w-0 items-center gap-4">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
-          >
-            <span className="text-[var(--fp-color-muted-foreground)]">←</span>
-            {t("cashflow.back")}
-          </button>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--fp-color-foreground)]">{t("goals.title")}</h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            className="max-[760px]:hidden"
-          >
-            {t("goals.viewExample")}
-          </Button>
-          
-          <Button
-            variant="default"
-            onClick={handleCreate}
-          >
-            <Plus className="size-4 shrink-0" />
-            {t("goals.addGoal")}
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        back
+        title={t("goals.title")}
+        actions={
+          <>
+            <Button variant="secondary" className="max-[760px]:hidden">
+              {t("goals.viewExample")}
+            </Button>
+            <Button variant="default" onClick={handleCreate}>
+              <Plus className="size-4 shrink-0" />
+              {t("goals.addGoal")}
+            </Button>
+          </>
+        }
+      />
 
       {/* Stats bar */}
       {goals.length > 0 && (
@@ -294,58 +280,40 @@ export function GoalsPage() {
 
       {/* Toolbar */}
       {goals.length > 0 && (
-        <div className="flex flex-col gap-4 border-b border-[var(--fp-color-border)] pb-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative w-full sm:w-auto min-w-[300px]">
-              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
-              <input
-                type="text"
-                placeholder={t("goals.searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-10 pr-5 text-sm font-medium text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveFilter("all")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "all"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterAll")}
-              </button>
-              <button
-                onClick={() => setActiveFilter("onetime")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "onetime"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterOnetime")}
-              </button>
-              <button
-                onClick={() => setActiveFilter("periodic")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "periodic"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterPeriodic")}
-              </button>
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative w-[260px]">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
+            <input
+              type="text"
+              placeholder={t("goals.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 w-full rounded-lg border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-9 pr-4 text-sm text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/20"
+            />
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
-            <span>{t("goals.sortPrefix")}</span>
+          {/* Filters */}
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-0.5">
+            {(["all", "onetime", "periodic"] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "rounded-md px-3.5 py-1 text-sm font-medium transition-all",
+                  activeFilter === filter
+                    ? "bg-[var(--fp-color-foreground)] text-[var(--fp-color-card)] shadow-sm"
+                    : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
+                )}
+              >
+                {t(`goals.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}` as Parameters<typeof t>[0])}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort — pushed right */}
+          <div className="ml-auto flex items-center gap-1 text-xs text-[var(--fp-color-muted-foreground)]">
+            <span className="mr-1 font-medium">{t("goals.sortPrefix")}</span>
             {(["name", "cost", "type", "year"] as const).map((field) => (
               <button
                 key={field}
@@ -358,14 +326,14 @@ export function GoalsPage() {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors",
+                  "flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-all",
                   sortField === field
-                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)]"
+                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
                     : "hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
                 )}
               >
                 {t(`goals.sort_${field}`)}
-                <span className="text-[10px] opacity-70">
+                <span className="text-[10px] opacity-60">
                   {sortField === field ? (sortDirection === "asc" ? "↑" : "↓") : "↑↓"}
                 </span>
               </button>

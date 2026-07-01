@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Page } from "@/components/layout/Page";
-import { CheckCircle2, ChevronLeft, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
+import { CheckCircle2, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
@@ -83,17 +83,11 @@ export function PensionPage() {
 
   return (
     <Page>
-      <div>
-        <button className="flex items-center text-[13px] font-medium text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)] transition-colors mb-4 cursor-pointer bg-transparent border-none p-0">
-          <ChevronLeft className="size-4 mr-1" /> {t("cashflow.back")}
-        </button>
-        <header className="grid gap-2">
-          <h1 className="text-[28px] font-bold tracking-tight text-[var(--fp-color-foreground)]">{t("pension.title")}</h1>
-          <p className="text-[var(--fp-color-label)] max-w-[700px] leading-relaxed text-[15px]">
-            {t("pension.description")}
-          </p>
-        </header>
-      </div>
+      <PageHeader
+        back
+        title={t("pension.title")}
+        description={t("pension.description")}
+      />
 
       <div className="grid gap-4 mt-2">
         {/* Параметры расчёта */}

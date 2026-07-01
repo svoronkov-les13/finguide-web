@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import {
-  FileChartColumnIncreasing, ChevronDown, ChevronUp, Edit3,
+  ChevronDown, ChevronUp, Edit3,
   LayoutDashboard, Target, TrendingUp, ExternalLink,
 } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
@@ -42,33 +42,25 @@ export function SummaryPage() {
 
   return (
     <Page>
-      {/* Header */}
-      <header className="flex items-start justify-between gap-5 flex-wrap">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] shadow-sm">
-            <FileChartColumnIncreasing className="size-5 text-[var(--fp-color-foreground)]" />
-          </span>
-          <div>
-            <h1 className="text-[28px] font-bold tracking-tight">{t("summary.title")}</h1>
-            <p className="mt-1 text-[14px] text-[var(--fp-color-label)]">{t("summary.subtitle")}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            variant="secondary"
-            className="h-10 gap-2"
-            onClick={() => navigate({ to: '/income' as never })}
-          >
-            <Edit3 className="size-4" /> {t("summary.toEdit")}
-          </Button>
-          <Button
-            className="h-10 gap-2"
-            onClick={() => navigate({ to: '/dashboard' as never })}
-          >
-            <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title={t("summary.title")}
+        description={t("summary.subtitle")}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => navigate({ to: '/income' as never })}
+            >
+              <Edit3 className="size-4" /> {t("summary.toEdit")}
+            </Button>
+            <Button
+              onClick={() => navigate({ to: '/dashboard' as never })}
+            >
+              <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
+            </Button>
+          </>
+        }
+      />
 
       {/* Balance + Key Insights */}
       <div className="grid gap-5 md:grid-cols-2">

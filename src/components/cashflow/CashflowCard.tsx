@@ -69,7 +69,7 @@ export function CashflowCard({
 
       {/* Left: Name + dates */}
       <div className="min-w-0 flex-1">
-        <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-sm")}>{item.name}</div>
+        <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-sm")} title={item.name}>{item.name}</div>
         {!compact && (
           <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
             {item.startYear ? `01.01.${item.startYear}` : ""} — {endLabel}

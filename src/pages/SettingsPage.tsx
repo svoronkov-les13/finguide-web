@@ -1,5 +1,5 @@
-import { Bell, Settings, Shield, SlidersHorizontal } from "lucide-react";
-import { Page } from "@/components/layout/Page";
+import { Bell, Shield, SlidersHorizontal } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -40,15 +40,10 @@ export function SettingsPage() {
   const { t } = useI18n();
   return (
     <Page bottom={false}>
-      <header className="flex min-w-0 items-center gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-          <Settings className="size-5" />
-        </span>
-        <div>
-          <h1 className="page-title">{t("settings.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("settings.subtitle")}</p>
-        </div>
-      </header>
+      <PageHeader
+        title={t("settings.title")}
+        description={t("settings.subtitle")}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,800px)_280px]">
         <div className="grid gap-5">

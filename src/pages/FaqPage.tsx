@@ -1,5 +1,5 @@
-import { CircleHelp, Search } from "lucide-react";
-import { Page } from "@/components/layout/Page";
+import { Search } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -16,15 +16,10 @@ export function FaqPage() {
 
   return (
     <Page bottom={false}>
-      <header className="flex min-w-0 items-center gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-          <CircleHelp className="size-5" />
-        </span>
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight">{t("faq.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("faq.subtitle")}</p>
-        </div>
-      </header>
+      <PageHeader
+        title={t("faq.title")}
+        description={t("faq.subtitle")}
+      />
 
       <Card className="p-3">
         <label className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
