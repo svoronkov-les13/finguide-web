@@ -18,6 +18,7 @@ export const ru = {
     yes: "Да",
     confirmDelete: "Удалить цель?",
     delete: "Удалить",
+    back: "Назад",
   },
   groups: {
     navigation: "Планирование",
@@ -356,7 +357,7 @@ export const ru = {
     colCost: "Стоимость",
     colType: "Тип цели",
     colYear: "Год",
-    sortPrefix: "СОРТ:",
+    sortPrefix: "Сортировка:",
     totalAccumulated: "накоплено",
     totalGoalsCount: "{{count}} целей",
     totalGoalsCountOne: "{{count}} цель",
@@ -847,6 +848,7 @@ export const en = {
     yes: "Yes",
     confirmDelete: "Delete goal?",
     delete: "Delete",
+    back: "Back",
   },
   groups: {
     navigation: "Navigation",
@@ -1185,7 +1187,7 @@ export const en = {
     colCost: "Cost",
     colType: "Goal type",
     colYear: "Year",
-    sortPrefix: "SORT:",
+    sortPrefix: "Sort:",
     totalAccumulated: "saved",
     totalGoalsCount: "{{count}} goals",
     totalGoalsCountOne: "{{count}} goal",

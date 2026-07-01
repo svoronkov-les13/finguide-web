@@ -427,7 +427,9 @@ export function ForecastChart() {
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const row = payload[0].payload as (typeof data)[number];
-                  const titleText = `${row.year} ${t("format.yearSuffix")}`;
+                  const titleText = xAxisMode === "year"
+                    ? `${row.year} ${t("format.yearSuffix")}`
+                    : formatAge(row.age);
                   const yearGoals = goalsByYear.get(row.year) ?? [];
                   return (
                     <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
@@ -616,7 +618,9 @@ export function ForecastChart() {
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const row = payload[0].payload as (typeof data)[number];
-                  const titleText = `${formatAge(row.age)} (${row.year} г.)`;
+                  const titleText = xAxisMode === "year"
+                    ? `${row.year} ${t("format.yearSuffix")}`
+                    : formatAge(row.age);
 
                   const yearGoals = goalsByYear.get(row.year) ?? [];
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
+import { Plus, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
 import { CashflowSkeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { CashflowModal } from "@/components/cashflow/CashflowModal";
 import { CashflowEmptyState } from "@/components/cashflow/CashflowEmptyState";
 import { CashflowInstructionModal } from "@/components/cashflow/CashflowInstructionModal";
 import { CashflowCalculationDetailsModal } from "@/components/cashflow/CashflowCalculationDetailsModal";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useFormat } from "@/lib/useFormat";
 
@@ -43,7 +43,6 @@ const setStoredOrder = (planId: string, type: string, frequency: string, order: 
 export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const router = useRouter();
   const { data: plan } = usePlanQuery();
   const addCashflow = useAddCashflowMutation();
   const updateCashflow = useUpdateCashflowMutation();
@@ -213,54 +212,41 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   };
 
   return (
-    <Page size="wide" bottom={false} scrollable={false}>
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            onClick={() => router.history.back()}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
-          >
-            <ChevronLeft className="size-4" />
-            {t("cashflow.back")}
-          </button>
-          <h1 className="text-3xl font-bold text-[var(--fp-color-foreground)]">{t(`cashflow.${type}`)}</h1>
-          <button 
-            onClick={() => setInstructionOpen(true)}
-            className="grid size-5 place-items-center rounded-full border border-[var(--fp-color-border)] text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-          >
-            <Info className="size-3" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            className="max-[760px]:hidden"
-            onClick={() => setInstructionOpen(true)}
-          >
-            {t("cashflow.viewExample")}
-          </Button>
-
-          <Button
-            variant="default"
-            onClick={() => handleAddItem("monthly")}
-          >
-            <Plus className="size-4 shrink-0" />
-            {t("cashflow.add")}
-          </Button>
-
-          {items.length > 0 && (
-            <Button
-              variant={isCompact ? "active" : "secondary"}
-              onClick={() => setIsCompact(!isCompact)}
+    <Page bottom={false} scrollable={false}>
+      <PageHeader
+        back
+        title={t(`cashflow.${type}`)}
+        actions={
+          <>
+            <button
+              onClick={() => setInstructionOpen(true)}
+              className="grid size-9 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
             >
-              <Sparkles className="size-4" />
-              <span className="hidden sm:inline">{t("cashflow.compact")}</span>
+              <Info className="size-4" />
+            </button>
+            <Button
+              variant="secondary"
+              className="max-[760px]:hidden"
+              onClick={() => setInstructionOpen(true)}
+            >
+              {t("cashflow.viewExample")}
             </Button>
-          )}
-        </div>
-      </header>
+            <Button variant="default" onClick={() => handleAddItem("monthly")}>
+              <Plus className="size-4 shrink-0" />
+              {t("cashflow.add")}
+            </Button>
+            {items.length > 0 && (
+              <Button
+                variant={isCompact ? "active" : "secondary"}
+                onClick={() => setIsCompact(!isCompact)}
+              >
+                <Sparkles className="size-4" />
+                <span className="hidden sm:inline">{t("cashflow.compact")}</span>
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Stats bar */}
       {items.length > 0 && (

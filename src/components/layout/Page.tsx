@@ -1,47 +1,64 @@
 import type { ReactNode } from "react";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n/I18nProvider";
 
 /**
  * Page — единая обёртка для всех страниц приложения.
  *
- * Все страницы имеют одинаковую ширину (1256px), что обеспечивает
- * визуальную консистентность при навигации.
- *
- * Исключение: CashflowPage использует size="wide" (1400px),
- * так как там реально 3 колонки данных.
+ * Единая ширина 1200px для всех страниц без исключений.
+ * Ширина контролируется ТОЛЬКО здесь (AppShell не ограничивает).
  */
-type PageSize = "default" | "wide";
-
-const MAX_WIDTHS: Record<PageSize, string> = {
-  default: "max-w-[1256px]",
-  wide: "max-w-[1400px]",
-};
+const PAGE_MAX_W = "max-w-[1200px]";
 
 interface PageProps {
   children: ReactNode;
   className?: string;
-  /** Ширина: "default" = 1256px (все страницы), "wide" = 1400px (Cashflow) */
-  size?: PageSize;
   /** Нижний отступ pb-12. По умолчанию включён. */
   bottom?: boolean;
   /** Если true, страница сама скроллится (overflow-auto). По умолчанию true. */
   scrollable?: boolean;
 }
 
-export function Page({ children, className, size = "default", bottom = true, scrollable = true }: PageProps) {
+export function Page({ children, className, bottom = true, scrollable = true }: PageProps) {
   return (
     <div
       className={cn(
-        "mx-auto w-full",
+        "mx-auto w-full page-enter",
         scrollable
           ? cn("grid gap-6", bottom && "pb-12")
           : cn("flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0", bottom && "pb-12"),
-        MAX_WIDTHS[size],
+        PAGE_MAX_W,
         className,
       )}
     >
       {children}
     </div>
+  );
+}
+
+// ─── BackButton ───────────────────────────────────────────────────────────────
+
+/**
+ * Универсальная кнопка «Назад» для sub-page.
+ * Использует window.history.back() — подходит для SPA навигации.
+ */
+export function BackButton({ className }: { className?: string }) {
+  const { t } = useI18n();
+  return (
+    <button
+      onClick={() => window.history.back()}
+      className={cn(
+        "flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)]",
+        "bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium",
+        "text-[var(--fp-color-foreground)] transition-colors",
+        "hover:bg-[var(--fp-color-surface-hover)]",
+        className,
+      )}
+    >
+      <ChevronLeft className="size-4" />
+      {t("common.back")}
+    </button>
   );
 }
 
@@ -51,19 +68,15 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
-  /** Иконка / аватар слева от заголовка */
-  icon?: ReactNode;
+  /** Показать кнопку «Назад» перед заголовком */
+  back?: boolean;
 }
 
-export function PageHeader({ title, description, actions, icon }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, back }: PageHeaderProps) {
   return (
     <header className="flex items-start justify-between gap-4 max-[760px]:block">
       <div className="flex min-w-0 items-center gap-4">
-        {icon && (
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm">
-            {icon}
-          </span>
-        )}
+        {back && <BackButton />}
         <div className="min-w-0">
           <h1 className="page-title max-[760px]:text-2xl">{title}</h1>
           {description && (
@@ -74,7 +87,7 @@ export function PageHeader({ title, description, actions, icon }: PageHeaderProp
         </div>
       </div>
       {actions && (
-        <div className="flex shrink-0 flex-wrap justify-end gap-2 max-[760px]:mt-4 max-[760px]:justify-start">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 max-[760px]:mt-4 max-[760px]:justify-start">
           {actions}
         </div>
       )}

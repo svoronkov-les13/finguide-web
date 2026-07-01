@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { settingsSchema, type SettingsFormValues } from "@/forms/settingsSchema";
 
 import { useI18n } from "@/i18n/I18nProvider";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { useFormat } from "@/lib/useFormat";
 
 export function GeneralDataPage() {
@@ -64,17 +64,10 @@ export function GeneralDataPage() {
   return (
     <Page>
       <form onSubmit={onSubmit} className="contents">
-      <header className="min-w-0">
-        <div className="flex items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-            <SlidersHorizontal className="size-5" />
-          </span>
-          <div>
-            <h1 className="page-title">{t("general.title")}</h1>
-            <p className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">{t("general.subtitle")}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t("general.title")}
+        description={t("general.subtitle")}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,800px)_280px]">
         <div className="grid gap-5">
