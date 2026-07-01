@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
-import { Plus, Target, Download, Search } from "lucide-react";
+import { Plus, Target, Download, Search, Info } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { GoalsSkeleton } from "@/components/ui/skeleton";
@@ -16,8 +16,31 @@ import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal
 import { useFormat } from "@/lib/useFormat";
 
 export function GoalsPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { formatRub } = useFormat();
+  
+  const formatGoalsCount = (count: number) => {
+    if (locale === "ru") {
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod100 >= 11 && mod100 <= 19) {
+        return t("goals.totalGoalsCount", { count: String(count) });
+      }
+      if (mod10 === 1) {
+        return t("goals.totalGoalsCountOne", { count: String(count) });
+      }
+      if (mod10 >= 2 && mod10 <= 4) {
+        return t("goals.totalGoalsCountFew", { count: String(count) });
+      }
+      return t("goals.totalGoalsCount", { count: String(count) });
+    }
+    // English
+    if (count === 1) {
+      return t("goals.totalGoalsCountOne", { count: String(count) });
+    }
+    return t("goals.totalGoalsCount", { count: String(count) });
+  };
+
   const { data: plan } = usePlanQuery();
   const addGoal = useAddGoalMutation();
   const updateGoal = useUpdateGoalMutation();
@@ -232,7 +255,7 @@ export function GoalsPage() {
 
           <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm text-[var(--fp-color-muted-foreground)]">
             <Target className="size-4" />
-            {t(goals.length === 1 ? "goals.totalGoalsCountOne" : goals.length < 5 ? "goals.totalGoalsCountFew" : "goals.totalGoalsCount", { count: String(goals.length) })}
+            {formatGoalsCount(goals.length)}
           </div>
 
           {activeGoal && (
@@ -260,7 +283,7 @@ export function GoalsPage() {
                     {year}
                   </span>
                   <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)]">
-                    {t("goals.totalGoalsCount", { count: groupedGoals[year].length })}
+                    {formatGoalsCount(groupedGoals[year].length)}
                   </span>
                 </div>
                 {i < arr.length - 1 && (
@@ -272,7 +295,7 @@ export function GoalsPage() {
             ))}
           </div>
           <p className="text-sm text-[var(--fp-color-muted-foreground)] flex items-start gap-2 bg-[var(--fp-color-background)] p-3 rounded-lg">
-            <span className="mt-0.5 opacity-70">▹</span>
+            <Info className="size-4 text-[var(--fp-color-muted-foreground)] mt-0.5 shrink-0" />
             {t("goals.activeGoalInfo", { name: activeGoal.name, year: activeGoal.targetYear })}
           </p>
         </div>
@@ -384,7 +407,7 @@ export function GoalsPage() {
                         ) : (
                           <span className="rounded bg-[var(--fp-color-label)]/10 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-label)] uppercase">{t("goals.queueBadge")}</span>
                         )}
-                        <span className="text-sm font-bold opacity-70 ml-2">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
+                        <span className="text-sm font-bold opacity-70 ml-2">{formatGoalsCount(yearGoals.length)}</span>
                       </div>
                       <p className="text-sm font-medium opacity-70">
                         {isAccumulation ? t("goals.yearAccumulationInfo", { year: String(year) }) : isCompleted ? t("goals.yearCompletedInfo", { year: String(year) }) : t("goals.yearQueueInfo", { year: String(year) })}
