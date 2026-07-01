@@ -317,20 +317,16 @@ export function GoalsPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-1 rounded-lg border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-0.5">
+          <div className="flex items-center gap-1.5">
             {(["all", "onetime", "periodic"] as const).map((filter) => (
-              <button
+              <Button
                 key={filter}
+                variant={activeFilter === filter ? "active" : "secondary"}
+                size="sm"
                 onClick={() => setActiveFilter(filter)}
-                className={cn(
-                  "rounded-md px-3.5 py-1 text-sm font-medium transition-all",
-                  activeFilter === filter
-                    ? "bg-[var(--fp-color-foreground)] text-[var(--fp-color-card)] shadow-sm"
-                    : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
-                )}
               >
                 {t(`goals.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}` as Parameters<typeof t>[0])}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -338,8 +334,10 @@ export function GoalsPage() {
           <div className="ml-auto flex items-center gap-1 text-xs text-[var(--fp-color-muted-foreground)]">
             <span className="mr-1 font-medium">{t("goals.sortPrefix")}</span>
             {(["name", "cost", "type", "year"] as const).map((field) => (
-              <button
+              <Button
                 key={field}
+                variant={sortField === field ? "active" : "ghost"}
+                size="sm"
                 onClick={() => {
                   if (sortField === field) {
                     setSortDirection(prev => prev === "asc" ? "desc" : "asc");
@@ -348,18 +346,13 @@ export function GoalsPage() {
                     setSortDirection("asc");
                   }
                 }}
-                className={cn(
-                  "flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-all",
-                  sortField === field
-                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
+                className="h-8 py-0 px-2.5 text-xs font-semibold"
               >
                 {t(`goals.sort_${field}`)}
-                <span className="text-[10px] opacity-60">
+                <span className="text-[10px] opacity-70 ml-0.5">
                   {sortField === field ? (sortDirection === "asc" ? "↑" : "↓") : "↑↓"}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
