@@ -13,4 +13,17 @@ describe("SummaryPage growth display", () => {
     expect(effectiveGrowth({ growth: 0, growthType: "custom" }, 0.08)).toBe(0);
     expect(formatGrowthPercent(0)).toBe("0%");
   });
+
+  it("shows the first configured range growth for range-based cashflows", () => {
+    const growth = effectiveGrowth({
+      growth: 0,
+      growthType: "ranges",
+      growthRanges: [
+        { startYear: 2026, endYear: null, growthPercent: 5 },
+      ],
+    }, 0.08);
+
+    expect(growth).toBe(0.05);
+    expect(formatGrowthPercent(growth)).toBe("+5%");
+  });
 });

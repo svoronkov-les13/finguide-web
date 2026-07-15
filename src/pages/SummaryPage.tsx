@@ -384,7 +384,11 @@ function GoalsTable({
   );
 }
 
-export function effectiveGrowth(item: Pick<Cashflow | Goal, "growth" | "growthType">, inflation: number) {
+export function effectiveGrowth(item: Pick<Cashflow, "growth" | "growthType" | "growthRanges"> | Pick<Goal, "growth" | "growthType">, inflation: number) {
+  if (item.growthType === "ranges" && "growthRanges" in item) {
+    const firstRangeGrowth = item.growthRanges?.[0]?.growthPercent;
+    if (firstRangeGrowth !== undefined) return firstRangeGrowth / 100;
+  }
   return item.growthType === "inflation" && item.growth === 0 ? inflation : item.growth;
 }
 
