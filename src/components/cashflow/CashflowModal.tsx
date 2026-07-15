@@ -335,11 +335,7 @@ export function CashflowModal({
                           <button
                             type="button"
                             onClick={() =>
-                              appendRange({
-                                startYear: nextGrowthRangeStartYear(growthRangesValues, form.getValues("startYear")),
-                                endYear: null,
-                                growthPercent: 0,
-                              })
+                              appendRange(newGrowthRangeDefaults(growthRangesValues, form.getValues("startYear")))
                             }
                             className="flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-[var(--fp-color-border)] py-3 text-sm font-semibold text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
                           >
@@ -441,6 +437,15 @@ export function CashflowModal({
 export function nextGrowthRangeStartYear(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {
   const previousRange = ranges?.at(-1);
   return previousRange?.endYear ?? fallbackStartYear;
+}
+
+export function newGrowthRangeDefaults(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {
+  const startYear = nextGrowthRangeStartYear(ranges, fallbackStartYear);
+  return {
+    startYear,
+    endYear: startYear + 1,
+    growthPercent: 0,
+  };
 }
 
 export function collapseGrowthRangesAtIndex(ranges: GrowthRangeFormData[] | undefined, index: number) {
