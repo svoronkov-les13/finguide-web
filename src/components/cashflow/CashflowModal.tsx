@@ -57,7 +57,7 @@ export function CashflowModal({
     },
   });
 
-  const { fields: growthRanges, append: appendRange, remove: removeRange } = useFieldArray({
+  const { fields: growthRanges, append: appendRange, remove: removeRange, replace: replaceRanges } = useFieldArray({
     control: form.control,
     name: "growthRanges",
   });
@@ -317,7 +317,7 @@ export function CashflowModal({
                                     type="radio"
                                     className="size-4 accent-[var(--fp-color-foreground)]"
                                     checked={!growthRangesValues?.[index]?.endYear}
-                                    onChange={() => form.setValue(`growthRanges.${index}.endYear`, null)}
+                                    onChange={() => replaceRanges(collapseGrowthRangesAtIndex(form.getValues("growthRanges"), index))}
                                   />
                                   <span className="text-sm text-[var(--fp-color-foreground)]">{t("cashflow.rangeIndefinite")}</span>
                                 </label>
@@ -441,4 +441,10 @@ export function CashflowModal({
 export function nextGrowthRangeStartYear(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {
   const previousRange = ranges?.at(-1);
   return previousRange?.endYear ?? fallbackStartYear;
+}
+
+export function collapseGrowthRangesAtIndex(ranges: GrowthRangeFormData[] | undefined, index: number) {
+  return (ranges ?? []).slice(0, index + 1).map((range, rangeIndex) => (
+    rangeIndex === index ? { ...range, endYear: null } : range
+  ));
 }

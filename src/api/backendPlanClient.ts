@@ -263,6 +263,17 @@ function firstRate(schedule: ModelAssumptions["inflationSchedule"] | undefined, 
   return schedule?.[0]?.ratePct ?? fallbackPct;
 }
 
+function dashboardEndYearFromAssumptions(assumptions: ModelAssumptions | undefined) {
+  const startYear = assumptions?.startYear ?? new Date().getFullYear();
+  if (assumptions?.horizonYears) return startYear + assumptions.horizonYears - 1;
+  return assumptions?.projectionEndYear ?? startYear + 11;
+}
+
+function dashboardEndYearFromSettings(plan: FinancialPlan | undefined, fallbackStartYear: number) {
+  if (!plan) return fallbackStartYear + 11;
+  return plan.settings.startYear + plan.settings.dashboardCalculationYears - 1;
+}
+
 function mapForecastPoint(point: CashFlowProjectionPoint) {
   return {
     year: point.year,
@@ -298,6 +309,7 @@ function monthLabel(month: string) {
 }
 
 function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions | undefined): Cashflow {
+  const defaultEndYear = dashboardEndYearFromAssumptions(assumptions);
   return {
     id: source.id,
     name: source.name,
@@ -306,7 +318,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     amount: source.amount,
     currency: toUiCurrency(source.currency),
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
-    endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
+    endYear: source.endYear ?? yearFromDate(source.endDate, defaultEndYear),
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
@@ -316,6 +328,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
 }
 
 function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions | undefined): Cashflow {
+  const defaultEndYear = dashboardEndYearFromAssumptions(assumptions);
   return {
     id: source.id,
     name: source.name,
@@ -324,7 +337,7 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     amount: source.amount,
     currency: toUiCurrency(source.currency),
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
-    endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
+    endYear: source.endYear ?? yearFromDate(source.endDate, defaultEndYear),
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
@@ -503,8 +516,8 @@ export function cashflowGrowthScheduleFromRanges(ranges: Cashflow["growthRanges"
   return points;
 }
 
-function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
-  const effectiveEndYear = input.endYear ?? input.startYear + 30;
+function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.startYear + 30): IncomeSource {
+  const effectiveEndYear = input.endYear ?? Math.max(input.startYear, fallbackEndYear);
   const growthSchedule = input.growthType === "ranges" || input.growthRanges?.length
     ? cashflowGrowthScheduleFromRanges(input.growthRanges, effectiveEndYear)
     : [];
@@ -524,9 +537,9 @@ function baseIncomeFromCashflow(input: Cashflow): IncomeSource {
   };
 }
 
-function baseExpenseFromCashflow(input: Cashflow): ExpenseItem {
+function baseExpenseFromCashflow(input: Cashflow, fallbackEndYear?: number): ExpenseItem {
   return {
-    ...baseIncomeFromCashflow(input),
+    ...baseIncomeFromCashflow(input, fallbackEndYear),
     growthLabel: input.growth === 0 ? "Без индексации" : `${Math.round(input.growth * 1000) / 10}%`,
     budgetClass: "needs",
   };
@@ -658,11 +671,12 @@ export const backendPlanClient = {
     const current = findCashflow(id);
     if (!current) throw new Error(`Cashflow ${id} was not found`);
     const next = { ...current, ...patch };
+    const fallbackEndYear = dashboardEndYearFromSettings(lastFinancialPlan, next.startYear);
 
     if (next.type === "income") {
-      await patchPlansPlanIdIncomesId(planId, id, baseIncomeFromCashflow(next), await requestOptions());
+      await patchPlansPlanIdIncomesId(planId, id, baseIncomeFromCashflow(next, fallbackEndYear), await requestOptions());
     } else if (next.type === "expense") {
-      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next), await requestOptions());
+      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next, fallbackEndYear), await requestOptions());
     } else {
       await patchPlansPlanIdGoalsId(planId, id, goalRequestFromGoal({ ...findGoal(id), id, name: next.name, targetYear: next.endYear ?? new Date().getFullYear(), targetMonth: 12, cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), await requestOptions());
     }
@@ -673,11 +687,12 @@ export const backendPlanClient = {
   async addCashflow(input: Omit<Cashflow, "id">) {
     const planId = currentPlanId();
     const cashflow = { ...input, id: `${input.type}-${Date.now()}` };
+    const fallbackEndYear = dashboardEndYearFromSettings(lastFinancialPlan, cashflow.startYear);
 
     if (cashflow.type === "income") {
-      await postPlansPlanIdIncomes(planId, baseIncomeFromCashflow(cashflow), await requestOptions());
+      await postPlansPlanIdIncomes(planId, baseIncomeFromCashflow(cashflow, fallbackEndYear), await requestOptions());
     } else if (cashflow.type === "expense") {
-      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow), await requestOptions());
+      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow, fallbackEndYear), await requestOptions());
     } else {
       await postPlansPlanIdGoals(planId, goalRequestFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear ?? new Date().getFullYear(), targetMonth: 12, cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), await requestOptions());
     }

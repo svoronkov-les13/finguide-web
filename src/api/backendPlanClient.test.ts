@@ -210,6 +210,194 @@ describe("backendPlanClient cashflow growth ranges", () => {
   });
 });
 
+describe("backendPlanClient income periods", () => {
+  it("maps indefinite backend incomes to the dashboard forecast grid end year", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({
+          data: planState([], {
+            modelAssumptions: { horizonYears: 15 },
+            incomes: [{
+              id: "income-1",
+              name: "Зарплата",
+              amount: 300_000,
+              currency: "RUB",
+              frequency: "monthly",
+              growthType: "inflation",
+              growthPct: 0,
+              startDate: "2026-01-01",
+              endDate: null,
+              startYear: 2026,
+              endYear: null,
+            }],
+          }),
+        });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    const plan = await backendPlanClient.getPlan();
+
+    expect(plan.cashflows[0]).toMatchObject({
+      id: "income-1",
+      endYear: 2040,
+    });
+  });
+
+  it("saves a new indefinite income through the dashboard forecast grid end year", async () => {
+    const requests: Array<{ url: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      requests.push({ url, body });
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({ data: planState([], { modelAssumptions: { horizonYears: 15 } }) });
+      }
+      if (url.endsWith("/plans/plan-1/incomes") && method === "POST") {
+        return jsonResponse({ data: body }, 201);
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    await backendPlanClient.addCashflow({
+      name: "Зарплата",
+      type: "income",
+      frequency: "monthly",
+      amount: 300_000,
+      currency: "RUB",
+      startYear: 2026,
+      endYear: null,
+      growth: 0,
+      enabled: true,
+      category: "Ежемесячные доходы",
+    });
+
+    const incomePost = requests.find((request) => request.url.endsWith("/plans/plan-1/incomes"))?.body as {
+      endDate?: string;
+      endYear?: number;
+    };
+    expect(incomePost).toMatchObject({
+      endDate: "2040-12-31",
+      endYear: 2040,
+    });
+  });
+});
+
+describe("backendPlanClient expense periods", () => {
+  it("maps indefinite backend expenses to the dashboard forecast grid end year", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({
+          data: planState([], {
+            modelAssumptions: { horizonYears: 15 },
+            expenses: [{
+              id: "expense-1",
+              name: "Аренда",
+              amount: 120_000,
+              currency: "RUB",
+              frequency: "monthly",
+              growthType: "inflation",
+              growthPct: 0,
+              startDate: "2026-01-01",
+              endDate: null,
+              startYear: 2026,
+              endYear: null,
+            }],
+          }),
+        });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    const plan = await backendPlanClient.getPlan();
+
+    expect(plan.cashflows[0]).toMatchObject({
+      id: "expense-1",
+      endYear: 2040,
+    });
+  });
+
+  it("saves a new indefinite expense through the dashboard forecast grid end year", async () => {
+    const requests: Array<{ url: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      requests.push({ url, body });
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({ data: planState([], { modelAssumptions: { horizonYears: 15 } }) });
+      }
+      if (url.endsWith("/plans/plan-1/expenses") && method === "POST") {
+        return jsonResponse({ data: body }, 201);
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+    await backendPlanClient.addCashflow({
+      name: "Аренда",
+      type: "expense",
+      frequency: "monthly",
+      amount: 120_000,
+      currency: "RUB",
+      startYear: 2026,
+      endYear: null,
+      growth: 0,
+      enabled: true,
+      category: "Ежемесячные расходы",
+    });
+
+    const expensePost = requests.find((request) => request.url.endsWith("/plans/plan-1/expenses"))?.body as {
+      endDate?: string;
+      endYear?: number;
+    };
+    expect(expensePost).toMatchObject({
+      endDate: "2040-12-31",
+      endYear: 2040,
+    });
+  });
+});
+
 describe("backendPlanClient goal mutations", () => {
   it("rereads analytics after adding a goal so the nearest goal and dashboard forecast recalculate immediately", async () => {
     const initialGoal = apiGoal({ id: "goal-1", name: "Подушка", priority: 1 });
@@ -501,7 +689,7 @@ function apiGoal(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function planState(goals: unknown[], overrides: { pension?: Record<string, unknown> } = {}) {
+function planState(goals: unknown[], overrides: { pension?: Record<string, unknown>; modelAssumptions?: Record<string, unknown>; incomes?: unknown[]; expenses?: unknown[] } = {}) {
   const state = {
     id: "plan-1",
     name: "Основной",
@@ -530,9 +718,10 @@ function planState(goals: unknown[], overrides: { pension?: Record<string, unkno
       investmentReturnPct: 10,
       inflationSchedule: [{ year: 2026, ratePct: 7 }],
       projectionEndYear: 2036,
+      ...overrides.modelAssumptions,
     },
-    incomes: [],
-    expenses: [],
+    incomes: overrides.incomes ?? [],
+    expenses: overrides.expenses ?? [],
     goals,
   };
   return {
