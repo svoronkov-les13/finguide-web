@@ -328,6 +328,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
 }
 
 function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions | undefined): Cashflow {
+  const defaultEndYear = dashboardEndYearFromAssumptions(assumptions);
   return {
     id: source.id,
     name: source.name,
@@ -336,7 +337,7 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     amount: source.amount,
     currency: toUiCurrency(source.currency),
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
-    endYear: source.endYear ?? yearFromDate(source.endDate, assumptions?.projectionEndYear ?? assumptions?.startYear ?? new Date().getFullYear()),
+    endYear: source.endYear ?? yearFromDate(source.endDate, defaultEndYear),
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
@@ -675,7 +676,7 @@ export const backendPlanClient = {
     if (next.type === "income") {
       await patchPlansPlanIdIncomesId(planId, id, baseIncomeFromCashflow(next, fallbackEndYear), await requestOptions());
     } else if (next.type === "expense") {
-      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next), await requestOptions());
+      await patchPlansPlanIdExpensesId(planId, id, baseExpenseFromCashflow(next, fallbackEndYear), await requestOptions());
     } else {
       await patchPlansPlanIdGoalsId(planId, id, goalRequestFromGoal({ ...findGoal(id), id, name: next.name, targetYear: next.endYear ?? new Date().getFullYear(), targetMonth: 12, cost: next.amount, saved: 0, growth: next.growth, reachable: true, icon: "Target" }, 1), await requestOptions());
     }
@@ -691,7 +692,7 @@ export const backendPlanClient = {
     if (cashflow.type === "income") {
       await postPlansPlanIdIncomes(planId, baseIncomeFromCashflow(cashflow, fallbackEndYear), await requestOptions());
     } else if (cashflow.type === "expense") {
-      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow), await requestOptions());
+      await postPlansPlanIdExpenses(planId, baseExpenseFromCashflow(cashflow, fallbackEndYear), await requestOptions());
     } else {
       await postPlansPlanIdGoals(planId, goalRequestFromGoal({ id: cashflow.id, name: cashflow.name, icon: "Target", targetYear: cashflow.endYear ?? new Date().getFullYear(), targetMonth: 12, cost: cashflow.amount, saved: 0, growth: cashflow.growth, reachable: true }, 1), await requestOptions());
     }
