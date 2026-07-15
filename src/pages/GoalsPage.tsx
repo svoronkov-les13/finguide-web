@@ -376,8 +376,7 @@ export function GoalsPage() {
               const isAccumulation = activeGoal?.targetYear === year;
               const isCompleted = yearGoals.every(g => g.saved >= goalProjectedCost(g));
               const yearSummary = goalYearSummary(yearGoals, year, currentYear, currentMonthIdx, monthsInYear);
-              const yearTotalSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
-              const yearPercent = yearSummary.totalProjectedCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearSummary.totalProjectedCost) * 100)) : 0;
+              const yearPercent = yearSummary.totalProjectedCost > 0 ? Math.min(100, Math.round((yearSummary.saved / yearSummary.totalProjectedCost) * 100)) : 0;
 
               const isYearDragOver = dragOverYear === year;
 
