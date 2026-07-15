@@ -83,7 +83,7 @@ describe("trackingActiveGoal", () => {
     });
   });
 
-  it("includes projected cashflow allocation in active goal progress", () => {
+  it("does not include projected cashflow allocation in active goal progress", () => {
     expect(trackingGoalProgress(goal({
       id: "active",
       cost: 550_000,
@@ -91,8 +91,8 @@ describe("trackingActiveGoal", () => {
       projectedSaved: 120_000,
     }))).toEqual({
       cost: 550_000,
-      saved: 120_000,
-      percent: 22,
+      saved: 0,
+      percent: 0,
       achieved: false,
     });
   });
