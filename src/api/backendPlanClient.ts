@@ -68,6 +68,31 @@ let activeScenario: ScenarioId = "base";
 let lastPlanState: PlanState | undefined;
 let lastFinancialPlan: FinancialPlan | undefined;
 
+const PENSION_FORECAST_YEARS_KEY_PREFIX = "finguide.pension-forecast-years";
+
+function pensionForecastYearsKey(planId: string) {
+  return `${PENSION_FORECAST_YEARS_KEY_PREFIX}.${planId}`;
+}
+
+function readPensionForecastYears(planId: string, fallback: number) {
+  try {
+    const raw = globalThis.localStorage?.getItem(pensionForecastYearsKey(planId));
+    const value = raw ? Number(raw) : NaN;
+    return Number.isFinite(value) && value >= 1 && value <= 80 ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writePensionForecastYears(planId: string, value: number | undefined) {
+  if (value === undefined) return;
+  try {
+    globalThis.localStorage?.setItem(pensionForecastYearsKey(planId), String(value));
+  } catch {
+    // This is a UI-only display horizon; backend calculations must not depend on it.
+  }
+}
+
 async function requestOptions(): Promise<RequestInit> {
   const authorization = oidcAuthEnabled ? await getValidOidcAuthorizationHeader() : demoBearerToken ? `Bearer ${demoBearerToken}` : undefined;
   return {
@@ -238,7 +263,8 @@ function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undef
   const startYear = assumptions?.startYear ?? new Date().getFullYear();
   const birthYear = assumptions?.birthYear ?? (planState.profile.age ? startYear - planState.profile.age : startYear - planState.pension.currentAge);
   const currentAge = Math.max(0, startYear - birthYear);
-  const pensionCalculationYears = Math.max(1, planState.pension.retirementAge - currentAge);
+  const defaultPensionCalculationYears = Math.max(1, planState.pension.retirementAge - currentAge);
+  const pensionCalculationYears = readPensionForecastYears(planState.id, defaultPensionCalculationYears);
 
   return {
     startYear,
@@ -626,8 +652,8 @@ export const backendPlanClient = {
     const startYear = patch.startYear ?? currentAssumptions?.startYear ?? new Date().getFullYear();
     const birthYear = patch.birthYear ?? currentAssumptions?.birthYear ?? (current.profile.age ? startYear - current.profile.age : startYear - current.pension.currentAge);
     const currentAge = Math.max(0, startYear - birthYear);
-    const pensionCalculationYears = patch.pensionCalculationYears ?? Math.max(1, current.pension.retirementAge - currentAge);
-    const retirementAge = patch.retirementAge ?? currentAge + pensionCalculationYears;
+    const retirementAge = patch.retirementAge ?? current.pension.retirementAge;
+    writePensionForecastYears(planId, patch.pensionCalculationYears);
     const pensionInflationPct = patch.inflation !== undefined
       ? patch.inflation * 100
       : firstRate(currentAssumptions?.inflationSchedule, current.pension.inflationPct);

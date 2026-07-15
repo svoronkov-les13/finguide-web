@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { PensionPage } from "@/pages/PensionPage";
+import { buildPensionChartData, PensionPage } from "@/pages/PensionPage";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
@@ -55,5 +55,18 @@ describe("PensionPage", () => {
     expect(html).toContain('name="retirementAge"');
     expect(html).not.toMatch(/name="retirementAge"[^>]*readOnly/);
     expect(html).not.toMatch(/name="retirementAge"[^>]*disabled/);
+  });
+
+  it("uses pension forecast years only to limit chart rendering", () => {
+    const forecast = [
+      { age: 35, year: 2026, capital: 100, income: 0, expenses: 0, goals: 0, savings: 0 },
+      { age: 36, year: 2027, capital: 200, income: 0, expenses: 0, goals: 0, savings: 0 },
+      { age: 37, year: 2028, capital: 300, income: 0, expenses: 0, goals: 0, savings: 0 },
+    ];
+
+    expect(buildPensionChartData(forecast, 35, 1)).toEqual([
+      { age: 35, year: 2026, capital: 100 },
+      { age: 36, year: 2027, capital: 200 },
+    ]);
   });
 });

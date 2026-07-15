@@ -12,6 +12,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
 import { pensionExpenseComparison } from "@/pages/pensionComparison";
+import type { ForecastPoint } from "@/types/finance";
+
+export function buildPensionChartData(forecast: ForecastPoint[], currentAge: number, pensionCalculationYears: number) {
+  const endAge = currentAge + Math.max(1, pensionCalculationYears);
+  return forecast
+    .filter((point) => point.age <= endAge)
+    .map((point) => ({
+      age: point.age,
+      capital: point.capital,
+      year: point.year,
+    }));
+}
 
 export function PensionPage() {
   const { data: plan } = usePlanQuery();
@@ -66,11 +78,7 @@ export function PensionPage() {
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
   const retirementCapital = plan.forecast.find(p => p.age === formState.retirementAge)?.capital || 2373688270;
   
-  const chartData = plan.forecast.filter(p => p.age <= 100).map(p => ({
-    age: p.age,
-    capital: p.capital,
-    year: p.year
-  }));
+  const chartData = buildPensionChartData(plan.forecast, settings.currentAge, settings.pensionCalculationYears);
 
   const isCapitalSufficient = retirementCapital >= targetCapital;
 
