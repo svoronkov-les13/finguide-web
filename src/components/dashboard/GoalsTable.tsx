@@ -31,7 +31,7 @@ export function GoalsTable() {
         
         {/* Summary badges on the right */}
         <div className="flex items-center gap-4 text-xs text-[var(--fp-color-muted-foreground)] max-[760px]:mt-2">
-          <span className="num">● {t("goals.totalLabel")}: <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(total, { compact: true })}</span></span>
+          <span className="num">● {t("goals.totalLabel")}: <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(total)}</span></span>
           <span className="flex items-center gap-2">
             <span className="text-[var(--fp-color-teal)]">● {t("goals.reachableCount", { count: String(counts.reachable) })}</span>
             <span className="text-[var(--fp-color-coral)]">● {t("goals.atRiskCount", { count: String(counts.atRisk) })}</span>
@@ -58,7 +58,7 @@ export function GoalsTable() {
             <span>{t("goals.colGoal")}</span>
             <span className="text-[var(--fp-color-foreground)] flex items-center gap-1.5 font-bold">
               <Icons.Target className="size-3.5 text-[var(--fp-color-muted-foreground)]" />
-              {t("goals.totalLabel").toUpperCase()}: {formatRub(total, { compact: true })}
+              {t("goals.totalLabel").toUpperCase()}: {formatRub(total)}
               <span className="text-[var(--fp-color-teal)] ml-1">● {counts.reachable}</span>
               <span className="text-[var(--fp-color-coral)]">● {counts.atRisk}</span>
             </span>
@@ -106,7 +106,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
         <div className="flex items-baseline justify-between mb-1">
           <span className="font-semibold text-[13px]">
             {formatRub(progress.saved, { compact: false })}
-            <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal"> / {formatRub(progress.cost, { compact: true })}</span>
+            <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal"> / {formatRub(progress.cost)}</span>
           </span>
           <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-medium">{progress.percent}%</span>
         </div>
@@ -119,7 +119,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
         <div className="text-[10px]">{t("goals.inYears", { count: String(yearsLeft) })}</div>
       </div>
       <div className="text-right">
-        <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost, { compact: true })}</div>
+        <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost)}</div>
         <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: String(Math.round(goal.growth * 100)) })}</div>
       </div>
       <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">

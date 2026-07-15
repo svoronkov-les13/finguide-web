@@ -52,7 +52,7 @@ export function PensionPage() {
   const futureMonthlySpend = targetMonthlySpend * inflationMultiplier;
   
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
-  const retirementCapital = plan.forecast.find(p => p.age === settings.retirementAge)?.capital || 2373688270;
+  const retirementCapital = plan.forecast.find(p => p.age === formState.retirementAge)?.capital || 2373688270;
   
   const chartData = plan.forecast.filter(p => p.age <= 100).map(p => ({
     age: p.age,
@@ -123,6 +123,7 @@ export function PensionPage() {
                     <div className="relative flex-1">
                       <input 
                         type="number" 
+                        name="retirementAge"
                         value={retirementMode === "age" ? formState.retirementAge : (plan.settings.birthYear + formState.retirementAge)} 
                         onChange={(e) => {
                           const val = Number(e.target.value);
@@ -364,7 +365,7 @@ export function PensionPage() {
                 <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
-                <span>{t("pension.targetYearInfo", { year: retirementYear, age: settings.retirementAge })}</span>
+                <span>{t("pension.targetYearInfo", { year: retirementYear, age: formState.retirementAge })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
                 <span>{t("pension.yearsToSave", { years: yearsToRetirement })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
@@ -433,7 +434,7 @@ export function PensionPage() {
           <Card className="p-7 rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
             <h2 className="text-[17px] font-semibold mb-2">{t("pension.chartTitle")}</h2>
             <p className="text-[14px] text-[var(--fp-color-label)] mb-8">
-              {t("pension.chartSubtitle", { age: settings.retirementAge })}
+              {t("pension.chartSubtitle", { age: formState.retirementAge })}
             </p>
             
             <div className="h-[320px] w-full">
@@ -467,7 +468,7 @@ export function PensionPage() {
                     itemStyle={{ fontSize: '14px', fontWeight: 600, color: 'var(--fp-color-foreground)' }}
                     labelStyle={{ fontSize: '13px', color: 'var(--fp-color-label)', marginBottom: '4px' }}
                   />
-                  <ReferenceLine x={settings.retirementAge} stroke="var(--fp-color-orange)" strokeDasharray="3 3" label={{ position: 'top', value: t("pension.pensionLine"), fill: 'var(--fp-color-orange)', fontSize: 13, fontWeight: 600, dy: -10 }} />
+                  <ReferenceLine x={formState.retirementAge} stroke="var(--fp-color-orange)" strokeDasharray="3 3" label={{ position: 'top', value: t("pension.pensionLine"), fill: 'var(--fp-color-orange)', fontSize: 13, fontWeight: 600, dy: -10 }} />
                   <Area type="monotone" dataKey="capital" stroke="var(--fp-color-teal)" strokeWidth={3} fillOpacity={1} fill="url(#colorCapital)" />
                 </AreaChart>
               </ResponsiveContainer>
