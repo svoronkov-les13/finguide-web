@@ -42,7 +42,7 @@ describe("goalYearSummary", () => {
     });
   });
 
-  it("subtracts projected allocations and respects target months for the monthly need", () => {
+  it("ignores projected allocations and respects target months for the monthly need", () => {
     const goals = [
       goal({ id: "trip", targetYear: 2027, targetMonth: 1, cost: 451_500, projectedCost: 451_500, saved: 0, projectedSaved: 203_175 }),
       goal({ id: "april", targetYear: 2027, targetMonth: 4, cost: 550_000, projectedCost: 550_000, saved: 0 }),
@@ -51,9 +51,9 @@ describe("goalYearSummary", () => {
 
     expect(goalYearSummary(goals, 2027, 2026, 6)).toEqual({
       totalProjectedCost: 8_281_500,
-      remaining: 8_078_325,
-      monthlyUntilYearEnd: 494_919,
-      saved: 203_175,
+      remaining: 8_281_500,
+      monthlyUntilYearEnd: 523_944,
+      saved: 0,
     });
   });
 });
@@ -72,7 +72,7 @@ describe("goalPortfolioSummary", () => {
     });
   });
 
-  it("includes projected allocations in the accumulated percentage", () => {
+  it("does not include projected allocations in the accumulated percentage", () => {
     const goals = [
       goal({ id: "trip", cost: 451_500, projectedCost: 451_500, saved: 0, projectedSaved: 203_175 }),
       goal({ id: "april", cost: 550_000, projectedCost: 550_000, saved: 0 }),
@@ -81,8 +81,8 @@ describe("goalPortfolioSummary", () => {
 
     expect(goalPortfolioSummary(goals)).toEqual({
       totalProjectedCost: 8_281_500,
-      totalSaved: 203_175,
-      accumulatedPercent: 2,
+      totalSaved: 0,
+      accumulatedPercent: 0,
     });
   });
 });

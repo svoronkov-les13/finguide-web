@@ -1,5 +1,4 @@
 import type { Goal } from "@/types/finance";
-import { goalProgress } from "@/components/goals/goalProgress";
 
 export interface GoalYearSummary {
   totalProjectedCost: number;
@@ -19,9 +18,8 @@ export function goalProjectedCost(goal: Goal) {
 }
 
 export function goalPortfolioSummary(goals: Goal[]): GoalPortfolioSummary {
-  const progressByGoal = goals.map(goalProgress);
-  const totalProjectedCost = progressByGoal.reduce((sum, progress) => sum + progress.cost, 0);
-  const totalSaved = progressByGoal.reduce((sum, progress) => sum + progress.saved, 0);
+  const totalProjectedCost = goals.reduce((sum, goal) => sum + goalProjectedCost(goal), 0);
+  const totalSaved = goals.reduce((sum, goal) => sum + goal.saved, 0);
 
   return {
     totalProjectedCost,
@@ -38,13 +36,12 @@ export function goalYearSummary(
   monthsInYear = 12
 ): GoalYearSummary {
   const yearGoals = goals.filter((goal) => goal.targetYear === targetYear);
-  const progressByGoal = yearGoals.map((goal) => ({ goal, progress: goalProgress(goal) }));
-  const totalProjectedCost = progressByGoal.reduce((total, item) => total + item.progress.cost, 0);
-  const saved = progressByGoal.reduce((total, item) => total + item.progress.saved, 0);
-  const remaining = progressByGoal.reduce((total, item) => total + Math.max(0, item.progress.cost - item.progress.saved), 0);
-  const monthlyNeed = progressByGoal.reduce((total, item) => {
-    const monthsLeft = monthsToTarget(item.goal, currentYear, currentMonthIdx, monthsInYear);
-    return total + Math.max(0, item.progress.cost - item.progress.saved) / monthsLeft;
+  const totalProjectedCost = yearGoals.reduce((total, goal) => total + goalProjectedCost(goal), 0);
+  const saved = yearGoals.reduce((total, goal) => total + goal.saved, 0);
+  const remaining = yearGoals.reduce((total, goal) => total + Math.max(0, goalProjectedCost(goal) - goal.saved), 0);
+  const monthlyNeed = yearGoals.reduce((total, goal) => {
+    const monthsLeft = monthsToTarget(goal, currentYear, currentMonthIdx, monthsInYear);
+    return total + Math.max(0, goalProjectedCost(goal) - goal.saved) / monthsLeft;
   }, 0);
 
   return {
