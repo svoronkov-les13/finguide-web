@@ -6,6 +6,7 @@ import type { TrackerEntry } from "@/types/finance";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 describe("backendPlanClient response handling", () => {
@@ -138,7 +139,7 @@ describe("backendPlanClient settings mutations", () => {
     });
   });
 
-  it("saves separate pension and dashboard calculation periods from general settings", async () => {
+  it("keeps pension forecast years from changing retirement calculations", async () => {
     const requests: Array<{ url: string; body: unknown }> = [];
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
@@ -160,7 +161,7 @@ describe("backendPlanClient settings mutations", () => {
     });
 
     await backendPlanClient.getPlan();
-    await backendPlanClient.updateSettings({
+    const updated = await backendPlanClient.updateSettings({
       birthYear: 1990,
       pensionCalculationYears: 25,
       dashboardCalculationYears: 15,
@@ -181,8 +182,9 @@ describe("backendPlanClient settings mutations", () => {
     });
     expect(pensionPatch).toMatchObject({
       currentAge: 36,
-      retirementAge: 61,
+      retirementAge: 60,
     });
+    expect(updated.settings.pensionCalculationYears).toBe(25);
   });
 });
 
