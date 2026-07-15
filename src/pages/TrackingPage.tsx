@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/pages/trackingGoal";
 import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
+import { trackingYearSummary } from "@/pages/trackingYearSummary";
 import type { MonthlyStatus } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
 
@@ -233,9 +234,12 @@ export function TrackingPage() {
   const completedMonths = months.filter((m) => m.status === "completed");
   const partialMonths = months.filter((m) => m.status === "partial");
   const missedMonths = months.filter((m) => m.status === "missed");
-  const totalSaved = months.reduce((acc, m) => acc + (m.amount ?? 0), 0);
-  const totalPlanned = monthlyTarget * 12;
-  const totalPercent = totalPlanned > 0 ? Math.round((totalSaved / totalPlanned) * 100) : 0;
+  const { totalSaved, totalPercent } = trackingYearSummary(
+    months,
+    monthlyTarget,
+    currentMonthIdx,
+    viewYear === currentYear,
+  );
   const completionPct = completedMonths.length + partialMonths.length > 0
     ? Math.round((completedMonths.length / (completedMonths.length + partialMonths.length + missedMonths.length)) * 100)
     : 0;
