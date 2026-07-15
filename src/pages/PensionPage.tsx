@@ -22,9 +22,11 @@ export function PensionPage() {
   const [spendingScenario, setSpendingScenario] = useState<"save" | "spend">("spend");
   const [paramsOpen, setParamsOpen] = useState(true);
   const [scenariosOpen, setScenariosOpen] = useState(true);
+  const [retirementMode, setRetirementMode] = useState<"age" | "year">("age");
 
   // Local state for the form so we can edit it before hitting "Calculate"
   const [formState, setFormState] = useState({
+    retirementAge: 60,
     targetMonthlySpend: 100000,
     investmentReturn: 0.1,
     statePensionEnabled: true,
@@ -34,6 +36,7 @@ export function PensionPage() {
   useEffect(() => {
     if (plan?.settings) {
       setFormState({
+        retirementAge: plan.settings.retirementAge,
         targetMonthlySpend: plan.settings.targetMonthlySpend,
         investmentReturn: plan.settings.pensionInvestmentReturn,
         statePensionEnabled: plan.settings.statePensionEnabled,
@@ -47,7 +50,7 @@ export function PensionPage() {
 
   const settings = plan.settings;
   const currentYear = settings.startYear;
-  const yearsToRetirement = Math.max(0, settings.retirementAge - settings.currentAge);
+  const yearsToRetirement = Math.max(0, formState.retirementAge - settings.currentAge);
   const retirementYear = currentYear + yearsToRetirement;
   
   const targetMonthlySpend = formState.targetMonthlySpend;
@@ -73,6 +76,7 @@ export function PensionPage() {
 
   const handleCalculate = () => {
     updateSettings({
+      retirementAge: formState.retirementAge,
       targetMonthlySpend: formState.targetMonthlySpend,
       pensionInvestmentReturn: formState.investmentReturn,
       withdrawalStrategy: spendingScenario === "save" ? "preserve_capital" : "spend_down_30y",

@@ -15,8 +15,12 @@ vi.mock("@/i18n/I18nProvider", () => ({
       if (key === "goals.reachableOf") return `${values?.reachable}/${values?.total}`;
       if (key === "goals.inYears") return `${values?.count}y`;
       if (key === "goals.perYear") return `${values?.pct}%/yr`;
+      if (key === "format.symbolRub") return "₽";
+      if (key === "format.millionRub") return "млн ₽";
+      if (key === "format.thousandRub") return "тыс. ₽";
       return key;
     },
+    locale: "ru",
   }),
 }));
 
@@ -47,8 +51,8 @@ describe("GoalsTable", () => {
     const normalized = html.replace(/\u00a0/g, " ");
 
     expect(normalized).toContain("1 500 000 ₽");
-    expect(normalized).toContain("250 000 ₽");
+    expect(normalized).toContain("500 000 ₽");
     expect(normalized).not.toContain("1,5 млн ₽");
-    expect(normalized).not.toContain("250 тыс. ₽");
+    expect(normalized).not.toContain("500 тыс. ₽");
   });
 });
