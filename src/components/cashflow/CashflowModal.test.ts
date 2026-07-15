@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { collapseGrowthRangesAtIndex, nextGrowthRangeStartYear } from "@/components/cashflow/CashflowModal";
+import { collapseGrowthRangesAtIndex, newGrowthRangeDefaults, nextGrowthRangeStartYear } from "@/components/cashflow/CashflowModal";
 
 describe("CashflowModal growth ranges", () => {
   it("starts a new range from the previous range end year", () => {
@@ -12,6 +12,16 @@ describe("CashflowModal growth ranges", () => {
 
   it("uses the cashflow start year for the first range", () => {
     expect(nextGrowthRangeStartYear([], 2026)).toBe(2026);
+  });
+
+  it("defaults a new range to one year instead of indefinite", () => {
+    expect(newGrowthRangeDefaults([
+      { startYear: 2026, endYear: 2031, growthPercent: 5 },
+    ], 2026)).toEqual({
+      startYear: 2031,
+      endYear: 2032,
+      growthPercent: 0,
+    });
   });
 
   it("removes ranges after the selected indefinite range", () => {
