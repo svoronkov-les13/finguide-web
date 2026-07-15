@@ -19,8 +19,9 @@ export function goalProjectedCost(goal: Goal) {
 }
 
 export function goalPortfolioSummary(goals: Goal[]): GoalPortfolioSummary {
-  const totalProjectedCost = goals.reduce((sum, goal) => sum + goalProjectedCost(goal), 0);
-  const totalSaved = goals.reduce((sum, goal) => sum + goal.saved, 0);
+  const progressByGoal = goals.map(goalProgress);
+  const totalProjectedCost = progressByGoal.reduce((sum, progress) => sum + progress.cost, 0);
+  const totalSaved = progressByGoal.reduce((sum, progress) => sum + progress.saved, 0);
 
   return {
     totalProjectedCost,
