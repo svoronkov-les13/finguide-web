@@ -38,6 +38,22 @@ describe("goalYearSummary", () => {
       totalProjectedCost: 1_420_000,
       remaining: 1_200_000,
       monthlyUntilYearEnd: 171_429,
+      saved: 220_000,
+    });
+  });
+
+  it("subtracts projected allocations and respects target months for the monthly need", () => {
+    const goals = [
+      goal({ id: "trip", targetYear: 2027, targetMonth: 1, cost: 451_500, projectedCost: 451_500, saved: 0, projectedSaved: 203_175 }),
+      goal({ id: "april", targetYear: 2027, targetMonth: 4, cost: 550_000, projectedCost: 550_000, saved: 0 }),
+      goal({ id: "repair", targetYear: 2027, targetMonth: 12, cost: 7_280_000, projectedCost: 7_280_000, saved: 0 }),
+    ];
+
+    expect(goalYearSummary(goals, 2027, 2026, 6)).toEqual({
+      totalProjectedCost: 8_281_500,
+      remaining: 8_078_325,
+      monthlyUntilYearEnd: 494_919,
+      saved: 203_175,
     });
   });
 });
