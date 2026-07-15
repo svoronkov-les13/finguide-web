@@ -208,9 +208,64 @@ describe("backendPlanClient cashflow growth ranges", () => {
       { year: 2029, ratePct: 5 },
     ]);
   });
+
+  it("restores the last range as indefinite when the schedule reaches the cashflow end year", () => {
+    expect(cashflowGrowthRangesFromSchedule([
+      { year: 2026, ratePct: 3 },
+      { year: 2027, ratePct: 3 },
+      { year: 2028, ratePct: 3 },
+    ], 2029)).toEqual([
+      { startYear: 2026, endYear: null, growthPercent: 3 },
+    ]);
+  });
 });
 
 describe("backendPlanClient income periods", () => {
+  it("reopens income growth ranges that reach the cashflow end year as indefinite", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({
+          data: planState([], {
+            incomes: [{
+              id: "income-1",
+              name: "Зарплата",
+              amount: 300_000,
+              currency: "RUB",
+              frequency: "monthly",
+              growthType: "manual",
+              growthPct: 0,
+              growthSchedule: [
+                { year: 2026, ratePct: 3 },
+                { year: 2027, ratePct: 3 },
+              ],
+              startDate: "2026-01-01",
+              endDate: "2028-12-31",
+              startYear: 2026,
+              endYear: 2028,
+            }],
+          }),
+        });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    const plan = await backendPlanClient.getPlan();
+
+    expect(plan.cashflows[0].growthRanges).toEqual([
+      { startYear: 2026, endYear: null, growthPercent: 3 },
+    ]);
+  });
+
   it("maps indefinite backend incomes to the dashboard forecast grid end year", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
@@ -305,6 +360,51 @@ describe("backendPlanClient income periods", () => {
 });
 
 describe("backendPlanClient expense periods", () => {
+  it("reopens expense growth ranges that reach the cashflow end year as indefinite", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({
+          data: planState([], {
+            expenses: [{
+              id: "expense-1",
+              name: "Аренда",
+              amount: 120_000,
+              currency: "RUB",
+              frequency: "monthly",
+              growthType: "manual",
+              growthPct: 0,
+              growthSchedule: [
+                { year: 2026, ratePct: 3 },
+                { year: 2027, ratePct: 3 },
+              ],
+              startDate: "2026-01-01",
+              endDate: "2028-12-31",
+              startYear: 2026,
+              endYear: 2028,
+            }],
+          }),
+        });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    const plan = await backendPlanClient.getPlan();
+
+    expect(plan.cashflows[0].growthRanges).toEqual([
+      { startYear: 2026, endYear: null, growthPercent: 3 },
+    ]);
+  });
+
   it("maps indefinite backend expenses to the dashboard forecast grid end year", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);

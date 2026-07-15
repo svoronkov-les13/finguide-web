@@ -310,6 +310,7 @@ function monthLabel(month: string) {
 
 function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions | undefined): Cashflow {
   const defaultEndYear = dashboardEndYearFromAssumptions(assumptions);
+  const endYear = source.endYear ?? yearFromDate(source.endDate, defaultEndYear);
   return {
     id: source.id,
     name: source.name,
@@ -318,10 +319,10 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     amount: source.amount,
     currency: toUiCurrency(source.currency),
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
-    endYear: source.endYear ?? yearFromDate(source.endDate, defaultEndYear),
+    endYear,
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
-    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
+    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
   };
@@ -329,6 +330,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
 
 function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions | undefined): Cashflow {
   const defaultEndYear = dashboardEndYearFromAssumptions(assumptions);
+  const endYear = source.endYear ?? yearFromDate(source.endDate, defaultEndYear);
   return {
     id: source.id,
     name: source.name,
@@ -337,10 +339,10 @@ function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssumptions |
     amount: source.amount,
     currency: toUiCurrency(source.currency),
     startYear: source.startYear ?? yearFromDate(source.startDate, assumptions?.startYear ?? new Date().getFullYear()),
-    endYear: source.endYear ?? yearFromDate(source.endDate, defaultEndYear),
+    endYear,
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
-    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule),
+    growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "one_time" ? "Разовые расходы" : "Ежегодные расходы",
   };
@@ -487,7 +489,7 @@ function endDateFromYear(year: number) {
   return `${year}-12-31`;
 }
 
-export function cashflowGrowthRangesFromSchedule(schedule: YearRatePoint[] | undefined): Cashflow["growthRanges"] {
+export function cashflowGrowthRangesFromSchedule(schedule: YearRatePoint[] | undefined, cashflowEndYear?: number | null): Cashflow["growthRanges"] {
   if (!schedule?.length) return [];
   const sorted = schedule.slice().sort((a, b) => a.year - b.year);
   const ranges: NonNullable<Cashflow["growthRanges"]> = [];
@@ -499,6 +501,11 @@ export function cashflowGrowthRangesFromSchedule(schedule: YearRatePoint[] | und
     } else {
       ranges.push({ startYear: point.year, endYear: point.year + 1, growthPercent: point.ratePct });
     }
+  }
+
+  const last = ranges.at(-1);
+  if (last && cashflowEndYear != null && last.endYear === cashflowEndYear) {
+    last.endYear = null;
   }
 
   return ranges;
