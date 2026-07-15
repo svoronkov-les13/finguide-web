@@ -8,6 +8,7 @@ import {
   hasValidAuthSession,
   loginWithCredentials as oidcLoginWithCredentials,
   oidcAuthEnabled,
+  registerWithCredentials as oidcRegisterWithCredentials,
   type AuthSession,
 } from "@/auth/oidc";
 
@@ -17,6 +18,7 @@ type AuthContextValue = {
   authenticated: boolean;
   login: (returnTo?: string) => Promise<void>;
   loginWithCredentials: (email: string, password: string) => Promise<AuthSession>;
+  registerWithCredentials: (request: { firstName: string; lastName: string; email: string; password: string }) => Promise<AuthSession>;
   completeLogin: () => Promise<string>;
   logout: () => void;
   refresh: () => void;
@@ -37,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: (returnTo?: string) => beginOidcLogin(returnTo),
       loginWithCredentials: async (email: string, password: string) => {
         const newSession = await oidcLoginWithCredentials(email, password);
+        setSession(newSession);
+        return newSession;
+      },
+      registerWithCredentials: async (request) => {
+        const newSession = await oidcRegisterWithCredentials(request);
         setSession(newSession);
         return newSession;
       },

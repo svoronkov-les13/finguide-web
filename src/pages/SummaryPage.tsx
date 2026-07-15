@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
 import {
-  FileChartColumnIncreasing, ChevronDown, ChevronUp, Edit3,
+  ChevronDown, ChevronUp, Edit3,
   LayoutDashboard, Target, TrendingUp, ExternalLink,
 } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatRub, formatPercent } from "@/lib/utils";
+import { SummarySkeleton } from "@/components/ui/skeleton";
+
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Cashflow, Goal } from "@/types/finance";
+import { useFormat } from "@/lib/useFormat";
 
 export function SummaryPage() {
   const { data: plan } = usePlanQuery();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { formatRub, formatPercent } = useFormat();
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-[var(--fp-color-muted)]/60" />;
+  if (!plan) return <SummarySkeleton />;
 
   const currentYear = new Date().getFullYear();
   const currentForecast = plan.forecast.find(p => p.year === currentYear) || plan.forecast[0];
@@ -39,33 +42,25 @@ export function SummaryPage() {
 
   return (
     <Page>
-      {/* Header */}
-      <header className="flex items-start justify-between gap-5 flex-wrap">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] shadow-sm">
-            <FileChartColumnIncreasing className="size-5 text-[var(--fp-color-foreground)]" />
-          </span>
-          <div>
-            <h1 className="text-[28px] font-bold tracking-tight">{t("summary.title")}</h1>
-            <p className="mt-1 text-[14px] text-[var(--fp-color-label)]">{t("summary.subtitle")}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            variant="secondary"
-            className="h-10 gap-2"
-            onClick={() => navigate({ to: '/income' as never })}
-          >
-            <Edit3 className="size-4" /> {t("summary.toEdit")}
-          </Button>
-          <Button
-            className="h-10 gap-2"
-            onClick={() => navigate({ to: '/dashboard' as never })}
-          >
-            <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title={t("summary.title")}
+        description={t("summary.subtitle")}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => navigate({ to: '/income' as never })}
+            >
+              <Edit3 className="size-4" /> {t("summary.toEdit")}
+            </Button>
+            <Button
+              onClick={() => navigate({ to: '/dashboard' as never })}
+            >
+              <LayoutDashboard className="size-4" /> {t("summary.toDashboard")}
+            </Button>
+          </>
+        }
+      />
 
       {/* Balance + Key Insights */}
       <div className="grid gap-5 md:grid-cols-2">
@@ -80,7 +75,7 @@ export function SummaryPage() {
               <span className="text-[15px] font-medium text-[var(--fp-color-label)]">{t("summary.perYear")}</span>
             </div>
             <div className="text-[13px] font-medium text-[var(--fp-color-label)]">
-              ср. {balance > 0 ? "+" : ""}{formatRub(balance / 12)}{t("summary.perMonth")}
+              {t("summary.avg")} {balance > 0 ? "+" : ""}{formatRub(balance / 12)}{t("summary.perMonth")}
             </div>
           </div>
           <div className={`mt-6 text-[13px] p-4 rounded-[14px] font-medium leading-relaxed ${balance >= 0 ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral-soft)] text-[var(--fp-color-coral)]"}`}>
@@ -131,6 +126,7 @@ export function SummaryPage() {
           count={incomes.length}
           total={annualIncome}
           items={incomes}
+          inflation={plan.settings.inflation}
           editHref="/income"
           t={t}
         />
@@ -139,6 +135,7 @@ export function SummaryPage() {
           count={expenses.length}
           total={annualExpenses}
           items={expenses}
+          inflation={plan.settings.inflation}
           editHref="/expenses"
           t={t}
         />
@@ -147,6 +144,7 @@ export function SummaryPage() {
           count={plan.goals.length}
           total={annualGoals}
           items={plan.goals}
+          inflation={plan.settings.inflation}
           goalsSaved={goalsSaved}
           goalsTotal={goalsTotal}
           goalsPercent={goalsPercent}
@@ -191,13 +189,14 @@ export function SummaryPage() {
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 function CashflowTable({
-  title, count, total, items, editHref, t,
+  title, count, total, items, inflation, editHref, t,
 }: {
-  title: string; count: number; total: number; items: Cashflow[]; editHref: string;
+  title: string; count: number; total: number; items: Cashflow[]; inflation: number; editHref: string;
   t: ReturnType<typeof import("@/i18n/I18nProvider")["useI18n"]>["t"];
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
+  const { formatRub } = useFormat();
 
   const freqLabel = (f: Cashflow["frequency"]) => {
     if (f === "monthly") return t("summary.monthly");
@@ -249,8 +248,8 @@ function CashflowTable({
                 <div className="text-[var(--fp-color-label)] text-[13px]">
                   {item.startYear} — {item.endYear ?? t("summary.indefinite")}
                 </div>
-                <div className={`text-[13px] font-medium ${item.growth > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-label)]"}`}>
-                  {item.growth > 0 ? "+" : ""}{Math.round(item.growth * 100)}%
+                <div className={`text-[13px] font-medium ${effectiveGrowth(item, inflation) > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-label)]"}`}>
+                  {formatGrowthPercent(effectiveGrowth(item, inflation))}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
@@ -286,14 +285,15 @@ function CashflowTable({
 }
 
 function GoalsTable({
-  title, count, total, items, goalsSaved, goalsTotal, goalsPercent, editHref, t,
+  title, count, total, items, inflation, goalsSaved, goalsTotal, goalsPercent, editHref, t,
 }: {
   title: string; count: number; total: number; items: Goal[];
-  goalsSaved: number; goalsTotal: number; goalsPercent: number; editHref: string;
+  inflation: number; goalsSaved: number; goalsTotal: number; goalsPercent: number; editHref: string;
   t: ReturnType<typeof import("@/i18n/I18nProvider")["useI18n"]>["t"];
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
+  const { formatRub } = useFormat();
 
   return (
     <Card className="overflow-hidden rounded-[20px] border-[var(--fp-color-border)] shadow-sm">
@@ -340,7 +340,7 @@ function GoalsTable({
                   <div className="text-right font-semibold">{formatRub(item.cost)}</div>
                   <div className="text-center text-[var(--fp-color-label)] text-[13px]">{item.targetYear}</div>
                   <div className="text-right text-[13px] font-medium text-[var(--fp-color-teal)]">
-                    +{Math.round(item.growth * 100)}% {t("summary.perYearShort")}
+                    {formatGrowthPercent(effectiveGrowth(item, inflation))} {t("summary.perYearShort")}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
@@ -382,4 +382,13 @@ function GoalsTable({
       )}
     </Card>
   );
+}
+
+export function effectiveGrowth(item: Pick<Cashflow | Goal, "growth" | "growthType">, inflation: number) {
+  return item.growthType === "inflation" && item.growth === 0 ? inflation : item.growth;
+}
+
+export function formatGrowthPercent(growth: number) {
+  const rounded = Math.round(growth * 100);
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
 }

@@ -1,32 +1,30 @@
-import { CircleHelp, Search } from "lucide-react";
-import { Page } from "@/components/layout/Page";
+import { Search } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
-const questions = [
-  ["Откуда берутся данные?", "Frontend загружает текущий план через real backend adapter. В mock режиме используется локальная модель с тем же `FinancialPlan` контрактом."],
-  ["Что делает сценарий «Что если?»", "Он применяет клиентский сценарий поверх backend snapshot. Это важно, потому что scenarios CRUD/compare пока отмечены в backend status как follow-up."],
-  ["Какие изменения сохраняются на сервере?", "Доходы, расходы, цели и часть настроек проходят через текущие real API endpoints. Tracker/account/import/export имеют клиентские fallback до готовности backend."],
-  ["Почему дизайн переносится вручную?", "Figma file не содержит reusable component library через API, поэтому компоненты пересобираются в текущем React design system."],
-];
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function FaqPage() {
+  const { t } = useI18n();
+
+  const questions = [
+    [t("faq.q1"), t("faq.a1")],
+    [t("faq.q2"), t("faq.a2")],
+    [t("faq.q3"), t("faq.a3")],
+    [t("faq.q4"), t("faq.a4")],
+  ];
+
   return (
     <Page bottom={false}>
-      <header className="flex min-w-0 items-center gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-          <CircleHelp className="size-5" />
-        </span>
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight">FAQ</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Короткие ответы по дизайну, данным и backend-контракту</p>
-        </div>
-      </header>
+      <PageHeader
+        title={t("faq.title")}
+        description={t("faq.subtitle")}
+      />
 
       <Card className="p-3">
         <label className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
           <Search className="size-4 text-muted-foreground" />
-          <Input className="h-8 border-0 bg-transparent p-0 shadow-none focus:ring-0" placeholder="Поиск по вопросам" />
+          <Input className="h-8 border-0 bg-transparent p-0 shadow-none focus:ring-0" placeholder={t("faq.searchPlaceholder")} />
         </label>
       </Card>
 

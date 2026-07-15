@@ -166,4 +166,45 @@ describe("OIDC session helpers", () => {
     expect(url.searchParams.get("id_token_hint")).toBe("id-token");
     expect(url.searchParams.get("post_logout_redirect_uri")).toBe("http://66.42.121.18/fg/login");
   });
+
+  it("registers through backend then logs in with Keycloak credentials", async () => {
+    vi.stubEnv("VITE_FINGUIDE_OIDC_ISSUER_URL", "https://finguide.les13.tech/auth/realms/finguide");
+    const { registerWithCredentials, getStoredAuthSession } = await loadOidc();
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({ data: { email: "stas@example.com" } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: "access-token", refresh_token: "refresh-token", token_type: "Bearer", expires_in: 600 }),
+      } as Response);
+
+    await registerWithCredentials({
+      firstName: "Стас",
+      lastName: "Воронков",
+      email: "stas@example.com",
+      password: "correct-horse-battery",
+    });
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      "/finguide-api/api/v1/auth/register",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          firstName: "Стас",
+          lastName: "Воронков",
+          email: "stas@example.com",
+          password: "correct-horse-battery",
+        }),
+      }),
+    );
+    const tokenBody = vi.mocked(fetch).mock.calls[1][1]?.body as URLSearchParams;
+    expect(tokenBody.get("grant_type")).toBe("password");
+    expect(tokenBody.get("username")).toBe("stas@example.com");
+    expect(tokenBody.get("password")).toBe("correct-horse-battery");
+    expect(getStoredAuthSession()?.accessToken).toBe("access-token");
+  });
 });

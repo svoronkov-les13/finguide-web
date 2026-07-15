@@ -8,6 +8,7 @@ export interface MonthData {
   percent?: number;
 }
 
+/** Use goals.monthNames from i18n instead of these constants when possible */
 export const MONTH_NAMES_RU = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
@@ -18,8 +19,21 @@ export const MONTH_NAMES_SHORT = [
   "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек",
 ];
 
-export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx: number): MonthData[] {
-  return MONTH_NAMES_RU.map((name, i) => ({
+/**
+ * Build month names from i18n t() function.
+ * Usage: `getMonthNames(t)` returns localized full month names.
+ */
+export function getMonthNames(t: (key: never) => string): string[] {
+  return Array.from({ length: 12 }, (_, i) => t(`goals.monthNames.${i + 1}` as never));
+}
+
+export function getMonthNamesShort(t: (key: never) => string): string[] {
+  return Array.from({ length: 12 }, (_, i) => t(`goals.monthShort.${i + 1}` as never));
+}
+
+export function makeEmptyYear(year: number, currentYear: number, currentMonthIdx: number, monthNames?: string[]): MonthData[] {
+  const names = monthNames ?? MONTH_NAMES_RU;
+  return names.map((name, i) => ({
     id: String(i + 1).padStart(2, "0"),
     name,
     status: (year === currentYear && i === currentMonthIdx

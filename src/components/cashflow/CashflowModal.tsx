@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Check, BookOpen, Lightbulb, Trash2, ChevronDown } from "lucide-react";
+import { X, Check, BookOpen, Lightbulb, Trash2 } from "lucide-react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import type { Cashflow } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlanQuery } from "@/api/planQueries";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -27,6 +28,8 @@ interface CashflowFormData {
 }
 
 const STEP_KEYS = ["stepName", "stepAmount", "stepType", "stepDates", "stepGrowth"] as const;
+
+type GrowthRangeFormData = CashflowFormData["growthRanges"][number];
 
 
 
@@ -95,6 +98,7 @@ export function CashflowModal({
   };
 
   const frequencyValue = useWatch({ control: form.control, name: "frequency" });
+  const currencyValue = useWatch({ control: form.control, name: "currency" });
   const isMonthly = frequencyValue === "monthly";
   const isYearly = frequencyValue === "yearly";
   const isOnetime = frequencyValue === "onetime";
@@ -132,7 +136,6 @@ export function CashflowModal({
                     <Input
                       placeholder={t(`cashflow.namePlaceholder_${type}`)}
                       {...form.register("name")}
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] placeholder:text-[var(--fp-color-text-muted)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                     />
                   </div>
 
@@ -143,34 +146,35 @@ export function CashflowModal({
                       <Input
                         type="number"
                         {...form.register("amount", { valueAsNumber: true })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.currency")}</Label>
-                      <div className="relative">
-                        <select
-                          className="h-12 w-full appearance-none rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 pr-10 text-sm text-[var(--fp-color-foreground)] font-semibold outline-none cursor-pointer hover:border-[var(--fp-color-border-strong)] focus:border-[var(--fp-color-border-strong)]"
-                          {...form.register("currency")}
+                      <Select
+                          value={currencyValue}
+                          onValueChange={(v) => form.setValue("currency", v as "RUB" | "USD")}
                         >
-                          <option value="RUB">RUB</option>
-                          <option value="USD">USD</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
-                      </div>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="RUB">RUB</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                          </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">
                         {t(`cashflow.typeLabel_${type}`)}
                       </Label>
-                      <div className="flex h-12 items-center gap-1 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] p-1">
+                      <div className="flex h-12 items-center gap-1 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] p-1">
                         <button
                           type="button"
                           onClick={() => setFrequency("monthly")}
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isMonthly
-                              ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
+                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           )}
                         >
@@ -182,7 +186,7 @@ export function CashflowModal({
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isYearly
-                              ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
+                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           )}
                         >
@@ -194,7 +198,7 @@ export function CashflowModal({
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
                             isOnetime
-                              ? "bg-[var(--fp-color-foreground)] text-white shadow-sm"
+                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
                               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
                           )}
                         >
@@ -211,7 +215,6 @@ export function CashflowModal({
                       <Input
                         type="number"
                         {...form.register("startYear", { valueAsNumber: true })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                     <div className="grid gap-2">
@@ -220,7 +223,6 @@ export function CashflowModal({
                         type="number"
                         placeholder={t("cashflow.indefinite")}
                         {...form.register("endYear", { setValueAs: (v) => (v === "" || v === null ? null : Number(v)) })}
-                        className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] px-5 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] focus:bg-[var(--fp-color-card)] focus:ring-0 outline-none"
                       />
                     </div>
                   </div>
@@ -277,7 +279,7 @@ export function CashflowModal({
                                     <Input
                                       type="number"
                                       {...form.register(`growthRanges.${index}.startYear` as const, { valueAsNumber: true })}
-                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
+                                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
                                   </div>
                                 </div>
@@ -290,7 +292,7 @@ export function CashflowModal({
                                       {...form.register(`growthRanges.${index}.endYear` as const, {
                                         setValueAs: (v) => (v === "" || v === null ? null : Number(v)),
                                       })}
-                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
+                                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-4 text-sm text-[var(--fp-color-foreground)] transition-all focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
                                   </div>
                                 </div>
@@ -301,7 +303,7 @@ export function CashflowModal({
                                       type="number"
                                       step="0.1"
                                       {...form.register(`growthRanges.${index}.growthPercent` as const, { valueAsNumber: true })}
-                                      className="h-[42px] w-full rounded-xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-4 pr-8 text-sm text-[var(--fp-color-foreground)] text-center font-semibold focus:border-[var(--fp-color-border-strong)] outline-none"
+                                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-4 pr-8 text-sm text-[var(--fp-color-foreground)] text-center font-semibold focus:border-[var(--fp-color-border-strong)] outline-none"
                                     />
                                     <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">
                                       %
@@ -322,7 +324,7 @@ export function CashflowModal({
                                 <button
                                   type="button"
                                   onClick={() => removeRange(index)}
-                                  className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-3 py-1.5 text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:text-red-500"
+                                  className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] px-3 py-1.5 text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:text-[var(--fp-color-danger)]"
                                 >
                                   <Trash2 className="size-3" />
                                   {t("cashflow.delete")}
@@ -334,7 +336,7 @@ export function CashflowModal({
                             type="button"
                             onClick={() =>
                               appendRange({
-                                startYear: new Date().getFullYear(),
+                                startYear: nextGrowthRangeStartYear(growthRangesValues, form.getValues("startYear")),
                                 endYear: null,
                                 growthPercent: 0,
                               })
@@ -355,7 +357,7 @@ export function CashflowModal({
                 <button
                   type="submit"
                   form="cashflow-form"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-[var(--fp-color-card)] transition hover:opacity-90"
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-white transition hover:opacity-90"
                 >
                   <Check className="size-4" />
                   {initialData?.id ? t("cashflow.save") : t("cashflow.add")}
@@ -372,7 +374,7 @@ export function CashflowModal({
                   <button
                     type="button"
                     onClick={onDelete}
-                    className="ml-auto inline-flex h-12 items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-6 text-sm font-semibold text-red-600 transition hover:bg-red-500/20"
+                    className="ml-auto inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-6 text-sm font-semibold text-[var(--fp-color-danger)] transition hover:bg-[var(--fp-color-danger)]/20"
                   >
                     <Trash2 className="size-4" />
                     {t("cashflow.delete")}
@@ -434,4 +436,9 @@ export function CashflowModal({
       </Dialog.Portal>
     </Dialog.Root>
   );
+}
+
+export function nextGrowthRangeStartYear(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {
+  const previousRange = ranges?.at(-1);
+  return previousRange?.endYear ?? fallbackStartYear;
 }

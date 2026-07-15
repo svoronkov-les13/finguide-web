@@ -50,6 +50,7 @@ export interface Goal {
   projectedSaved?: number;
   projectedProgressPct?: number;
   growth: number;
+  growthType?: "inflation" | "custom";
   reachable: boolean;
   type?: "onetime" | "periodic";
 }
@@ -94,11 +95,17 @@ export interface PlanSettings {
   birthYear: number;
   currentAge: number;
   retirementAge: number;
+  pensionCalculationYears: number;
+  dashboardCalculationYears: number;
   monthsInYear: number;
   inflation: number;
   investmentReturn: number;
+  pensionInvestmentReturn: number;
   startingCapital: number;
   targetMonthlySpend: number;
+  withdrawalStrategy: "preserve_capital" | "spend_down_30y";
+  statePensionEnabled: boolean;
+  statePensionMonthly: number;
 }
 
 export interface FinancialPlan {
@@ -122,6 +129,14 @@ export interface FinancialPlan {
 }
 
 export type EditablePlanPatch = Partial<PlanSettings>;
+
+export interface PlanSummary {
+  id: string;
+  name: string;
+  current: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 
 // ─── Monthly Tracker (Calendar tracker) ───────────────────────────────────────

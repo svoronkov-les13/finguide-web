@@ -1,20 +1,46 @@
 import { useState } from "react";
-import { Page } from "@/components/layout/Page";
-import { Plus, Target, Download, Search } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
+import { Plus, Target, Download, Search, Info } from "lucide-react";
 import { useAddGoalMutation, useDeleteGoalMutation, usePlanQuery, useUpdateGoalMutation, useReorderGoalsMutation } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
+import { GoalsSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { cn, formatRub } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Goal } from "@/types/finance";
 import { GoalListItem } from "@/components/goals/GoalListItem";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
-import { goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
-import { trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalPortfolioSummary, goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
+import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
+import { useFormat } from "@/lib/useFormat";
 
 export function GoalsPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { formatRub } = useFormat();
+  
+  const formatGoalsCount = (count: number) => {
+    if (locale === "ru") {
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod100 >= 11 && mod100 <= 19) {
+        return t("goals.totalGoalsCount", { count: String(count) });
+      }
+      if (mod10 === 1) {
+        return t("goals.totalGoalsCountOne", { count: String(count) });
+      }
+      if (mod10 >= 2 && mod10 <= 4) {
+        return t("goals.totalGoalsCountFew", { count: String(count) });
+      }
+      return t("goals.totalGoalsCount", { count: String(count) });
+    }
+    // English
+    if (count === 1) {
+      return t("goals.totalGoalsCountOne", { count: String(count) });
+    }
+    return t("goals.totalGoalsCount", { count: String(count) });
+  };
+
   const { data: plan } = usePlanQuery();
   const addGoal = useAddGoalMutation();
   const updateGoal = useUpdateGoalMutation();
@@ -124,12 +150,14 @@ export function GoalsPage() {
     setDragOverGoalId(null);
   };
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan) return <GoalsSkeleton />;
 
   const goals = plan.goals ?? [];
-  const totalCost = goals.reduce((sum, goal) => sum + goalProgress(goal).cost, 0);
-  const totalSaved = goals.reduce((sum, goal) => sum + goalProgress(goal).saved, 0);
-  const accumulatedPercent = totalCost > 0 ? Math.min(100, Math.round((totalSaved / totalCost) * 100)) : 0;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthIdx = now.getMonth();
+  const monthsInYear = plan.settings.monthsInYear ?? 12;
+  const { totalProjectedCost: totalCost, accumulatedPercent } = goalPortfolioSummary(goals);
   
   const filteredGoals = goals.filter((goal) => {
     const matchesSearch = goal.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -159,7 +187,7 @@ export function GoalsPage() {
       if (sortField === "name") result = a.name.localeCompare(b.name);
       if (sortField === "cost") result = a.cost - b.cost;
       if (sortField === "type") result = String(a.type).localeCompare(String(b.type));
-      if (sortField === "year") result = (a.priority ?? 0) - (b.priority ?? 0);
+      if (sortField === "year") result = compareGoalTargetOrder(a, b);
       return sortDirection === "asc" ? result : -result;
     });
   });
@@ -196,35 +224,21 @@ export function GoalsPage() {
   return (
     <Page>
       {/* Header */}
-      <header className="flex items-start justify-between gap-5 max-[760px]:flex-col">
-        <div className="flex min-w-0 items-center gap-4">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
-          >
-            <span className="text-[var(--fp-color-muted-foreground)]">←</span>
-            {t("cashflow.back")}
-          </button>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--fp-color-foreground)]">{t("goals.title")}</h1>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            className="max-[760px]:hidden"
-          >
-            {t("goals.viewExample")}
-          </Button>
-          
-          <Button
-            variant="default"
-            onClick={handleCreate}
-          >
-            <Plus className="size-4 shrink-0" />
-            {t("goals.addGoal")}
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        back
+        title={t("goals.title")}
+        actions={
+          <>
+            <Button variant="secondary" className="max-[760px]:hidden">
+              {t("goals.viewExample")}
+            </Button>
+            <Button variant="default" onClick={handleCreate}>
+              <Plus className="size-4 shrink-0" />
+              {t("goals.addGoal")}
+            </Button>
+          </>
+        }
+      />
 
       {/* Stats bar */}
       {goals.length > 0 && (
@@ -241,7 +255,7 @@ export function GoalsPage() {
 
           <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm text-[var(--fp-color-muted-foreground)]">
             <Target className="size-4" />
-            {t(goals.length === 1 ? "goals.totalGoalsCountOne" : goals.length < 5 ? "goals.totalGoalsCountFew" : "goals.totalGoalsCount", { count: String(goals.length) })}
+            {formatGoalsCount(goals.length)}
           </div>
 
           {activeGoal && (
@@ -269,7 +283,7 @@ export function GoalsPage() {
                     {year}
                   </span>
                   <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)]">
-                    {t("goals.totalGoalsCount", { count: groupedGoals[year].length })}
+                    {formatGoalsCount(groupedGoals[year].length)}
                   </span>
                 </div>
                 {i < arr.length - 1 && (
@@ -281,7 +295,7 @@ export function GoalsPage() {
             ))}
           </div>
           <p className="text-sm text-[var(--fp-color-muted-foreground)] flex items-start gap-2 bg-[var(--fp-color-background)] p-3 rounded-lg">
-            <span className="mt-0.5 opacity-70">▹</span>
+            <Info className="size-4 text-[var(--fp-color-muted-foreground)] mt-0.5 shrink-0" />
             {t("goals.activeGoalInfo", { name: activeGoal.name, year: activeGoal.targetYear })}
           </p>
         </div>
@@ -289,58 +303,40 @@ export function GoalsPage() {
 
       {/* Toolbar */}
       {goals.length > 0 && (
-        <div className="flex flex-col gap-4 border-b border-[var(--fp-color-border)] pb-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative w-full sm:w-auto min-w-[300px]">
-              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
-              <input
-                type="text"
-                placeholder={t("goals.searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-[48px] w-full rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] pl-10 pr-4 text-sm font-medium text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-muted-foreground)] focus:border-[var(--fp-color-primary)]"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveFilter("all")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "all"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterAll")}
-              </button>
-              <button
-                onClick={() => setActiveFilter("onetime")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "onetime"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterOnetime")}
-              </button>
-              <button
-                onClick={() => setActiveFilter("periodic")}
-                className={cn(
-                  "rounded-full border px-6 h-[48px] text-sm font-bold transition-colors",
-                  activeFilter === "periodic"
-                    ? "border-transparent bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
-                    : "border-transparent bg-transparent text-[var(--fp-color-muted-foreground)] hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-                )}
-              >
-                {t("goals.filterPeriodic")}
-              </button>
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative w-[260px]">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--fp-color-muted-foreground)]" />
+            <input
+              type="text"
+              placeholder={t("goals.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 w-full rounded-lg border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-9 pr-4 text-sm text-[var(--fp-color-foreground)] outline-none placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/20"
+            />
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
-            <span>{t("goals.sortPrefix")}</span>
+          {/* Filters */}
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-0.5">
+            {(["all", "onetime", "periodic"] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={cn(
+                  "rounded-md px-3.5 py-1 text-sm font-medium transition-all",
+                  activeFilter === filter
+                    ? "bg-[var(--fp-color-foreground)] text-[var(--fp-color-card)] shadow-sm"
+                    : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
+                )}
+              >
+                {t(`goals.filter${filter.charAt(0).toUpperCase() + filter.slice(1)}` as Parameters<typeof t>[0])}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort — pushed right */}
+          <div className="ml-auto flex items-center gap-1 text-xs text-[var(--fp-color-muted-foreground)]">
+            <span className="mr-1 font-medium">{t("goals.sortPrefix")}</span>
             {(["name", "cost", "type", "year"] as const).map((field) => (
               <button
                 key={field}
@@ -353,14 +349,14 @@ export function GoalsPage() {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors",
+                  "flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-all",
                   sortField === field
-                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)]"
+                    ? "bg-[var(--fp-color-surface)] text-[var(--fp-color-foreground)] shadow-sm"
                     : "hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
                 )}
               >
                 {t(`goals.sort_${field}`)}
-                <span className="text-[10px] opacity-70">
+                <span className="text-[10px] opacity-60">
                   {sortField === field ? (sortDirection === "asc" ? "↑" : "↓") : "↑↓"}
                 </span>
               </button>
@@ -378,10 +374,10 @@ export function GoalsPage() {
               if (!yearGoals || yearGoals.length === 0) return null;
 
               const isAccumulation = activeGoal?.targetYear === year;
-              const isCompleted = yearGoals.every(g => g.saved >= g.cost);
-              const yearTotalCost = yearGoals.reduce((sum, g) => sum + g.cost, 0);
+              const isCompleted = yearGoals.every(g => g.saved >= goalProjectedCost(g));
+              const yearSummary = goalYearSummary(yearGoals, year, currentYear, currentMonthIdx, monthsInYear);
               const yearTotalSaved = yearGoals.reduce((sum, g) => sum + g.saved, 0);
-              const yearPercent = yearTotalCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearTotalCost) * 100)) : 0;
+              const yearPercent = yearSummary.totalProjectedCost > 0 ? Math.min(100, Math.round((yearTotalSaved / yearSummary.totalProjectedCost) * 100)) : 0;
 
               const isYearDragOver = dragOverYear === year;
 
@@ -407,26 +403,30 @@ export function GoalsPage() {
                         {isAccumulation ? (
                           <span className="rounded bg-white/50 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-accent-gold-text)] uppercase">{t("goals.accumulationBadge")}</span>
                         ) : isCompleted ? (
-                          <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-emerald-600 uppercase">{t("goals.completedBadge")}</span>
+                          <span className="rounded bg-[var(--fp-color-teal)]/10 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-teal)] uppercase">{t("goals.completedBadge")}</span>
                         ) : (
-                          <span className="rounded bg-sky-500/10 px-2 py-0.5 text-xs font-bold tracking-wider text-sky-600 uppercase">{t("goals.queueBadge")}</span>
+                          <span className="rounded bg-[var(--fp-color-label)]/10 px-2 py-0.5 text-xs font-bold tracking-wider text-[var(--fp-color-label)] uppercase">{t("goals.queueBadge")}</span>
                         )}
-                        <span className="text-sm font-bold opacity-70 ml-2">{t("goals.totalGoalsCount", { count: yearGoals.length })}</span>
+                        <span className="text-sm font-bold opacity-70 ml-2">{formatGoalsCount(yearGoals.length)}</span>
                       </div>
                       <p className="text-sm font-medium opacity-70">
                         {isAccumulation ? t("goals.yearAccumulationInfo", { year: String(year) }) : isCompleted ? t("goals.yearCompletedInfo", { year: String(year) }) : t("goals.yearQueueInfo", { year: String(year) })}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 bg-white/40 px-4 py-2 rounded-full border border-white/20">
-                      <span className={cn("font-bold text-lg", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{formatRub(yearTotalCost)}</span>
-                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-black/10">
-                        <div 
-                          className={cn("h-full rounded-full", isAccumulation ? "bg-[var(--fp-color-accent-gold-text)]" : "bg-[var(--fp-color-foreground)]")} 
-                          style={{ width: `${yearPercent}%` }} 
-                        />
+                    <div className="grid min-w-[320px] gap-3 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/40 px-4 py-3 sm:grid-cols-3">
+                      <YearSummaryMetric label={t("goals.yearTotalProjected")} value={formatRub(yearSummary.totalProjectedCost)} emphasis={isAccumulation} />
+                      <YearSummaryMetric label={t("goals.yearRemaining")} value={formatRub(yearSummary.remaining)} emphasis={isAccumulation} />
+                      <YearSummaryMetric label={t("goals.yearMonthlyUntilEnd")} value={formatRub(yearSummary.monthlyUntilYearEnd)} emphasis={isAccumulation} />
+                      <div className="sm:col-span-3 flex items-center gap-3">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
+                          <div
+                            className={cn("h-full rounded-full", isAccumulation ? "bg-[var(--fp-color-accent-gold-text)]" : "bg-[var(--fp-color-foreground)]")}
+                            style={{ width: `${yearPercent}%` }}
+                          />
+                        </div>
+                        <span className={cn("text-xs font-bold", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-muted-foreground)]")}>{yearPercent}%</span>
                       </div>
-                      <span className={cn("text-xs font-bold", isAccumulation ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-muted-foreground)]")}>{yearPercent}%</span>
                     </div>
                   </div>
 
@@ -476,9 +476,19 @@ export function GoalsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         initialData={editingItem}
+        defaultGrowth={plan?.settings.inflation}
         onSubmit={handleModalSubmit}
         onDelete={(id) => deleteGoal.mutate(id)}
       />
     </Page>
+  );
+}
+
+function YearSummaryMetric({ label, value, emphasis }: { label: string; value: string; emphasis: boolean }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] font-semibold uppercase text-[var(--fp-color-muted-foreground)]">{label}</div>
+      <div className={cn("mt-1 truncate text-sm font-bold", emphasis ? "text-[var(--fp-color-accent-gold-text)]" : "text-[var(--fp-color-foreground)]")}>{value}</div>
+    </div>
   );
 }

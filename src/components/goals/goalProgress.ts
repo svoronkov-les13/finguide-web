@@ -8,8 +8,8 @@ export interface GoalProgress {
 }
 
 export function goalProgress(goal: Goal): GoalProgress {
-  const cost = goal.cost;
-  const saved = goal.saved;
+  const cost = goal.projectedCost ?? goal.cost;
+  const saved = Math.min(cost, goal.saved + (goal.projectedSaved ?? 0));
   const percent = cost > 0 ? Math.min(100, Math.round((saved / cost) * 100)) : 0;
 
   return {

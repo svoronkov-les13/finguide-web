@@ -25,6 +25,7 @@
   --color-teal: var(--fp-color-teal);
   --color-coral: var(--fp-color-coral);
   --color-danger: var(--fp-color-danger);
+  --color-input: var(--fp-color-input);
 
   /* Shadows */
   --shadow-card: var(--fp-shadow-card);
@@ -65,6 +66,21 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+select {
+  color-scheme: light;
+}
+
+select option {
+  background: var(--fp-color-card);
+  color: var(--fp-color-foreground);
+  padding: 8px 12px;
+}
+
+select option:checked {
+  background: var(--fp-color-surface-hover);
+  color: var(--fp-color-foreground);
 }
 
 ::selection {
@@ -248,6 +264,25 @@ button {
 .recharts-brush-traveller {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* =============================================
+   Page transition
+   ============================================= */
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter var(--fp-duration-normal) var(--fp-easing-default) both;
 }
 
 /* =============================================

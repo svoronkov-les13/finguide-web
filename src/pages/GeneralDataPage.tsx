@@ -7,13 +7,15 @@ import { useNavigate } from "@tanstack/react-router";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useAuth } from "@/auth/AuthProvider";
 import { Card } from "@/components/ui/card";
+import { GeneralDataSkeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { settingsSchema, type SettingsFormValues } from "@/forms/settingsSchema";
-import { formatRub } from "@/lib/utils";
+
 import { useI18n } from "@/i18n/I18nProvider";
-import { Page } from "@/components/layout/Page";
+import { Page, PageHeader } from "@/components/layout/Page";
+import { useFormat } from "@/lib/useFormat";
 
 export function GeneralDataPage() {
   const { t } = useI18n();
@@ -29,6 +31,8 @@ export function GeneralDataPage() {
       birthYear: settings?.birthYear ?? 1993,
       monthsInYear: settings?.monthsInYear ?? 12,
       retirementAge: settings?.retirementAge ?? 60,
+      pensionCalculationYears: settings?.pensionCalculationYears ?? Math.max(1, (settings?.retirementAge ?? 60) - (settings?.currentAge ?? 30)),
+      dashboardCalculationYears: settings?.dashboardCalculationYears ?? 12,
       inflationPercent: Math.round((settings?.inflation ?? 0.07) * 100),
       investmentReturnPercent: Math.round((settings?.investmentReturn ?? 0.09) * 100),
       startingCapital: settings?.startingCapital ?? 0,
@@ -38,7 +42,7 @@ export function GeneralDataPage() {
 
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
-  const horizon = Math.max(0, values.retirementAge - age);
+  const retirementAge = age + values.pensionCalculationYears;
   const realReturn = values.investmentReturnPercent - values.inflationPercent;
 
   const onSubmit = form.handleSubmit((next) => {
@@ -46,7 +50,8 @@ export function GeneralDataPage() {
       startYear: next.startYear,
       birthYear: next.birthYear,
       monthsInYear: next.monthsInYear,
-      retirementAge: next.retirementAge,
+      pensionCalculationYears: next.pensionCalculationYears,
+      dashboardCalculationYears: next.dashboardCalculationYears,
       inflation: next.inflationPercent / 100,
       investmentReturn: next.investmentReturnPercent / 100,
       startingCapital: next.startingCapital,
@@ -54,22 +59,15 @@ export function GeneralDataPage() {
     });
   });
 
-  if (!plan || !settings) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan || !settings) return <GeneralDataSkeleton />;
 
   return (
     <Page>
       <form onSubmit={onSubmit} className="contents">
-      <header className="min-w-0">
-        <div className="flex items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-soft">
-            <SlidersHorizontal className="size-5" />
-          </span>
-          <div>
-            <h1 className="page-title">{t("general.title")}</h1>
-            <p className="mt-1 text-sm text-[var(--fp-color-muted-foreground)]">{t("general.subtitle")}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t("general.title")}
+        description={t("general.subtitle")}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,800px)_280px]">
         <div className="grid gap-5">
@@ -123,17 +121,16 @@ export function GeneralDataPage() {
                 <Input type="number" step="0.1" {...form.register("inflationPercent")} />
               </Field>
               <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${realReturn.toFixed(1)}%`} detail={t("general.realReturnDetail")} />
-              <MetricBox label={t("general.horizon")} value={`${horizon} ${t("general.years")}`} detail={t("general.horizonDetail")} />
             </div>
           </FormSection>
 
           {/* Temporary visible fields (Not in Figma) */}
           <FormSection
-            icon={<Info className="size-4 text-amber-500" />}
+            icon={<Info className="size-4 text-[var(--fp-color-orange)]" />}
             title={
-              <div className="flex items-center gap-2 text-amber-600">
+              <div className="flex items-center gap-2 text-[var(--fp-color-orange)]">
                 {t("general.tempFields")}
-                <span className="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-600">{t("general.tempBadge")}</span>
+                <span className="rounded bg-[var(--fp-color-orange)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-orange)]">{t("general.tempBadge")}</span>
               </div>
             }
             description={t("general.tempFieldsDesc")}
@@ -142,8 +139,11 @@ export function GeneralDataPage() {
               <Field label={t("general.birthYear")} hint={t("general.birthYearHint")} error={form.formState.errors.birthYear?.message}>
                 <Input type="number" {...form.register("birthYear", { valueAsNumber: true })} />
               </Field>
-              <Field label={t("general.retirementAge")} hint={t("general.retirementAgeHint")} error={form.formState.errors.retirementAge?.message}>
-                <Input type="number" {...form.register("retirementAge", { valueAsNumber: true })} />
+              <Field label={t("general.pensionCalculationYears")} hint={t("general.pensionCalculationYearsHint")} error={form.formState.errors.pensionCalculationYears?.message}>
+                <Input type="number" {...form.register("pensionCalculationYears", { valueAsNumber: true })} />
+              </Field>
+              <Field label={t("general.dashboardCalculationYears")} hint={t("general.dashboardCalculationYearsHint")} error={form.formState.errors.dashboardCalculationYears?.message}>
+                <Input type="number" {...form.register("dashboardCalculationYears", { valueAsNumber: true })} />
               </Field>
             </div>
           </FormSection>
@@ -178,8 +178,7 @@ export function GeneralDataPage() {
             returnPct={values.investmentReturnPercent}
             inflationPct={values.inflationPercent}
             realReturn={realReturn}
-            horizon={horizon}
-            retirementAge={values.retirementAge}
+            retirementAge={retirementAge}
           />
           <HelpBlock title={t("general.baseCurrency")}>{t("general.helpCurrency")}</HelpBlock>
           <HelpBlock title={t("general.startingCapital")}>{t("general.helpCapital")}</HelpBlock>
@@ -200,10 +199,10 @@ function SummaryCard(props: {
   returnPct: number;
   inflationPct: number;
   realReturn: number;
-  horizon: number;
   retirementAge: number;
 }) {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2 font-semibold">
@@ -218,7 +217,6 @@ function SummaryCard(props: {
         <SummaryRow label={t("general.returnPct")} value={`${props.returnPct}%`} tone="positive" />
         <SummaryRow label={t("general.inflationPct")} value={`${props.inflationPct}%`} tone="negative" />
         <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${props.realReturn.toFixed(1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
-        <SummaryRow label={t("general.horizon")} value={`${props.horizon} ${t("general.years")}`} />
         <SummaryRow label={t("general.pensionIn")} value={`${props.retirementAge} ${t("general.years")}`} />
       </dl>
     </Card>
@@ -266,7 +264,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
     <label className="grid gap-2">
       <Label>{label}</Label>
       {children}
-      {error ? <span className="text-xs text-rose-700">{error}</span> : hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+      {error ? <span className="text-xs text-[var(--fp-color-danger)]">{error}</span> : hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </label>
   );
 }

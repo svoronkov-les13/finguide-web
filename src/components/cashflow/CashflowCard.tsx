@@ -1,8 +1,9 @@
 import { ChevronDown, GripVertical, TrendingUp } from "lucide-react";
 import type { Cashflow } from "@/types/finance";
-import { formatRub, formatUsd } from "@/lib/utils";
+
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
+import { useFormat } from "@/lib/useFormat";
 
 export function CashflowCard({
   item,
@@ -32,11 +33,12 @@ export function CashflowCard({
   isDragOver?: boolean;
 }) {
   const { t } = useI18n();
+  const { formatRub, formatUsd } = useFormat();
   const formatMoney = (amount: number, currency: string) => {
     return currency === "USD" ? formatUsd(amount) : formatRub(amount);
   };
 
-  const isMonthly = item.category.toLowerCase().includes("месяц") || item.category.toLowerCase().includes("monthly") || item.frequency === "monthly";
+  const isMonthly = item.frequency === "monthly" || item.category.toLowerCase().includes("monthly");
   const yearlyAmount = isMonthly ? item.amount * 12 : item.amount;
   const monthlyAmount = isMonthly ? item.amount : Math.round(item.amount / 12);
   const growthPct = Math.round(item.growth * 100);
@@ -67,7 +69,7 @@ export function CashflowCard({
 
       {/* Left: Name + dates */}
       <div className="min-w-0 flex-1">
-        <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-sm")}>{item.name}</div>
+        <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-sm")} title={item.name}>{item.name}</div>
         {!compact && (
           <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
             {item.startYear ? `01.01.${item.startYear}` : ""} — {endLabel}

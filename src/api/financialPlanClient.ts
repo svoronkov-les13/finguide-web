@@ -36,6 +36,10 @@ function activeClient() {
 
 const backendFirstClient = {
   getPlan: getPlanWithDevFallback,
+  listPlans: () => activeClient().listPlans(),
+  createPlan: (name: string) => activeClient().createPlan(name),
+  copyPlan: (planId: string, name: string) => activeClient().copyPlan(planId, name),
+  switchPlan: (planId: string) => activeClient().switchPlan(planId),
   setScenario: (id: ScenarioId) => activeClient().setScenario(id),
   updateSettings: (patch: EditablePlanPatch) => activeClient().updateSettings(patch),
   updateCashflow: (id: string, patch: Partial<Cashflow>) => activeClient().updateCashflow(id, patch),
@@ -53,7 +57,7 @@ const backendFirstClient = {
   saveWhatIfScenario: (input: Parameters<typeof backendPlanClient.saveWhatIfScenario>[0]) =>
     activeClient().saveWhatIfScenario(input),
   // Monthly tracker — always hit backend
-  getMonthlyTracker: (planId: string) => backendPlanClient.getMonthlyTracker(planId),
+  getMonthlyTracker: (planId: string, year?: number) => backendPlanClient.getMonthlyTracker(planId, year),
   saveMonthlyTrackerEntry: (planId: string, month: string, status: MonthlyStatus, amount?: number | null, note?: string | null) =>
     backendPlanClient.saveMonthlyTrackerEntry(planId, month, status, amount, note),
 };

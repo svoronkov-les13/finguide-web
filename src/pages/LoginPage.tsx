@@ -8,17 +8,17 @@ import { useI18n } from "@/i18n/I18nProvider";
 /* ---- Shared inline styles (DRY) ---- */
 
 const inputStyle: React.CSSProperties = {
-  height: 52,
+  height: 48,
   width: "100%",
-  borderRadius: "var(--fp-radius-full)",
-  border: "none",
-  background: "var(--fp-color-muted)",
+  borderRadius: 16,
+  border: "1px solid var(--fp-color-border)",
+  background: "var(--fp-color-input)",
   paddingLeft: 44,
   paddingRight: 16,
-  fontSize: "var(--fp-text-base)",
+  fontSize: "var(--fp-text-sm)",
   color: "var(--fp-color-foreground)",
   outline: "none",
-  transition: "box-shadow var(--fp-duration-normal) var(--fp-easing-default)",
+  transition: "border-color var(--fp-duration-normal) var(--fp-easing-default), box-shadow var(--fp-duration-normal) var(--fp-easing-default)",
   fontFamily: "var(--fp-font-primary)",
 };
 
@@ -195,9 +195,9 @@ export function LoginPage() {
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
-            height: 52,
+            height: 48,
             width: "100%",
-            borderRadius: "var(--fp-radius-full)",
+            borderRadius: 16,
             border: "none",
             background: "var(--fp-color-primary)",
             color: "var(--fp-color-primary-foreground)",

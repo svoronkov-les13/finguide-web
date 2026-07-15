@@ -4,11 +4,11 @@ React/Vite frontend for **FinGuide / «Финансовый капитал»**.
 
 ## Links
 
-- Demo: http://66.42.121.18/fg/
-- Backend API base: http://66.42.121.18/finguide-api/api/v1
-- Backend Swagger: http://66.42.121.18/finguide-api/swagger-ui.html
+- App: https://finguide.les13.tech/fg/
+- Backend API base: https://finguide.les13.tech/finguide-api/api/v1
+- Backend Swagger: https://finguide.les13.tech/finguide-api/swagger-ui.html
 - Backend docs: https://svoronkov-les13.github.io/finguide-be/
-- Keycloak realm: http://66.42.121.18/auth/realms/finguide
+- Keycloak realm: https://finguide.les13.tech/auth/realms/finguide
 - Web repository: https://github.com/svoronkov-les13/finguide-web
 - Backend repository: https://github.com/svoronkov-les13/finguide-be
 
@@ -73,30 +73,31 @@ The left navigation counters for income, expenses and goals are derived from the
 - While the current plan is not loaded, the sidebar does not render demo/default counter values.
 - Empty persisted plans render zero counters instead of seeded demo values.
 
+## Documentation and GitHub Pages
+
+Project-wide MkDocs/GitHub Pages documentation is currently published from `finguide-be`:
+
+```txt
+https://svoronkov-les13.github.io/finguide-be/
+```
+
+This repository does not currently have its own Pages workflow. Keep this README and `.env.example` aligned with the public deployment contract because they are the web-specific source for local setup and runtime variables.
+
 ## CI/CD
 
-Frontend deploy автоматизирован через `.github/workflows/deploy.yml`.
+Current production-like deployment is container based:
+
+- `.github/workflows/docker-ghcr.yml` builds and pushes `ghcr.io/svoronkov-les13/finguide-web:<tag>`;
+- `finguide-ops` deploy workflows roll out the selected image tag to Kubernetes.
+
+The older `.github/workflows/deploy.yml` static-file deploy is legacy and should not be treated as the current `finguide.les13.tech` deployment path.
 
 Триггеры:
 
 - push в `main`;
 - ручной `workflow_dispatch`.
 
-Runner:
-
-- self-hosted GitHub Actions runner на `66.42.121.18`;
-- labels: `self-hosted`, `finguide-web`;
-- рабочая директория runner на сервере: `/home/clawd/actions-runner-finguide-web`.
-
-Deploy job делает:
-
-1. `bun install --frozen-lockfile`;
-2. `bun run build:fg`;
-3. backup текущего `/var/www/mtproxy-info/fg` в `/var/www/mtproxy-info/backups/`;
-4. `rsync --delete dist/` в `/var/www/mtproxy-info/fg`;
-5. smoke test публичной страницы `http://66.42.121.18/fg/`.
-
-`main` автоматически деплоится, поэтому незавершённые изменения нужно вести в отдельной ветке/worktree.
+`main` can publish container images automatically, so unfinished changes should stay in a separate branch/worktree until checked.
 
 ## Environment
 
@@ -106,7 +107,7 @@ Typical local `.env` values:
 VITE_FINGUIDE_BASE_PATH=/
 VITE_FINGUIDE_API_BASE_URL=http://127.0.0.1:8080/api/v1
 VITE_FINGUIDE_AUTH_ENABLED=false
-VITE_FINGUIDE_OIDC_ISSUER_URL=http://66.42.121.18/auth/realms/finguide
+VITE_FINGUIDE_OIDC_ISSUER_URL=https://finguide.les13.tech/auth/realms/finguide
 VITE_FINGUIDE_OIDC_CLIENT_ID=finguide-web
 VITE_FINGUIDE_OIDC_SCOPE="openid profile email"
 ```
@@ -118,15 +119,18 @@ In local dev the app uses the backend client first. If the backend route is unav
 VITE_FINGUIDE_DEV_MOCK_FALLBACK=false
 ```
 
-Demo build under `/fg/` uses:
+Production-like Kubernetes deployment uses the app under `/fg/`, API at `/finguide-api/api/v1`, and Keycloak at `/auth/realms/finguide` on the same host:
 
 ```bash
 VITE_FINGUIDE_BASE_PATH=/fg/
+VITE_FINGUIDE_API_BASE_URL=/finguide-api/api/v1
 VITE_FINGUIDE_AUTH_ENABLED=true
-VITE_FINGUIDE_OIDC_ISSUER_URL=http://66.42.121.18/auth/realms/finguide
+VITE_FINGUIDE_OIDC_ISSUER_URL=https://finguide.les13.tech/auth/realms/finguide
 VITE_FINGUIDE_OIDC_CLIENT_ID=finguide-web
 VITE_FINGUIDE_OIDC_SCOPE="openid profile email"
 ```
+
+The root URL redirects to `/fg/`; Keycloak redirect URI should therefore stay `https://finguide.les13.tech/fg/auth/callback`.
 
 ## Development
 

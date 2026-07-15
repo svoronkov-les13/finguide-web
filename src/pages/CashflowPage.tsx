@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { Page } from "@/components/layout/Page";
-import { Plus, ChevronLeft, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
+import { Page, PageHeader } from "@/components/layout/Page";
+import { Button } from "@/components/ui/button";
+import { Plus, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw } from "lucide-react";
 import { useAddCashflowMutation, useDeleteCashflowMutation, usePlanQuery, useUpdateCashflowMutation } from "@/api/planQueries";
-import { Card } from "@/components/ui/card";
-import { cn, formatRub } from "@/lib/utils";
+import { CashflowSkeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { Cashflow } from "@/types/finance";
 import { CashflowCard } from "@/components/cashflow/CashflowCard";
 import { CashflowModal } from "@/components/cashflow/CashflowModal";
 import { CashflowEmptyState } from "@/components/cashflow/CashflowEmptyState";
 import { CashflowInstructionModal } from "@/components/cashflow/CashflowInstructionModal";
 import { CashflowCalculationDetailsModal } from "@/components/cashflow/CashflowCalculationDetailsModal";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
+import { useFormat } from "@/lib/useFormat";
 
 type CashflowColumn = {
   id: "monthly" | "yearly" | "onetime";
@@ -40,7 +42,7 @@ const setStoredOrder = (planId: string, type: string, frequency: string, order: 
 
 export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const { t } = useI18n();
-  const router = useRouter();
+  const { formatRub } = useFormat();
   const { data: plan } = usePlanQuery();
   const addCashflow = useAddCashflowMutation();
   const updateCashflow = useUpdateCashflowMutation();
@@ -131,7 +133,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDragOverItemId(null);
   };
 
-  if (!plan) return <Card className="h-96 max-w-[1256px] animate-pulse bg-muted/60" />;
+  if (!plan) return <CashflowSkeleton />;
 
   const items = plan.cashflows.filter((item) => item.type === type);
   const nextRoute = type === "income" ? "/expenses" : "/goals";
@@ -179,8 +181,6 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDrawerOpen(true);
   };
 
-
-
   const handleSubmit = (data: Partial<Cashflow>) => {
     const frequency = data.frequency || "monthly";
     const category = data.category || t(`cashflow.defaultCategoryMonthly_${type}` as Parameters<typeof t>[0]);
@@ -212,43 +212,41 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   };
 
   return (
-    <Page size="wide" bottom={false} scrollable={false}>
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            onClick={() => router.history.back()}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
-          >
-            <ChevronLeft className="size-4" />
-            {t("cashflow.back")}
-          </button>
-          <h1 className="text-3xl font-bold text-[var(--fp-color-foreground)]">{t(`cashflow.${type}`)}</h1>
-          <button 
-            onClick={() => setInstructionOpen(true)}
-            className="grid size-5 place-items-center rounded-full border border-[var(--fp-color-border)] text-xs text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
-          >
-            <Info className="size-3" />
-          </button>
-          <button className="hidden sm:block rounded-full border border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] px-5 py-2 text-sm font-medium text-[var(--fp-color-background)] transition-colors hover:opacity-90">
-            {t("cashflow.viewExample")}
-          </button>
-        </div>
-        {items.length > 0 && (
-          <button 
-            onClick={() => setIsCompact(!isCompact)}
-            className={cn(
-              "flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
-              isCompact 
-                ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)]" 
-                : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
+    <Page bottom={false} scrollable={false}>
+      <PageHeader
+        back
+        title={t(`cashflow.${type}`)}
+        actions={
+          <>
+            <button
+              onClick={() => setInstructionOpen(true)}
+              className="grid size-9 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
+            >
+              <Info className="size-4" />
+            </button>
+            <Button
+              variant="secondary"
+              className="max-[760px]:hidden"
+              onClick={() => setInstructionOpen(true)}
+            >
+              {t("cashflow.viewExample")}
+            </Button>
+            <Button variant="default" onClick={() => handleAddItem("monthly")}>
+              <Plus className="size-4 shrink-0" />
+              {t("cashflow.add")}
+            </Button>
+            {items.length > 0 && (
+              <Button
+                variant={isCompact ? "active" : "secondary"}
+                onClick={() => setIsCompact(!isCompact)}
+              >
+                <Sparkles className="size-4" />
+                <span className="hidden sm:inline">{t("cashflow.compact")}</span>
+              </Button>
             )}
-          >
-            <Sparkles className="size-4" />
-            <span className="hidden sm:inline">{t("cashflow.compact")}</span>
-          </button>
-        )}
-      </header>
+          </>
+        }
+      />
 
       {/* Stats bar */}
       {items.length > 0 && (
@@ -288,7 +286,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
             className={cn(
               "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
               activeFilter === "all"
-                ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-white"
+                ? "border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] font-bold"
                 : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
             )}
           >
@@ -301,7 +299,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
               className={cn(
                 "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                 activeFilter === col.id
-                  ? "border-[var(--fp-color-foreground)] bg-[var(--fp-color-foreground)] text-white"
+                  ? "border-[var(--fp-color-border-strong)] bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] font-bold"
                   : "border-[var(--fp-color-border)] bg-[var(--fp-color-background)] text-[var(--fp-color-foreground)] hover:bg-[var(--fp-color-surface-hover)]"
               )}
             >
@@ -446,6 +444,7 @@ function CashflowColumn({
   startYear,
 }: CashflowColumnProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { formatRub } = useFormat();
   const [showScrollbar, setShowScrollbar] = useState(false);
   const [thumbHeight, setThumbHeight] = useState(0);
   const [thumbTop, setThumbTop] = useState(0);
@@ -605,7 +604,7 @@ function CashflowColumn({
       {/* Add button */}
       <button
         onClick={() => onAddItem(column.defaultFrequency)}
-        className="mb-3 ml-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+        className="mb-3 ml-4 flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] py-3.5 text-sm font-medium text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
       >
         <Plus className="size-4" />
         {t("cashflow.add")}

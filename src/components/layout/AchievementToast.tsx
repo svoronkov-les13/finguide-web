@@ -12,7 +12,7 @@ export function AchievementToast() {
 
   return (
     <aside className="fixed bottom-6 right-6 z-50 w-[min(340px,calc(100vw-32px))] rounded-[28px] border border-border/80 bg-card/94 p-4 shadow-elevated backdrop-blur-2xl">
-      <div className="pointer-events-none absolute -right-3 -top-4 grid size-20 place-items-center rounded-full border-[6px] border-emerald-500/25 text-3xl text-emerald-600/70">✓</div>
+      <div className="pointer-events-none absolute -right-3 -top-4 grid size-20 place-items-center rounded-full border-[6px] border-[var(--fp-color-teal)]/25 text-3xl text-[var(--fp-color-teal)]/70">✓</div>
       <Button className="absolute right-3 top-3" variant="ghost" size="iconSm" onClick={() => setVisible(false)} aria-label={t("common.close")}>
         <X className="size-4" />
       </Button>
