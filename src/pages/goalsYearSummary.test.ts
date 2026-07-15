@@ -71,4 +71,18 @@ describe("goalPortfolioSummary", () => {
       accumulatedPercent: 15,
     });
   });
+
+  it("includes projected allocations in the accumulated percentage", () => {
+    const goals = [
+      goal({ id: "trip", cost: 451_500, projectedCost: 451_500, saved: 0, projectedSaved: 203_175 }),
+      goal({ id: "april", cost: 550_000, projectedCost: 550_000, saved: 0 }),
+      goal({ id: "repair", cost: 7_280_000, projectedCost: 7_280_000, saved: 0 }),
+    ];
+
+    expect(goalPortfolioSummary(goals)).toEqual({
+      totalProjectedCost: 8_281_500,
+      totalSaved: 203_175,
+      accumulatedPercent: 2,
+    });
+  });
 });
