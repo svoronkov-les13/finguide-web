@@ -67,6 +67,16 @@ export function getOidcAuthorizationHeader() {
 }
 
 let refreshPromise: Promise<AuthSession | undefined> | null = null;
+const authSessionListeners = new Set<(session: AuthSession | undefined) => void>();
+
+export function subscribeAuthSession(listener: (session: AuthSession | undefined) => void) {
+  authSessionListeners.add(listener);
+  return () => authSessionListeners.delete(listener);
+}
+
+function notifyAuthSession(session: AuthSession | undefined) {
+  authSessionListeners.forEach((listener) => listener(session));
+}
 
 export async function refreshAuthSession(): Promise<AuthSession | undefined> {
   if (refreshPromise) return refreshPromise;
@@ -197,6 +207,7 @@ export function endOidcSession() {
 
 export function clearAuthSession() {
   window.localStorage.removeItem(AUTH_SESSION_KEY);
+  notifyAuthSession(undefined);
 }
 
 /**
@@ -276,6 +287,7 @@ function storeTokenResponse(token: TokenResponse) {
     profile: parseJwtProfile(token.id_token || token.access_token),
   };
   window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+  notifyAuthSession(session);
   return session;
 }
 

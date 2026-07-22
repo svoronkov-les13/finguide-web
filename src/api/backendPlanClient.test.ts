@@ -15,6 +15,18 @@ describe("backendPlanClient response handling", () => {
       "PATCH /analytics/assumptions failed with HTTP 403: Plan is read-only",
     );
   });
+
+  it("clears the stored auth session when backend returns 401", () => {
+    window.localStorage.setItem(
+      "finguide.auth.session",
+      JSON.stringify({ accessToken: "rejected-token", refreshToken: "refresh-token", tokenType: "Bearer", expiresAt: Date.now() + 60_000 }),
+    );
+
+    expect(() => unwrapData({ status: 401, data: { error: { message: "Unauthorized" } } }, "GET /plans/current")).toThrow(
+      "GET /plans/current failed with HTTP 401: Unauthorized",
+    );
+    expect(window.localStorage.getItem("finguide.auth.session")).toBeNull();
+  });
 });
 
 describe("backendPlanClient plan management", () => {

@@ -17,7 +17,7 @@ import {
   postPlansPlanIdGoalsReorder,
   postPlansPlanIdIncomes,
 } from "@/shared/api/generated/finguide";
-import { getValidOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
+import { clearAuthSession, getValidOidcAuthorizationHeader, oidcAuthEnabled } from "@/auth/oidc";
 import { apiBaseUrl, demoBearerToken } from "@/shared/api/baseUrl";
 import type {
   CashFlowProjectionPoint,
@@ -105,6 +105,9 @@ async function requestOptions(): Promise<RequestInit> {
 
 export function unwrapData<T>(response: ApiResponse, operation: string): T {
   if (response.status < 200 || response.status >= 300) {
+    if (response.status === 401) {
+      clearAuthSession();
+    }
     const envelope = response.data as { error?: { message?: string } } | undefined;
     const detail = envelope?.error?.message ? `: ${envelope.error.message}` : "";
     throw new Error(`${operation} failed with HTTP ${response.status}${detail}`);
@@ -144,6 +147,9 @@ async function backendNoContent(path: string, options: RequestInit = {}, operati
     },
   });
   if (res.status < 200 || res.status >= 300) {
+    if (res.status === 401) {
+      clearAuthSession();
+    }
     throw new Error(`${operation} failed with HTTP ${res.status}`);
   }
 }
