@@ -184,30 +184,36 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const handleSubmit = (data: Partial<Cashflow>) => {
     const frequency = data.frequency || "monthly";
     const category = data.category || t(`cashflow.defaultCategoryMonthly_${type}` as Parameters<typeof t>[0]);
+    const closeModal = () => setDrawerOpen(false);
 
     if (data.id) {
-      updateCashflow.mutate({ id: data.id, patch: { ...data, category, frequency } });
+      updateCashflow.mutate(
+        { id: data.id, patch: { ...data, category, frequency } },
+        { onSuccess: closeModal },
+      );
     } else {
-      addCashflow.mutate({
-        ...data,
-        type,
-        name: data.name || t("cashflow.newEntry"),
-        amount: data.amount || 0,
-        currency: data.currency || "RUB",
-        category,
-        frequency,
-        startYear: data.startYear || plan.settings.startYear,
-        endYear: data.endYear ?? null,
-        growth: data.growth || 0,
-        enabled: data.enabled ?? true,
-      } as Cashflow);
+      addCashflow.mutate(
+        {
+          ...data,
+          type,
+          name: data.name || t("cashflow.newEntry"),
+          amount: data.amount || 0,
+          currency: data.currency || "RUB",
+          category,
+          frequency,
+          startYear: data.startYear || plan.settings.startYear,
+          endYear: data.endYear ?? null,
+          growth: data.growth || 0,
+          enabled: data.enabled ?? true,
+        } as Cashflow,
+        { onSuccess: closeModal },
+      );
     }
   };
 
   const handleDelete = () => {
     if (editingItem?.id) {
-      deleteCashflow.mutate(editingItem.id);
-      setDrawerOpen(false);
+      deleteCashflow.mutate(editingItem.id, { onSuccess: () => setDrawerOpen(false) });
     }
   };
 
@@ -381,6 +387,8 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
         type={type}
         onSubmit={handleSubmit}
         onDelete={handleDelete}
+        saving={addCashflow.isPending || updateCashflow.isPending}
+        deleting={deleteCashflow.isPending}
       />
 
       <CashflowInstructionModal

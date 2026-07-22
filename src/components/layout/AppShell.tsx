@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
+import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { NetworkActivityIndicator } from "@/components/layout/NetworkActivityIndicator";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface AppShellProps {
   children: ReactNode;
@@ -10,6 +13,10 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const { t } = useI18n();
+  const activeFetches = useIsFetching();
+  const activeMutations = useIsMutating();
+  const networkActive = activeFetches + activeMutations > 0;
 
   return (
     <div
@@ -19,8 +26,9 @@ export function AppShell({ children }: AppShellProps) {
       )}
     >
       <Sidebar />
-      <div className="min-w-0 overflow-hidden">
+      <div className="relative min-w-0 overflow-hidden">
         <Topbar />
+        <NetworkActivityIndicator active={networkActive} label={t("common.syncing")} />
         <main className="scrollbar-thin h-[calc(100vh-52px)] overflow-y-auto px-6 py-8 [scrollbar-gutter:stable] max-[760px]:h-auto max-[760px]:overflow-visible max-[760px]:px-4 max-[760px]:py-6 max-[760px]:[scrollbar-gutter:auto]">
           {children}
         </main>
