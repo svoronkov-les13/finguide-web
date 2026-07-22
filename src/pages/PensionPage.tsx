@@ -7,7 +7,6 @@ import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
 import { PensionSkeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
@@ -25,6 +24,14 @@ export function buildPensionChartData(forecast: ForecastPoint[], currentAge: num
     }));
 }
 
+type PensionFormState = {
+  retirementAge: number | "";
+  targetMonthlySpend: number;
+  investmentReturn: number;
+  statePensionEnabled: boolean;
+  statePensionMonthly: number;
+};
+
 export function PensionPage() {
   const { data: plan } = usePlanQuery();
   const { mutate: updateSettings, isPending: isUpdating } = useUpdateSettingsMutation();
@@ -37,7 +44,7 @@ export function PensionPage() {
   const [retirementMode, setRetirementMode] = useState<"age" | "year">("age");
 
   // Local state for the form so we can edit it before hitting "Calculate"
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<PensionFormState>({
     retirementAge: 60,
     targetMonthlySpend: 100000,
     investmentReturn: 0.1,
@@ -62,7 +69,8 @@ export function PensionPage() {
 
   const settings = plan.settings;
   const currentYear = settings.startYear;
-  const yearsToRetirement = Math.max(0, formState.retirementAge - settings.currentAge);
+  const effectiveRetirementAge = formState.retirementAge === "" ? settings.retirementAge : formState.retirementAge;
+  const yearsToRetirement = Math.max(0, effectiveRetirementAge - settings.currentAge);
   const retirementYear = currentYear + yearsToRetirement;
   
   const targetMonthlySpend = formState.targetMonthlySpend;
@@ -76,13 +84,15 @@ export function PensionPage() {
   const futureMonthlySpend = expenseComparison.plannedMonthlyAtRetirement;
   
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
-  const retirementCapital = plan.forecast.find(p => p.age === formState.retirementAge)?.capital || 2373688270;
+  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital || 2373688270;
   
   const chartData = buildPensionChartData(plan.forecast, settings.currentAge, settings.pensionCalculationYears);
 
   const isCapitalSufficient = retirementCapital >= targetCapital;
 
   const handleCalculate = () => {
+    if (formState.retirementAge === "") return;
+
     updateSettings({
       retirementAge: formState.retirementAge,
       targetMonthlySpend: formState.targetMonthlySpend,
@@ -139,8 +149,19 @@ export function PensionPage() {
                       <input 
                         type="number" 
                         name="retirementAge"
-                        value={retirementMode === "age" ? formState.retirementAge : (plan.settings.birthYear + formState.retirementAge)} 
+                        value={
+                          formState.retirementAge === ""
+                            ? ""
+                            : retirementMode === "age"
+                              ? formState.retirementAge
+                              : plan.settings.birthYear + formState.retirementAge
+                        } 
                         onChange={(e) => {
+                          if (e.target.value === "") {
+                            setFormState(s => ({ ...s, retirementAge: "" }));
+                            return;
+                          }
+
                           const val = Number(e.target.value);
                           if (retirementMode === "age") {
                             setFormState(s => ({ ...s, retirementAge: val }));
@@ -173,15 +194,12 @@ export function PensionPage() {
 
                 <div>
                   <label className="text-[13px] text-[var(--fp-color-label)] mb-2 block leading-tight">{t("pension.pensionCurrency")}</label>
-                  <Select defaultValue={t("pension.usd")}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={t("pension.usd")}>{t("pension.usd")}</SelectItem>
-                      <SelectItem value={t("pension.rub")}>{t("pension.rub")}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div
+                    data-testid="pension-currency-value"
+                    className="flex h-12 w-full items-center rounded-2xl border border-transparent bg-[var(--fp-color-input-disabled)] px-5 text-sm font-semibold text-[var(--fp-color-label)] opacity-80"
+                  >
+                    {t("pension.rub")}
+                  </div>
                 </div>
               </div>
 
@@ -376,7 +394,7 @@ export function PensionPage() {
                 <button 
                   className="h-[46px] px-8 rounded-full bg-[var(--fp-color-primary)] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2" 
                   onClick={handleCalculate}
-                  disabled={isUpdating}
+                  disabled={isUpdating || formState.retirementAge === ""}
                 >
                   {isUpdating && <Loader2 className="size-4 animate-spin" />}
                   {t("pension.calculate")}
@@ -399,7 +417,7 @@ export function PensionPage() {
                 <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
-                <span>{t("pension.targetYearInfo", { year: retirementYear, age: formState.retirementAge })}</span>
+                <span>{t("pension.targetYearInfo", { year: retirementYear, age: effectiveRetirementAge })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
                 <span>{t("pension.yearsToSave", { years: yearsToRetirement })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
@@ -468,7 +486,7 @@ export function PensionPage() {
           <Card className="p-7 rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
             <h2 className="text-[17px] font-semibold mb-2">{t("pension.chartTitle")}</h2>
             <p className="text-[14px] text-[var(--fp-color-label)] mb-8">
-              {t("pension.chartSubtitle", { age: formState.retirementAge })}
+              {t("pension.chartSubtitle", { age: effectiveRetirementAge })}
             </p>
             
             <div className="h-[320px] w-full">
@@ -502,7 +520,7 @@ export function PensionPage() {
                     itemStyle={{ fontSize: '14px', fontWeight: 600, color: 'var(--fp-color-foreground)' }}
                     labelStyle={{ fontSize: '13px', color: 'var(--fp-color-label)', marginBottom: '4px' }}
                   />
-                  <ReferenceLine x={formState.retirementAge} stroke="var(--fp-color-orange)" strokeDasharray="3 3" label={{ position: 'top', value: t("pension.pensionLine"), fill: 'var(--fp-color-orange)', fontSize: 13, fontWeight: 600, dy: -10 }} />
+                  <ReferenceLine x={effectiveRetirementAge} stroke="var(--fp-color-orange)" strokeDasharray="3 3" label={{ position: 'top', value: t("pension.pensionLine"), fill: 'var(--fp-color-orange)', fontSize: 13, fontWeight: 600, dy: -10 }} />
                   <Area type="monotone" dataKey="capital" stroke="var(--fp-color-teal)" strokeWidth={3} fillOpacity={1} fill="url(#colorCapital)" />
                 </AreaChart>
               </ResponsiveContainer>
