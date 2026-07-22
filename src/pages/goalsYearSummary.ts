@@ -1,4 +1,5 @@
 import type { Goal } from "@/types/finance";
+import { goalFundedAmount } from "@/components/goals/goalProgress";
 
 export interface GoalYearSummary {
   totalProjectedCost: number;
@@ -19,7 +20,7 @@ export function goalProjectedCost(goal: Goal) {
 
 export function goalPortfolioSummary(goals: Goal[]): GoalPortfolioSummary {
   const totalProjectedCost = goals.reduce((sum, goal) => sum + goalProjectedCost(goal), 0);
-  const totalSaved = goals.reduce((sum, goal) => sum + goal.saved, 0);
+  const totalSaved = goals.reduce((sum, goal) => sum + goalFundedAmount(goal), 0);
 
   return {
     totalProjectedCost,
@@ -37,11 +38,11 @@ export function goalYearSummary(
 ): GoalYearSummary {
   const yearGoals = goals.filter((goal) => goal.targetYear === targetYear);
   const totalProjectedCost = yearGoals.reduce((total, goal) => total + goalProjectedCost(goal), 0);
-  const saved = yearGoals.reduce((total, goal) => total + goal.saved, 0);
-  const remaining = yearGoals.reduce((total, goal) => total + Math.max(0, goalProjectedCost(goal) - goal.saved), 0);
+  const saved = yearGoals.reduce((total, goal) => total + goalFundedAmount(goal), 0);
+  const remaining = yearGoals.reduce((total, goal) => total + Math.max(0, goalProjectedCost(goal) - goalFundedAmount(goal)), 0);
   const monthlyNeed = yearGoals.reduce((total, goal) => {
     const monthsLeft = monthsToTarget(goal, currentYear, currentMonthIdx, monthsInYear);
-    return total + Math.max(0, goalProjectedCost(goal) - goal.saved) / monthsLeft;
+    return total + Math.max(0, goalProjectedCost(goal) - goalFundedAmount(goal)) / monthsLeft;
   }, 0);
 
   return {
