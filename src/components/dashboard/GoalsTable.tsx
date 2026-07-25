@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
-import { goalProgress } from "@/components/goals/goalProgress";
+import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -85,8 +85,9 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { formatRub } = useFormat();
   const Icon = iconMap[goal.icon] ?? Icons.Target;
   const progress = goalProgress(goal);
+  const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const month = goal.targetMonth ?? 12;
-  const statusLabel = progress.achieved
+  const statusLabel = isActuallyAchieved
     ? t("goals.statusAchieved")
     : goal.reachable
       ? t("goals.statusReachable")

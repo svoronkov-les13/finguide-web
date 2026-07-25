@@ -18,6 +18,11 @@ export function goalFundedAmount(goal: Goal): number {
   return Math.min(cost, goal.saved + Math.max(0, projectedAllocation));
 }
 
+export function goalIsActuallyAchieved(goal: Goal): boolean {
+  const cost = goalProgressCost(goal);
+  return cost > 0 && goal.saved >= cost;
+}
+
 export function goalProgress(goal: Goal): GoalProgress {
   const cost = goalProgressCost(goal);
   const saved = goalFundedAmount(goal);

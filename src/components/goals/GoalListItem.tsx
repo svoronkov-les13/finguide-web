@@ -2,7 +2,7 @@ import { CheckCircle2, Edit2, Target, GripVertical, TrendingUp } from "lucide-re
 import * as Icons from "lucide-react";
 import type { Goal } from "@/types/finance";
 
-import { goalProgress } from "@/components/goals/goalProgress";
+import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalProjectedCost } from "@/pages/goalsYearSummary";
 
@@ -43,6 +43,7 @@ export function GoalListItem({
   const { t } = useI18n();
   const { formatRub } = useFormat();
   const progress = goalProgress(goal);
+  const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const isPeriodic = goal.type === "periodic";
   const month = goal.targetMonth ?? 12;
   const projectedCost = goalProjectedCost(goal);
@@ -73,10 +74,10 @@ export function GoalListItem({
       <div className="flex flex-col min-w-[200px] flex-1">
         <div className="flex items-center gap-2">
           <h3 className="truncate transition-colors duration-200 text-[var(--text-heading)]" style={{ fontSize: "13px", fontWeight: 500 }}>{goal.name}</h3>
-          {progress.achieved && (
+          {isActuallyAchieved && (
             <span className="inline-flex items-center gap-1 rounded bg-[var(--fp-color-teal)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--fp-color-teal)]"><CheckCircle2 className="size-3" />{t("goals.achieved")}</span>
           )}
-          {!progress.achieved && isAccumulation && (
+          {!isActuallyAchieved && isAccumulation && (
             <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]">{t("goals.accumulationLabel")}</span>
           )}
           {isQueue && (

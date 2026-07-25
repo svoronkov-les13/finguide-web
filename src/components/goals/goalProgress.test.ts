@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalProgress } from "@/components/goals/goalProgress";
+import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
 import type { Goal } from "@/types/finance";
 
 const baseGoal: Goal = {
@@ -59,5 +59,29 @@ describe("goalProgress", () => {
       percent: 100,
       achieved: true,
     });
+  });
+});
+
+describe("goalIsActuallyAchieved", () => {
+  it("does not mark a goal achieved only because forecast allocation fills it later", () => {
+    expect(goalIsActuallyAchieved({
+      ...baseGoal,
+      cost: 75_000_000,
+      projectedCost: 75_000_000,
+      saved: 0,
+      projectedSaved: 75_000_000,
+      projectedProgressPct: 100,
+      reachable: false,
+    })).toBe(false);
+  });
+
+  it("marks a goal achieved when factual savings cover the projected cost", () => {
+    expect(goalIsActuallyAchieved({
+      ...baseGoal,
+      cost: 75_000_000,
+      projectedCost: 75_000_000,
+      saved: 75_000_000,
+      projectedSaved: 0,
+    })).toBe(true);
   });
 });
