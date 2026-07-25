@@ -3,7 +3,7 @@ import type { Goal } from "@/types/finance";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/useFormat";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalProgress } from "@/components/goals/goalProgress";
+import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
 import * as Icons from "lucide-react";
 
 const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
@@ -22,6 +22,7 @@ export function GoalCard({
   const Icon = iconMap[item.icon] ?? Target;
   
   const progress = goalProgress(item);
+  const isActuallyAchieved = goalIsActuallyAchieved(item);
 
   return (
     <div
@@ -67,7 +68,7 @@ export function GoalCard({
         {!compact && (
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fp-color-muted)]">
             <div 
-              className={cn("h-full rounded-full", progress.achieved || item.reachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]")}
+              className={cn("h-full rounded-full", isActuallyAchieved || item.reachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]")}
               style={{ width: `${progress.percent}%` }}
             />
           </div>
