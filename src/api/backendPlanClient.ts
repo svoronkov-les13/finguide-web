@@ -68,31 +68,6 @@ let activeScenario: ScenarioId = "base";
 let lastPlanState: PlanState | undefined;
 let lastFinancialPlan: FinancialPlan | undefined;
 
-const PENSION_FORECAST_YEARS_KEY_PREFIX = "finguide.pension-forecast-years";
-
-function pensionForecastYearsKey(planId: string) {
-  return `${PENSION_FORECAST_YEARS_KEY_PREFIX}.${planId}`;
-}
-
-function readPensionForecastYears(planId: string, fallback: number) {
-  try {
-    const raw = globalThis.localStorage?.getItem(pensionForecastYearsKey(planId));
-    const value = raw ? Number(raw) : NaN;
-    return Number.isFinite(value) && value >= 1 && value <= 80 ? value : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writePensionForecastYears(planId: string, value: number | undefined) {
-  if (value === undefined) return;
-  try {
-    globalThis.localStorage?.setItem(pensionForecastYearsKey(planId), String(value));
-  } catch {
-    // This is a UI-only display horizon; backend calculations must not depend on it.
-  }
-}
-
 async function requestOptions(): Promise<RequestInit> {
   const authorization = oidcAuthEnabled ? await getValidOidcAuthorizationHeader() : demoBearerToken ? `Bearer ${demoBearerToken}` : undefined;
   return {
@@ -169,10 +144,14 @@ interface ApiMonthlyCashflowPoint {
 async function readBackendPlan() {
   const planState = unwrapData<PlanState>(await getPlansCurrent(await requestOptions()), "GET /plans/current");
   const planId = planState.id;
+  const settings = mapSettings(planState, planState.modelAssumptions);
 
-  const [dashboard, cashflow, monthlyCashflow, health, scenarios] = await Promise.all([
+  const [dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios] = await Promise.all([
     getPlansPlanIdDashboard(planId, await requestOptions()).then((response) => unwrapData<DashboardMetrics>(response, "GET /dashboard")),
-    getPlansPlanIdAnalyticsCashflow(planId, undefined, await requestOptions()).then((response) =>
+    getPlansPlanIdAnalyticsCashflow(planId, { years: settings.dashboardCalculationYears }, await requestOptions()).then((response) =>
+      unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
+    ),
+    getPlansPlanIdAnalyticsCashflow(planId, { years: settings.pensionCalculationYears }, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
     backendJson<ApiMonthlyCashflowPoint[]>(`/plans/${planId}/analytics/cashflow/monthly`, undefined, "GET /analytics/cashflow/monthly")
@@ -189,7 +168,7 @@ async function readBackendPlan() {
     readScenarioForecasts(scenarios),
   ]);
 
-  return mapBackendPlan({ planState, dashboard, cashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
+  return mapBackendPlan({ planState, dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
 }
 
 async function readScenarioForecasts(scenarios: ApiScenario[]): Promise<FinancialPlan["scenarioForecasts"]> {
@@ -207,18 +186,20 @@ function mapBackendPlan(input: {
   planState: PlanState;
   dashboard: DashboardMetrics;
   cashflow: CashFlowProjectionPoint[];
+  pensionCashflow: CashFlowProjectionPoint[];
   monthlyCashflow: ApiMonthlyCashflowPoint[];
   health: HealthScore;
   scenarios: ApiScenario[];
   tracker: ApiTrackerEntry[];
   scenarioForecasts?: FinancialPlan["scenarioForecasts"];
 }): FinancialPlan {
-  const { planState, dashboard, cashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
+  const { planState, dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   const planName = (planState as PlanState & { name?: string }).name ?? "Основной план";
   
   const baseForecast = cashflow.map(mapForecastPoint);
+  const pensionForecast = pensionCashflow.map(mapForecastPoint);
   const monthlyForecast = monthlyCashflow.map(mapMonthlyForecastPoint);
   const activeScenarioForecast = activeScenario !== "base" ? scenarioForecasts?.[activeScenario] : undefined;
   const forecast = activeScenarioForecast || baseForecast;
@@ -244,6 +225,7 @@ function mapBackendPlan(input: {
     goals,
     tracker: tracker.map(trackerEntryFromApi),
     forecast,
+    pensionForecast,
     monthlyForecast,
     scenarioForecasts,
   };
@@ -269,8 +251,7 @@ function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undef
   const startYear = assumptions?.startYear ?? new Date().getFullYear();
   const birthYear = assumptions?.birthYear ?? (planState.profile.age ? startYear - planState.profile.age : startYear - planState.pension.currentAge);
   const currentAge = Math.max(0, startYear - birthYear);
-  const defaultPensionCalculationYears = Math.max(1, planState.pension.retirementAge - currentAge);
-  const pensionCalculationYears = readPensionForecastYears(planState.id, defaultPensionCalculationYears);
+  const pensionCalculationYears = pensionProjectionYearsFromAssumptions(assumptions) ?? Math.max(1, planState.pension.retirementAge - currentAge);
 
   return {
     startYear,
@@ -299,6 +280,12 @@ function dashboardEndYearFromAssumptions(assumptions: ModelAssumptions | undefin
   const startYear = assumptions?.startYear ?? new Date().getFullYear();
   if (assumptions?.horizonYears) return startYear + assumptions.horizonYears - 1;
   return assumptions?.projectionEndYear ?? startYear + 11;
+}
+
+function pensionProjectionYearsFromAssumptions(assumptions: ModelAssumptions | undefined) {
+  if (!assumptions?.projectionEndYear) return undefined;
+  const startYear = assumptions.startYear ?? new Date().getFullYear();
+  return Math.max(1, assumptions.projectionEndYear - startYear + 1);
 }
 
 function dashboardEndYearFromSettings(plan: FinancialPlan | undefined, fallbackStartYear: number) {
@@ -658,8 +645,8 @@ export const backendPlanClient = {
     const startYear = patch.startYear ?? currentAssumptions?.startYear ?? new Date().getFullYear();
     const birthYear = patch.birthYear ?? currentAssumptions?.birthYear ?? (current.profile.age ? startYear - current.profile.age : startYear - current.pension.currentAge);
     const currentAge = Math.max(0, startYear - birthYear);
+    const pensionCalculationYears = patch.pensionCalculationYears ?? pensionProjectionYearsFromAssumptions(currentAssumptions) ?? Math.max(1, current.pension.retirementAge - currentAge);
     const retirementAge = patch.retirementAge ?? current.pension.retirementAge;
-    writePensionForecastYears(planId, patch.pensionCalculationYears);
     const pensionInflationPct = patch.inflation !== undefined
       ? patch.inflation * 100
       : firstRate(currentAssumptions?.inflationSchedule, current.pension.inflationPct);
@@ -671,6 +658,7 @@ export const backendPlanClient = {
           ...currentAssumptions,
           startYear,
           birthYear,
+          projectionEndYear: startYear + pensionCalculationYears - 1,
           horizonYears: patch.dashboardCalculationYears ?? currentAssumptions.horizonYears,
           monthsPerYear: patch.monthsInYear ?? currentAssumptions.monthsPerYear,
           initialCapital: patch.startingCapital ?? currentAssumptions.initialCapital,

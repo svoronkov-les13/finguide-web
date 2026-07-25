@@ -91,6 +91,20 @@ describe("PensionPage", () => {
     expect(html).not.toMatch(/name="retirementAge"[^>]*disabled/);
   });
 
+  it("limits the pension chart to the pension forecast horizon", () => {
+    const chartData = buildPensionChartData(
+      [
+        { age: 35, year: 2026, capital: 1_000_000 },
+        { age: 36, year: 2027, capital: 1_100_000 },
+        { age: 37, year: 2028, capital: 1_200_000 },
+        { age: 38, year: 2029, capital: 1_300_000 },
+      ],
+      { currentAge: 35, pensionCalculationYears: 2 },
+    );
+
+    expect(chartData.map((point) => point.age)).toEqual([35, 36, 37]);
+  });
+
   it("keeps retirement age field empty when the user clears it", () => {
     act(() => {
       root.render(<PensionPage />);
@@ -121,7 +135,7 @@ describe("PensionPage", () => {
       { age: 37, year: 2028, capital: 300, income: 0, expenses: 0, goals: 0, savings: 0 },
     ];
 
-    expect(buildPensionChartData(forecast, 35, 1)).toEqual([
+    expect(buildPensionChartData(forecast, { currentAge: 35, pensionCalculationYears: 1 })).toEqual([
       { age: 35, year: 2026, capital: 100 },
       { age: 36, year: 2027, capital: 200 },
     ]);

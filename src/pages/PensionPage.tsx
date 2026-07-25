@@ -11,12 +11,15 @@ import { PensionSkeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
 import { pensionExpenseComparison } from "@/pages/pensionComparison";
-import type { ForecastPoint } from "@/types/finance";
+import type { ForecastPoint, PlanSettings } from "@/types/finance";
 
-export function buildPensionChartData(forecast: ForecastPoint[], currentAge: number, pensionCalculationYears: number) {
-  const endAge = currentAge + Math.max(1, pensionCalculationYears);
+export function buildPensionChartData(
+  forecast: Array<Pick<ForecastPoint, "age" | "capital" | "year">>,
+  settings: Pick<PlanSettings, "currentAge" | "pensionCalculationYears">,
+) {
+  const maxAge = settings.currentAge + settings.pensionCalculationYears;
   return forecast
-    .filter((point) => point.age <= endAge)
+    .filter((point) => point.age <= maxAge)
     .map((point) => ({
       age: point.age,
       capital: point.capital,
@@ -86,7 +89,7 @@ export function PensionPage() {
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
   const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital || 2373688270;
   
-  const chartData = buildPensionChartData(plan.forecast, settings.currentAge, settings.pensionCalculationYears);
+  const chartData = buildPensionChartData(plan.pensionForecast ?? plan.forecast, settings);
 
   const isCapitalSufficient = retirementCapital >= targetCapital;
 
@@ -155,7 +158,7 @@ export function PensionPage() {
                             : retirementMode === "age"
                               ? formState.retirementAge
                               : plan.settings.birthYear + formState.retirementAge
-                        } 
+                        }
                         onChange={(e) => {
                           if (e.target.value === "") {
                             setFormState(s => ({ ...s, retirementAge: "" }));
