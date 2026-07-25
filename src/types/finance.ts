@@ -124,6 +124,7 @@ export interface FinancialPlan {
   goals: Goal[];
   tracker: TrackerEntry[];
   forecast: ForecastPoint[];
+  pensionForecast?: ForecastPoint[];
   monthlyForecast?: ForecastPoint[];
   scenarioForecasts?: Partial<Record<ScenarioId, ForecastPoint[]>>;
 }

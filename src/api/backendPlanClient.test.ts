@@ -65,7 +65,7 @@ describe("backendPlanClient settings mutations", () => {
         return jsonResponse({ data: body });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -96,7 +96,7 @@ describe("backendPlanClient settings mutations", () => {
       if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -151,7 +151,7 @@ describe("backendPlanClient settings mutations", () => {
       if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -169,6 +169,7 @@ describe("backendPlanClient settings mutations", () => {
     const assumptionsPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/analytics/assumptions"))?.body as {
       birthYear?: number;
       horizonYears?: number;
+      projectionEndYear?: number;
     };
     const pensionPatch = requests.find((request) => request.url.endsWith("/plans/plan-1/pension"))?.body as {
       currentAge?: number;
@@ -178,11 +179,42 @@ describe("backendPlanClient settings mutations", () => {
     expect(assumptionsPatch).toMatchObject({
       birthYear: 1990,
       horizonYears: 15,
+      projectionEndYear: 2050,
     });
     expect(pensionPatch).toMatchObject({
       currentAge: 36,
-      retirementAge: 61,
+      retirementAge: 60,
     });
+  });
+
+  it("requests dashboard and pension forecasts with their own horizons", async () => {
+    const urls: string[] = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      urls.push(url);
+
+      if (url.endsWith("/plans/current") && method === "GET") {
+        return jsonResponse({
+          data: planState([], {
+            modelAssumptions: { horizonYears: 12, projectionEndYear: 2065 },
+          }),
+        });
+      }
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    await backendPlanClient.getPlan();
+
+    expect(urls.some((url) => url.includes("/analytics/cashflow?years=12"))).toBe(true);
+    expect(urls.some((url) => url.includes("/analytics/cashflow?years=40"))).toBe(true);
   });
 });
 
@@ -250,7 +282,7 @@ describe("backendPlanClient income periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -292,7 +324,7 @@ describe("backendPlanClient income periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -325,7 +357,7 @@ describe("backendPlanClient income periods", () => {
         return jsonResponse({ data: body }, 201);
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -389,7 +421,7 @@ describe("backendPlanClient expense periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -431,7 +463,7 @@ describe("backendPlanClient expense periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -464,7 +496,7 @@ describe("backendPlanClient expense periods", () => {
         return jsonResponse({ data: body }, 201);
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
-      if (url.endsWith("/analytics/cashflow")) return jsonResponse({ data: [] });
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
       if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
@@ -524,7 +556,7 @@ describe("backendPlanClient goal mutations", () => {
           },
         });
       }
-      if (url.endsWith("/analytics/cashflow")) {
+      if (isYearlyCashflowUrl(url)) {
         return jsonResponse({
           data: mutationPhase
             ? [{ year: 2026, age: 33, totalIncome: 1_000_000, totalExpenses: 100_000, totalGoalExpenses: 500_000, netSavings: 400_000, capitalEndOfYear: 2_400_000 }]
@@ -559,7 +591,7 @@ describe("backendPlanClient goal mutations", () => {
     });
 
     expect(heavyRequestsAfterMutation.some((url) => url.endsWith("/dashboard"))).toBe(true);
-    expect(heavyRequestsAfterMutation.some((url) => url.endsWith("/analytics/cashflow"))).toBe(true);
+    expect(heavyRequestsAfterMutation.some(isYearlyCashflowUrl)).toBe(true);
     expect(updated.dashboardSnapshot?.monthlyTargetRub).toBe(500_000);
     expect(updated.forecast[0]).toMatchObject({ year: 2026, goals: -500_000 });
     expect(updated.goals.map((goal) => goal.id)).toEqual(["goal-1", "goal-2"]);
@@ -765,6 +797,10 @@ function isHeavyPlanRead(url: string) {
     || url.includes("/tracker/entries")
     || url.endsWith("/scenarios")
     || url.endsWith("/scenarios/compare");
+}
+
+function isYearlyCashflowUrl(url: string) {
+  return url.includes("/analytics/cashflow") && !url.includes("/analytics/cashflow/monthly");
 }
 
 function apiGoal(overrides: Record<string, unknown> = {}) {
