@@ -23,12 +23,13 @@ export function GoalCard({
   
   const progress = goalProgress(item);
   const isActuallyAchieved = goalIsActuallyAchieved(item);
+  const isDoneOrReachable = isActuallyAchieved || item.reachable;
 
   return (
     <div
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 rounded-2xl border bg-[var(--fp-color-card)] px-4 transition-all hover:border-[var(--fp-color-border-hover)] hover:shadow-[var(--fp-shadow-card)]",
-        item.reachable ? "border-[var(--fp-color-border)]" : "border-[var(--fp-color-coral)]/30",
+        isDoneOrReachable ? "border-[var(--fp-color-border)]" : "border-[var(--fp-color-coral)]/30",
         compact ? "py-2" : "py-4"
       )}
       onClick={onClick}
@@ -40,7 +41,7 @@ export function GoalCard({
       <div className={cn(
         "grid shrink-0 place-items-center rounded-[14px]",
         compact ? "size-7" : "size-10",
-        item.reachable ? "border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "border border-[var(--fp-color-coral)]/20 bg-[var(--fp-color-coral)]/10 text-[var(--fp-color-coral)]"
+        isDoneOrReachable ? "border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "border border-[var(--fp-color-coral)]/20 bg-[var(--fp-color-coral)]/10 text-[var(--fp-color-coral)]"
       )}>
         <Icon className={cn(compact ? "size-3.5" : "size-5")} />
       </div>
@@ -50,7 +51,7 @@ export function GoalCard({
         <div className="flex items-center gap-2">
           <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-[15px]")}>{item.name}</div>
           {!compact && (
-            item.reachable ? (
+            isDoneOrReachable ? (
               <CheckCircle2 className="size-3.5 text-[var(--fp-color-teal)] shrink-0" />
             ) : (
               <TriangleAlert className="size-3.5 text-[var(--fp-color-coral)] shrink-0" />

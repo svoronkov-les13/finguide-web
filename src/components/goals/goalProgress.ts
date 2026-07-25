@@ -19,8 +19,7 @@ export function goalFundedAmount(goal: Goal): number {
 }
 
 export function goalIsActuallyAchieved(goal: Goal): boolean {
-  const cost = goalProgressCost(goal);
-  return cost > 0 && goal.saved >= cost;
+  return goalProgress(goal).achieved;
 }
 
 export function goalProgress(goal: Goal): GoalProgress {

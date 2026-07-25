@@ -94,7 +94,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
       : t("goals.statusRisk");
   const yearsLeft = goal.targetYear - currentYear;
 
-  const isReachable = goal.reachable;
+  const isReachable = isActuallyAchieved || goal.reachable;
   const statusColorClass = isReachable ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]";
   const StatusIcon = isReachable ? Icons.CheckCircle2 : Icons.AlertTriangle;
 

@@ -1,7 +1,8 @@
 import type { Goal } from "@/types/finance";
+import { goalProgress } from "@/components/goals/goalProgress";
 
 export function computeDashboardGoalCounts(goals: Goal[]) {
-  const reachable = goals.filter((goal) => goal.reachable).length;
+  const reachable = goals.filter((goal) => goal.reachable || goalProgress(goal).achieved).length;
   const total = goals.length;
 
   return {

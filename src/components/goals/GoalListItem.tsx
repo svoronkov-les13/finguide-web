@@ -80,7 +80,7 @@ export function GoalListItem({
           {!isActuallyAchieved && isAccumulation && (
             <span className="rounded bg-[var(--fp-color-accent-gold-soft)] px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-accent-gold-text)]">{t("goals.accumulationLabel")}</span>
           )}
-          {isQueue && (
+          {!progress.achieved && isQueue && (
             <span className="rounded bg-[var(--fp-color-label)]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[var(--fp-color-label)]">{t("goals.queueLabel")}</span>
           )}
         </div>

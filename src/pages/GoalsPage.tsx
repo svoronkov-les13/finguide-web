@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Goal } from "@/types/finance";
 import { GoalListItem } from "@/components/goals/GoalListItem";
+import { goalProgress } from "@/components/goals/goalProgress";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalPortfolioSummary, goalProjectedCost, goalYearSummary } from "@/pages/goalsYearSummary";
+import { goalPortfolioSummary, goalYearSummary } from "@/pages/goalsYearSummary";
 import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
 
@@ -374,7 +375,7 @@ export function GoalsPage() {
               if (!yearGoals || yearGoals.length === 0) return null;
 
               const isAccumulation = activeGoal?.targetYear === year;
-              const isCompleted = yearGoals.every(g => g.saved >= goalProjectedCost(g));
+              const isCompleted = yearGoals.every(g => goalProgress(g).achieved);
               const yearSummary = goalYearSummary(yearGoals, year, currentYear, currentMonthIdx, monthsInYear);
               const yearPercent = yearSummary.totalProjectedCost > 0 ? Math.min(100, Math.round((yearSummary.saved / yearSummary.totalProjectedCost) * 100)) : 0;
 

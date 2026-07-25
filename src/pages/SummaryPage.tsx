@@ -13,6 +13,7 @@ import { SummarySkeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { Cashflow, Goal } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
+import { goalProgress } from "@/components/goals/goalProgress";
 
 export function SummaryPage() {
   const { data: plan } = usePlanQuery();
@@ -33,9 +34,11 @@ export function SummaryPage() {
   const savingsRate = annualIncome > 0 ? (balance / annualIncome) * 100 : 0;
   const pensionAvailable = balance - annualGoals;
 
-  const goalsTotal = plan.goals.reduce((sum, g) => sum + g.cost, 0);
-  const goalsSaved = plan.goals.reduce((sum, g) => sum + g.saved, 0);
-  const goalsPercent = goalsTotal > 0 ? (goalsSaved / goalsTotal) * 100 : 0;
+  const {
+    total: goalsTotal,
+    saved: goalsSaved,
+    percent: goalsPercent,
+  } = summaryGoalProgress(plan.goals);
 
   const incomes = plan.cashflows.filter(c => c.type === "income");
   const expenses = plan.cashflows.filter(c => c.type === "expense");
@@ -326,18 +329,19 @@ function GoalsTable({
           </div>
           <div className="divide-y divide-[var(--fp-color-border)]">
             {items.map(item => {
-              const pct = item.cost > 0 ? Math.min(100, Math.round((item.saved / item.cost) * 100)) : 0;
+              const progress = goalProgress(item);
+              const isDoneOrReachable = progress.achieved || item.reachable;
               return (
                 <div
                   key={item.id}
                   className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 items-center text-[14px] hover:bg-[var(--fp-color-surface-hover)] transition-colors group"
                 >
                   <div className="flex items-center gap-2 font-medium">
-                    <span className={`size-2 rounded-full shrink-0 ${item.reachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]"}`} />
+                    <span className={`size-2 rounded-full shrink-0 ${isDoneOrReachable ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-coral)]"}`} />
                     {item.name}
-                    <span className="text-[12px] text-[var(--fp-color-label)] font-normal">({pct}%)</span>
+                    <span className="text-[12px] text-[var(--fp-color-label)] font-normal">({progress.percent}%)</span>
                   </div>
-                  <div className="text-right font-semibold">{formatRub(item.cost)}</div>
+                  <div className="text-right font-semibold">{formatRub(progress.cost)}</div>
                   <div className="text-center text-[var(--fp-color-label)] text-[13px]">{item.targetYear}</div>
                   <div className="text-right text-[13px] font-medium text-[var(--fp-color-teal)]">
                     {formatGrowthPercent(effectiveGrowth(item, inflation))} {t("summary.perYearShort")}
@@ -395,4 +399,22 @@ export function effectiveGrowth(item: Pick<Cashflow, "growth" | "growthType" | "
 export function formatGrowthPercent(growth: number) {
   const rounded = Math.round(growth * 100);
   return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+export function summaryGoalProgress(goals: Goal[]) {
+  const totals = goals.reduce(
+    (acc, goal) => {
+      const progress = goalProgress(goal);
+      return {
+        total: acc.total + progress.cost,
+        saved: acc.saved + progress.saved,
+      };
+    },
+    { total: 0, saved: 0 }
+  );
+
+  return {
+    ...totals,
+    percent: totals.total > 0 ? Math.min(100, Math.round((totals.saved / totals.total) * 100)) : 0,
+  };
 }
