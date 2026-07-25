@@ -202,7 +202,7 @@ export function TrackingPage() {
   const monthlyTarget = plan?.dashboardSnapshot?.monthlyTargetRub ?? 0;
   const nearestGoalTarget = nearestGoalMonthlyTarget(plan?.goals, currentYear, plan?.settings.monthsInYear ?? 12);
   const trackerMonthTarget = monthFormTarget({ monthlyTarget, nearestGoalTarget });
-  const savingNeeds = goalSavingNeeds(plan?.goals, viewYear, currentYear, currentMonthIdx, plan?.settings.monthsInYear ?? 12);
+  const savingNeeds = goalSavingNeeds(plan?.goals, currentYear, currentMonthIdx, plan?.settings.monthsInYear ?? 12);
 
   // Build month grid from backend data + defaults
   const months: MonthData[] = (() => {

@@ -65,7 +65,7 @@ describe("trackingActiveGoal", () => {
     const decemberGoal = goal({ id: "december", targetYear: 2026, targetMonth: 12, cost: 240_000, projectedCost: 264_000, saved: 0 });
     const futureGoal = goal({ id: "future", targetYear: 2027, targetMonth: 3, cost: 330_000, projectedCost: 396_000, saved: 0 });
 
-    expect(goalSavingNeeds([juneGoal, decemberGoal, futureGoal], 2026, 2026, 4)).toEqual({
+    expect(goalSavingNeeds([juneGoal, decemberGoal, futureGoal], 2026, 4)).toEqual({
       currentYearSaved: 20_000,
       currentYearTotal: 396_000,
       currentYearMonthly: 89_000,
@@ -73,7 +73,7 @@ describe("trackingActiveGoal", () => {
     });
   });
 
-  it("does not show future goals as this year's goals when no goal ends this year", () => {
+  it("uses the nearest active goal for the year summary when no goal ends this year", () => {
     const futureGoal = goal({
       id: "future",
       targetYear: 2027,
@@ -82,27 +82,9 @@ describe("trackingActiveGoal", () => {
       saved: 100_000,
     });
 
-    expect(goalSavingNeeds([futureGoal], 2026, 2026, 5)).toEqual({
-      currentYearSaved: 0,
-      currentYearTotal: 0,
-      currentYearMonthly: 0,
-      allGoalsMonthly: 100_000,
-    });
-  });
-
-  it("summarizes the viewed year while calculating monthly need from the actual current month", () => {
-    const nextYearGoal = goal({
-      id: "next-year",
-      targetYear: 2027,
-      targetMonth: 6,
-      cost: 1_200_000,
-      projectedCost: 1_200_000,
-      saved: 0,
-    });
-
-    expect(goalSavingNeeds([nextYearGoal], 2027, 2026, 6)).toEqual({
-      currentYearSaved: 0,
-      currentYearTotal: 1_200_000,
+    expect(goalSavingNeeds([futureGoal], 2026, 5)).toEqual({
+      currentYearSaved: 100_000,
+      currentYearTotal: 2_000_000,
       currentYearMonthly: 100_000,
       allGoalsMonthly: 100_000,
     });
