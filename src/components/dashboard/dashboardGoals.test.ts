@@ -30,6 +30,15 @@ describe("computeDashboardGoalCounts", () => {
 
     expect(computeDashboardGoalCounts(goals)).toEqual({ total: 5, reachable: 1, atRisk: 4 });
   });
+
+  it("counts fully funded goals as reachable even when backend reachable is false", () => {
+    const goals = [
+      goal({ id: "funded", reachable: false, projectedCost: 100_000, projectedSaved: 100_000 }),
+      goal({ id: "risk", reachable: false }),
+    ];
+
+    expect(computeDashboardGoalCounts(goals)).toEqual({ total: 2, reachable: 1, atRisk: 1 });
+  });
 });
 
 describe("sortDashboardGoals", () => {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import { effectiveGrowth, formatGrowthPercent } from "@/pages/SummaryPage";
+import { effectiveGrowth, formatGrowthPercent, summaryGoalProgress } from "@/pages/SummaryPage";
 
 describe("SummaryPage growth display", () => {
   it("shows plan inflation for inflation-indexed items with zero stored growth", () => {
@@ -25,5 +25,31 @@ describe("SummaryPage growth display", () => {
 
     expect(growth).toBe(0.05);
     expect(formatGrowthPercent(growth)).toBe("+5%");
+  });
+});
+
+describe("summaryGoalProgress", () => {
+  it("uses backend projected goal progress for summary percentages", () => {
+    const goals = [
+      {
+        id: "education",
+        name: "Education",
+        icon: "GraduationCap",
+        targetYear: 2027,
+        cost: 100_000,
+        saved: 0,
+        projectedCost: 100_000,
+        projectedSaved: 100_000,
+        projectedProgressPct: 100,
+        growth: 0,
+        reachable: false,
+      },
+    ];
+
+    expect(summaryGoalProgress(goals)).toEqual({
+      total: 100_000,
+      saved: 100_000,
+      percent: 100,
+    });
   });
 });
