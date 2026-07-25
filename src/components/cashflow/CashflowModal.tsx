@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Check, BookOpen, Lightbulb, Trash2 } from "lucide-react";
+import { X, Check, BookOpen, Lightbulb, Trash2, Loader2 } from "lucide-react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import type { Cashflow } from "@/types/finance";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,8 @@ export function CashflowModal({
   type,
   onSubmit,
   onDelete,
+  saving = false,
+  deleting = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,9 +49,12 @@ export function CashflowModal({
   type: "income" | "expense";
   onSubmit: (data: Partial<Cashflow>) => void;
   onDelete?: () => void;
+  saving?: boolean;
+  deleting?: boolean;
 }) {
   const { data: plan } = usePlanQuery();
   const { t } = useI18n();
+  const busy = saving || deleting;
   const form = useForm<CashflowFormData>({
     defaultValues: {
       growthRanges: [],
@@ -90,7 +95,6 @@ export function CashflowModal({
       submitData.growth = 0; // Using default inflation logic
     }
     onSubmit(submitData);
-    onOpenChange(false);
   });
 
   const setFrequency = (freq: "monthly" | "yearly" | "onetime") => {
@@ -106,13 +110,15 @@ export function CashflowModal({
   const growthRangesValues = useWatch({ control: form.control, name: "growthRanges" });
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={(nextOpen) => {
+      if (!busy) onOpenChange(nextOpen);
+    }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           className="fixed inset-0 z-50 flex items-stretch justify-center data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
           style={{ padding: "32px 0" }}
-          onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false); }}
+          onClick={(e) => { if (!busy && e.target === e.currentTarget) onOpenChange(false); }}
         >
           <div className="mx-auto flex w-full max-w-[1100px] overflow-hidden rounded-[32px] bg-[var(--fp-color-card)] shadow-elevated border border-[var(--fp-color-border)]" onClick={(e) => e.stopPropagation()}>
             {/* Left: Form */}
@@ -122,14 +128,22 @@ export function CashflowModal({
                   {initialData?.id ? t("cashflow.editing") : t(`cashflow.modalTitle_${type}`)}
                 </Dialog.Title>
                 <Dialog.Close asChild>
-                  <button className="grid size-8 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]">
+                  <button
+                    disabled={busy}
+                    className="grid size-8 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)] disabled:pointer-events-none disabled:opacity-50"
+                  >
                     <X className="size-4" />
                   </button>
                 </Dialog.Close>
               </div>
 
               <div className="flex-1 px-8 md:px-10 pb-6">
-                <form id="cashflow-form" onSubmit={handleSubmit} className="grid gap-6">
+                <form
+                  id="cashflow-form"
+                  onSubmit={handleSubmit}
+                  aria-busy={busy}
+                  className={cn("grid gap-6", busy && "pointer-events-none opacity-70")}
+                >
                   {/* Name */}
                   <div className="grid gap-2">
                     <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t(`cashflow.nameLabel_${type}`)}</Label>
@@ -170,6 +184,7 @@ export function CashflowModal({
                       <div className="flex h-12 items-center gap-1 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] p-1">
                         <button
                           type="button"
+                          disabled={busy}
                           onClick={() => setFrequency("monthly")}
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
@@ -182,6 +197,7 @@ export function CashflowModal({
                         </button>
                         <button
                           type="button"
+                          disabled={busy}
                           onClick={() => setFrequency("yearly")}
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
@@ -194,6 +210,7 @@ export function CashflowModal({
                         </button>
                         <button
                           type="button"
+                          disabled={busy}
                           onClick={() => setFrequency("onetime")}
                           className={cn(
                             "h-full rounded-full px-4 text-sm font-semibold transition-all flex-1 shadow-none",
@@ -334,6 +351,7 @@ export function CashflowModal({
                           ))}
                           <button
                             type="button"
+                            disabled={busy}
                             onClick={() =>
                               appendRange(newGrowthRangeDefaults(growthRangesValues, form.getValues("startYear")))
                             }
@@ -353,15 +371,17 @@ export function CashflowModal({
                 <button
                   type="submit"
                   form="cashflow-form"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-white transition hover:opacity-90"
+                  disabled={busy}
+                  className="inline-flex h-12 min-w-[132px] items-center justify-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-white transition hover:opacity-90 disabled:pointer-events-none disabled:opacity-70"
                 >
-                  <Check className="size-4" />
-                  {initialData?.id ? t("cashflow.save") : t("cashflow.add")}
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                  {saving ? t("cashflow.saving") : initialData?.id ? t("cashflow.save") : t("cashflow.add")}
                 </button>
                 <button
                   type="button"
+                  disabled={busy}
                   onClick={() => onOpenChange(false)}
-                  className="inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-6 text-sm font-semibold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)]"
+                  className="inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-6 text-sm font-semibold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)] disabled:pointer-events-none disabled:opacity-50"
                 >
                   <X className="size-4" />
                   {t("cashflow.cancel")}
@@ -369,11 +389,12 @@ export function CashflowModal({
                 {initialData?.id && (
                   <button
                     type="button"
+                    disabled={busy}
                     onClick={onDelete}
-                    className="ml-auto inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-6 text-sm font-semibold text-[var(--fp-color-danger)] transition hover:bg-[var(--fp-color-danger)]/20"
+                    className="ml-auto inline-flex h-12 min-w-[116px] items-center justify-center gap-2 rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-6 text-sm font-semibold text-[var(--fp-color-danger)] transition hover:bg-[var(--fp-color-danger)]/20 disabled:pointer-events-none disabled:opacity-60"
                   >
-                    <Trash2 className="size-4" />
-                    {t("cashflow.delete")}
+                    {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                    {deleting ? t("cashflow.deleting") : t("cashflow.delete")}
                   </button>
                 )}
               </div>

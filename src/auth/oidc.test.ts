@@ -207,4 +207,66 @@ describe("OIDC session helpers", () => {
     expect(tokenBody.get("password")).toBe("correct-horse-battery");
     expect(getStoredAuthSession()?.accessToken).toBe("access-token");
   });
+
+  it("refreshes an expired access token before returning an authorization header", async () => {
+    vi.stubEnv("VITE_FINGUIDE_OIDC_ISSUER_URL", "https://finguide.les13.tech/auth/realms/finguide");
+    const { getStoredAuthSession, getValidOidcAuthorizationHeader } = await loadOidc();
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ accessToken: "expired-token", refreshToken: "refresh-token", tokenType: "Bearer", expiresAt: Date.now() - 1_000 }),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: "fresh-token", refresh_token: "fresh-refresh", token_type: "Bearer", expires_in: 600 }),
+    } as Response);
+
+    await expect(getValidOidcAuthorizationHeader()).resolves.toBe("Bearer fresh-token");
+
+    expect(fetch).toHaveBeenCalledWith(
+      "https://finguide.les13.tech/auth/realms/finguide/protocol/openid-connect/token",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const body = vi.mocked(fetch).mock.calls[0][1]?.body as URLSearchParams;
+    expect(body.get("grant_type")).toBe("refresh_token");
+    expect(body.get("refresh_token")).toBe("refresh-token");
+    expect(getStoredAuthSession()?.accessToken).toBe("fresh-token");
+  });
+
+  it("shares one refresh request across concurrent authorization header reads", async () => {
+    const { getValidOidcAuthorizationHeader } = await loadOidc();
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ accessToken: "expired-token", refreshToken: "refresh-token", tokenType: "Bearer", expiresAt: Date.now() - 1_000 }),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: "fresh-token", refresh_token: "fresh-refresh", token_type: "Bearer", expires_in: 600 }),
+    } as Response);
+
+    await expect(Promise.all([getValidOidcAuthorizationHeader(), getValidOidcAuthorizationHeader()])).resolves.toEqual([
+      "Bearer fresh-token",
+      "Bearer fresh-token",
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("notifies subscribers when refresh stores a new session and when storage is cleared", async () => {
+    const { clearAuthSession, getValidOidcAuthorizationHeader, subscribeAuthSession } = await loadOidc();
+    const observed: Array<string | undefined> = [];
+    const unsubscribe = subscribeAuthSession((session) => observed.push(session?.accessToken));
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ accessToken: "expired-token", refreshToken: "refresh-token", tokenType: "Bearer", expiresAt: Date.now() - 1_000 }),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: "fresh-token", refresh_token: "fresh-refresh", token_type: "Bearer", expires_in: 600 }),
+    } as Response);
+
+    await getValidOidcAuthorizationHeader();
+    clearAuthSession();
+    unsubscribe();
+
+    expect(observed).toEqual(["fresh-token", undefined]);
+  });
 });

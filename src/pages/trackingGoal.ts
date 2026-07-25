@@ -1,10 +1,10 @@
-import { goalProgress } from "@/components/goals/goalProgress";
+import { goalFundedAmount, goalProgress } from "@/components/goals/goalProgress";
 import type { Goal } from "@/types/finance";
 
 export function trackingActiveGoal(goals: Goal[] | undefined) {
   const ordered = orderedTrackingGoals(goals);
 
-  return ordered.find((goal) => goalTargetCost(goal) <= 0 || goal.saved < goalTargetCost(goal)) ?? ordered[0];
+  return ordered.find((goal) => goalTargetCost(goal) <= 0 || goalFundedAmount(goal) < goalTargetCost(goal)) ?? ordered[0];
 }
 
 export function nearestGoalMonthlyTarget(goals: Goal[] | undefined, currentYear: number, monthsInYear = 12) {
@@ -17,7 +17,7 @@ export function nearestGoalMonthlyTarget(goals: Goal[] | undefined, currentYear:
 }
 
 export function goalSavingNeeds(goals: Goal[] | undefined, currentYear: number, currentMonthIdx: number, monthsInYear = 12) {
-  const activeGoals = orderedTrackingGoals(goals).filter((goal) => goalTargetCost(goal) <= 0 || goal.saved < goalTargetCost(goal));
+  const activeGoals = orderedTrackingGoals(goals).filter((goal) => goalTargetCost(goal) <= 0 || goalFundedAmount(goal) < goalTargetCost(goal));
   const currentYearGoals = activeGoals.filter((goal) => goal.targetYear === currentYear);
   const summaryGoals = currentYearGoals.length > 0 ? currentYearGoals : activeGoals.slice(0, 1);
 
@@ -38,7 +38,7 @@ export function trackingGoalProgress(goal: Goal) {
 }
 
 function sumSaved(goals: Goal[]) {
-  return goals.reduce((total, goal) => total + Math.min(goal.saved, goalTargetCost(goal)), 0);
+  return goals.reduce((total, goal) => total + goalFundedAmount(goal), 0);
 }
 
 function sumTargetCost(goals: Goal[]) {
@@ -53,7 +53,7 @@ function sumMonthlyNeed(goals: Goal[], currentYear: number, currentMonthIdx: num
 }
 
 function goalRemaining(goal: Goal) {
-  return Math.max(0, goalTargetCost(goal) - goal.saved);
+  return Math.max(0, goalTargetCost(goal) - goalFundedAmount(goal));
 }
 
 function monthsToTarget(goal: Goal, currentYear: number, currentMonthIdx: number, monthsInYear: number) {

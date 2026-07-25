@@ -6,6 +6,7 @@ import type { TrackerEntry } from "@/types/finance";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage.clear();
 });
 
 describe("backendPlanClient response handling", () => {
@@ -13,6 +14,18 @@ describe("backendPlanClient response handling", () => {
     expect(() => unwrapData({ status: 403, data: { error: { message: "Plan is read-only" } } }, "PATCH /analytics/assumptions")).toThrow(
       "PATCH /analytics/assumptions failed with HTTP 403: Plan is read-only",
     );
+  });
+
+  it("clears the stored auth session when backend returns 401", () => {
+    window.localStorage.setItem(
+      "finguide.auth.session",
+      JSON.stringify({ accessToken: "rejected-token", refreshToken: "refresh-token", tokenType: "Bearer", expiresAt: Date.now() + 60_000 }),
+    );
+
+    expect(() => unwrapData({ status: 401, data: { error: { message: "Unauthorized" } } }, "GET /plans/current")).toThrow(
+      "GET /plans/current failed with HTTP 401: Unauthorized",
+    );
+    expect(window.localStorage.getItem("finguide.auth.session")).toBeNull();
   });
 });
 
@@ -138,8 +151,9 @@ describe("backendPlanClient settings mutations", () => {
     });
   });
 
-  it("saves separate pension and dashboard calculation periods from general settings", async () => {
+  it("keeps pension forecast years from changing retirement calculations", async () => {
     const requests: Array<{ url: string; body: unknown }> = [];
+    let modelAssumptionsOverride: Record<string, unknown> = {};
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
@@ -147,8 +161,11 @@ describe("backendPlanClient settings mutations", () => {
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
       requests.push({ url, body });
 
-      if (url.endsWith("/plans/current") && method === "GET") return jsonResponse({ data: planState([]) });
-      if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
+      if (url.endsWith("/plans/current") && method === "GET") return jsonResponse({ data: planState([], { modelAssumptions: modelAssumptionsOverride }) });
+      if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") {
+        modelAssumptionsOverride = body as Record<string, unknown>;
+        return jsonResponse({ data: body });
+      }
       if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
@@ -160,7 +177,7 @@ describe("backendPlanClient settings mutations", () => {
     });
 
     await backendPlanClient.getPlan();
-    await backendPlanClient.updateSettings({
+    const updated = await backendPlanClient.updateSettings({
       birthYear: 1990,
       pensionCalculationYears: 25,
       dashboardCalculationYears: 15,
@@ -185,6 +202,7 @@ describe("backendPlanClient settings mutations", () => {
       currentAge: 36,
       retirementAge: 60,
     });
+    expect(updated.settings.pensionCalculationYears).toBe(25);
   });
 
   it("requests dashboard and pension forecasts with their own horizons", async () => {

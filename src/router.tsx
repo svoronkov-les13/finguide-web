@@ -7,6 +7,7 @@ import { AuthCallbackPage } from "@/pages/AuthCallbackPage";
 import { AuthErrorPage } from "@/pages/AuthErrorPage";
 import { GeneralDataPage } from "@/pages/GeneralDataPage";
 import { GoalsPage } from "@/pages/GoalsPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { PensionPage } from "@/pages/PensionPage";
@@ -121,6 +122,12 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/forgot-password",
+  component: ForgotPasswordPage,
+});
+
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
@@ -143,6 +150,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   onboardingRoute,
   loginRoute,
+  forgotPasswordRoute,
   registerRoute,
   authCallbackRoute,
   authErrorRoute,

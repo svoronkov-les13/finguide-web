@@ -42,7 +42,7 @@ export function GeneralDataPage() {
 
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
-  const retirementAge = age + values.pensionCalculationYears;
+  const retirementAge = values.retirementAge;
   const realReturn = values.investmentReturnPercent - values.inflationPercent;
 
   const onSubmit = form.handleSubmit((next) => {

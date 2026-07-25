@@ -24,6 +24,13 @@ describe("trackingActiveGoal", () => {
     expect(trackingActiveGoal([first, second])).toBe(second);
   });
 
+  it("selects the next incomplete goal after projected allocation closes the current goal", () => {
+    const first = goal({ id: "first", name: "First", saved: 0, cost: 1000, projectedSaved: 1000, reachable: true });
+    const second = goal({ id: "second", name: "Second", saved: 100, cost: 2000, reachable: true });
+
+    expect(trackingActiveGoal([first, second])).toBe(second);
+  });
+
   it("keeps a goal active until inflation-adjusted cost is funded", () => {
     const first = goal({ id: "first", name: "First", saved: 1000, cost: 1000, projectedCost: 1200 });
     const second = goal({ id: "second", name: "Second", saved: 0, cost: 2000 });
@@ -83,7 +90,7 @@ describe("trackingActiveGoal", () => {
     });
   });
 
-  it("does not include projected cashflow allocation in active goal progress", () => {
+  it("includes projected cashflow allocation in active goal progress", () => {
     expect(trackingGoalProgress(goal({
       id: "active",
       cost: 550_000,
@@ -91,8 +98,8 @@ describe("trackingActiveGoal", () => {
       projectedSaved: 120_000,
     }))).toEqual({
       cost: 550_000,
-      saved: 0,
-      percent: 0,
+      saved: 120_000,
+      percent: 22,
       achieved: false,
     });
   });

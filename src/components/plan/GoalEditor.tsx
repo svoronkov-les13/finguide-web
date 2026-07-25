@@ -48,8 +48,8 @@ function GoalEditorCard({ goal, onUpdate, onDelete }: { goal: Goal; onUpdate: (i
       <div className="mt-4">
         <div className="flex items-end justify-between gap-3 text-xs">
           <div>
-            <div className="font-semibold text-foreground">{formatRub(goal.saved, { compact: true })}</div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">{t("goals.outOf")} {formatRub(goal.cost, { compact: true })}</div>
+            <div className="font-semibold text-foreground">{formatRub(progress.saved, { compact: true })}</div>
+            <div className="mt-0.5 text-[11px] text-muted-foreground">{t("goals.outOf")} {formatRub(progress.cost, { compact: true })}</div>
           </div>
           <div className="rounded-full border border-border/75 bg-card/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">{progress.percent}%</div>
         </div>

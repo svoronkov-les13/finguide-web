@@ -171,6 +171,21 @@ export function LoginPage() {
           </div>
         </div>
 
+        {auth.enabled && (
+          <Link
+            to="/forgot-password"
+            style={{
+              alignSelf: "flex-start",
+              color: "var(--fp-color-muted-foreground)",
+              fontSize: "var(--fp-text-sm)",
+              fontWeight: "var(--fp-weight-medium)",
+              textDecoration: "none",
+            }}
+          >
+            {t("auth.login.forgotPassword")}
+          </Link>
+        )}
+
         {/* Error message */}
         {error && (
           <p
