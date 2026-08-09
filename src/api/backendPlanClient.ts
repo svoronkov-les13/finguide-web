@@ -115,6 +115,7 @@ export function unwrapData<T>(response: ApiResponse, operation: string): T {
   if (response.status < 200 || response.status >= 300) {
     if (response.status === 401) {
       clearAuthSession();
+      resetPlanClientState();
     }
     const envelope = response.data as { error?: { message?: string; requestId?: string } } | undefined;
     const detail = envelope?.error?.message ? `: ${envelope.error.message}` : "";
@@ -291,16 +292,35 @@ function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undef
   };
 }
 
+class StalePlanError extends Error {
+  constructor() {
+    super("План ещё загружается или был переключён — повторите действие после обновления данных");
+    this.name = "StalePlanError";
+  }
+}
+
+/** Full cache expiry on plan switch / session change: mid-flight writes must
+ * fail loudly (surfaced by the error toast) instead of landing in the wrong plan. */
+function resetPlanClientState() {
+  lastPlanState = undefined;
+  lastFinancialPlan = undefined;
+}
+
 function findCashflow(id: string) {
-  return lastFinancialPlan?.cashflows.find((item) => item.id === id);
+  const cashflow = lastFinancialPlan?.cashflows.find((item) => item.id === id);
+  if (!cashflow) throw new StalePlanError();
+  return cashflow;
 }
 
 function findGoal(id: string) {
-  return lastFinancialPlan?.goals.find((item) => item.id === id);
+  const goal = lastFinancialPlan?.goals.find((item) => item.id === id);
+  if (!goal) throw new StalePlanError();
+  return goal;
 }
 
 function currentPlanId() {
-  return lastPlanState?.id ?? "plan_demo";
+  if (!lastPlanState) throw new StalePlanError();
+  return lastPlanState.id;
 }
 
 export const backendPlanClient = {
@@ -329,6 +349,7 @@ export const backendPlanClient = {
   },
 
   async switchPlan(planId: string): Promise<PlanSummary> {
+    resetPlanClientState();
     return backendJson<ApiPlanSummary>("/plans/current", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
