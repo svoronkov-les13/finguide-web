@@ -15,6 +15,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { goalPortfolioSummary, goalYearSummary } from "@/pages/goalsYearSummary";
 import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
+import { downloadPlanWorkbook } from "@/api/exportPlan";
 
 export function GoalsPage() {
   const { t, locale } = useI18n();
@@ -204,8 +205,9 @@ export function GoalsPage() {
   };
 
   const handleModalSubmit = (data: Partial<Goal>) => {
+    const closeModal = () => setModalOpen(false);
     if (data.id) {
-      updateGoal.mutate({ id: data.id, patch: data });
+      updateGoal.mutate({ id: data.id, patch: data }, { onSuccess: closeModal });
     } else {
       addGoal.mutate({
         name: data.name || t("goals.newGoal"),
@@ -217,9 +219,8 @@ export function GoalsPage() {
         growth: data.growth || 0,
         reachable: data.reachable ?? true,
         type: data.type || "onetime",
-      });
+      }, { onSuccess: closeModal });
     }
-    setModalOpen(false);
   };
 
   return (
@@ -230,9 +231,6 @@ export function GoalsPage() {
         title={t("goals.title")}
         actions={
           <>
-            <Button variant="secondary" size="sm" className="max-[760px]:hidden">
-              {t("goals.viewExample")}
-            </Button>
             <Button variant="default" size="sm" onClick={handleCreate}>
               <Plus className="size-4 shrink-0" />
               {t("goals.addGoal")}
@@ -261,7 +259,11 @@ export function GoalsPage() {
             </div>
           )}
 
-          <Button variant="secondary" className="px-5 py-3 h-auto ml-auto rounded-full font-medium">
+          <Button
+            variant="secondary"
+            className="px-5 py-3 h-auto ml-auto rounded-full font-medium"
+            onClick={() => plan && downloadPlanWorkbook(plan)}
+          >
             <Download className="size-4 mr-2" />
             {t("goals.export")}
           </Button>
@@ -473,7 +475,7 @@ export function GoalsPage() {
         initialData={editingItem}
         defaultGrowth={plan?.settings.inflation}
         onSubmit={handleModalSubmit}
-        onDelete={(id) => deleteGoal.mutate(id)}
+        onDelete={(id) => deleteGoal.mutate(id, { onSuccess: () => setModalOpen(false) })}
       />
     </Page>
   );

@@ -1,4 +1,5 @@
 import type { Goal } from "@/types/finance";
+import { goalFundedAmount, goalProgressCost } from "@/components/goals/goalProgress";
 
 export interface GoalFeasibility {
   /** Number of goals projected as reachable */
@@ -35,18 +36,14 @@ export function computeGoalFeasibility(
   const totalCount = goals.length;
 
   // Weighted by cost: how much of the total projected cost is covered by projected savings
-  const totalProjectedCost = goals.reduce((sum, g) => sum + (g.projectedCost ?? g.cost), 0);
-  const totalProjectedSaved = goals.reduce((sum, g) => sum + g.saved + (g.projectedSaved ?? 0), 0);
+  const totalProjectedCost = goals.reduce((sum, g) => sum + goalProgressCost(g), 0);
+  const totalProjectedSaved = goals.reduce((sum, g) => sum + goalFundedAmount(g), 0);
   const weightedPct = totalProjectedCost > 0
     ? Math.min(100, Math.round((totalProjectedSaved / totalProjectedCost) * 100))
     : 0;
 
   // Monthly deficit: what extra per month is needed to cover all remaining costs
-  const totalRemaining = goals.reduce((sum, g) => {
-    const cost = g.projectedCost ?? g.cost;
-    const saved = g.saved + (g.projectedSaved ?? 0);
-    return sum + Math.max(0, cost - saved);
-  }, 0);
+  const totalRemaining = goals.reduce((sum, g) => sum + Math.max(0, goalProgressCost(g) - goalFundedAmount(g)), 0);
 
   // Use the furthest goal's target year to determine remaining months
   const maxTargetYear = Math.max(...goals.map((g) => g.targetYear));

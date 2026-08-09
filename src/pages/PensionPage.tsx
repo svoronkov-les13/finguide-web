@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Page, PageHeader } from "@/components/layout/Page";
-import { CheckCircle2, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronUp, Info, Settings2, TriangleAlert, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
@@ -98,12 +98,19 @@ export function PensionPage() {
   });
   const futureMonthlySpend = expenseComparison.plannedMonthlyAtRetirement;
   
-  const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
-  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital || 2373688270;
-  
-  const chartData = buildPensionChartData(plan.pensionForecast ?? plan.forecast, settings, effectiveRetirementAge);
+  const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub ?? null;
+  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital ?? null;
 
-  const isCapitalSufficient = retirementCapital >= targetCapital;
+  const pensionPoints = plan.pensionForecast ?? plan.forecast;
+  const chartData = buildPensionChartData(pensionPoints, settings, effectiveRetirementAge);
+
+  const depletionPoint = pensionPoints.find(
+    (point) => point.age >= effectiveRetirementAge && point.capital <= 0,
+  );
+  const depletionAge = depletionPoint?.age ?? null;
+
+  const isCapitalSufficient = targetCapital != null && retirementCapital != null && retirementCapital >= targetCapital;
+  const hasResults = targetCapital != null;
 
   const handleCalculate = () => {
     if (formState.retirementAge === "") return;
@@ -424,8 +431,9 @@ export function PensionPage() {
                 {t("pension.targetCapitalIntro", { amount: formatRub(targetMonthlySpend) })}
               </p>
               <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital)}</span>
-                <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
+                <span className="text-[44px] leading-none font-bold tracking-tight">
+                  {targetCapital != null ? formatRub(targetCapital) : "—"}
+                </span>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
                 <span>{t("pension.targetYearInfo", { year: retirementYear, age: effectiveRetirementAge })}</span>
@@ -435,10 +443,12 @@ export function PensionPage() {
                 <span>{t("pension.annualReturn", { percent: formatPercent(settings.pensionInvestmentReturn) })}</span>
               </div>
             </div>
-            <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>
-              <CheckCircle2 className="size-[22px]" />
-              <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
-            </div>
+            {hasResults && (
+              <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>
+                {isCapitalSufficient ? <CheckCircle2 className="size-[22px]" /> : <TriangleAlert className="size-[22px]" />}
+                <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
+              </div>
+            )}
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -486,10 +496,23 @@ export function PensionPage() {
             {/* На сколько хватит капитала? */}
             <Card className="p-8 flex flex-col justify-center text-center rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
               <h3 className="text-[15px] font-semibold text-[var(--fp-color-label)] mb-6">{t("pension.howLongTitle")}</h3>
-              <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-teal)]">{t("pension.hundredPlusYears")}</div>
-              <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
-                {t("pension.capitalPreserved")}
-              </p>
+              {depletionAge == null ? (
+                <>
+                  <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-teal)]">{t("pension.hundredPlusYears")}</div>
+                  <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
+                    {t("pension.capitalPreserved")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-coral)]">
+                    {t("pension.lastsYears", { years: Math.max(0, depletionAge - effectiveRetirementAge) })}
+                  </div>
+                  <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
+                    {t("pension.depletesAtAge", { age: depletionAge })}
+                  </p>
+                </>
+              )}
             </Card>
           </div>
 

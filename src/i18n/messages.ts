@@ -484,6 +484,10 @@ export const ru = {
       "12": "Дек",
     },
   },
+  errors: {
+    saveFailed: "Не удалось сохранить изменения",
+    supportHint: "Попробуйте ещё раз. Если повторится — пришлите нам код trace_id из сообщения выше.",
+  },
   cashflow: {
     income: "Доходы",
     expense: "Расходы",
@@ -658,6 +662,8 @@ export const ru = {
     spendLessDesc: "Планируемые = {{percent}}% от текущих расходов.",
     howLongTitle: "На сколько хватит капитала?",
     hundredPlusYears: "100+ лет",
+    lastsYears: "≈ {{years}} лет",
+    depletesAtAge: "Капитал закончится примерно к {{age}} годам",
     capitalPreserved: "капитал сохраняется до 100 лет и дольше",
     chartTitle: "График пенсионного капитала",
     chartSubtitle: "Накопление → выход на пенсию ({{age}} лет) → расходование",
@@ -1339,6 +1345,10 @@ export const en = {
       "12": "Dec",
     },
   },
+  errors: {
+    saveFailed: "Couldn't save changes",
+    supportHint: "Try again. If it persists, send us the trace_id from the message above.",
+  },
   cashflow: {
     income: "Income",
     expense: "Expenses",
@@ -1513,6 +1523,8 @@ export const en = {
     spendLessDesc: "Planned = {{percent}}% of current expenses.",
     howLongTitle: "How long will the capital last?",
     hundredPlusYears: "100+ years",
+    lastsYears: "≈ {{years}} yrs",
+    depletesAtAge: "The capital runs out around age {{age}}",
     capitalPreserved: "capital is preserved for 100+ years",
     chartTitle: "Pension capital chart",
     chartSubtitle: "Accumulation → retirement ({{age}} years old) → spending",

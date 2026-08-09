@@ -81,7 +81,6 @@ export function GoalModal({
       ...data,
       growth: inflationEnabled ? (data.growth || 0) / 100 : 0,
     });
-    onOpenChange(false);
   });
 
   const typeValue = useWatch({ control: form.control, name: "type" });
@@ -305,7 +304,7 @@ export function GoalModal({
                             <span className="text-sm font-medium text-[var(--fp-color-danger)]">{t("common.confirmDelete")}</span>
                             <button
                               type="button"
-                              onClick={() => { onDelete(initialData.id!); onOpenChange(false); }}
+                              onClick={() => onDelete(initialData.id!)}
                               className="inline-flex h-[40px] items-center rounded-full bg-[var(--fp-color-danger)] px-4 text-xs font-bold text-white hover:opacity-90"
                             >
                               {t("goals.confirmYes")}
