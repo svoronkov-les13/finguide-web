@@ -22,7 +22,7 @@ import { useUiStore } from "@/store/uiStore";
 import type { ForecastPoint, FinancialPlan, Goal } from "@/types/finance";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useFormat } from "@/lib/useFormat";
-import { goalIcon } from "@/components/goals/goalIcons";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 
 const TypedBrush = Brush as any;
 
@@ -596,7 +596,7 @@ export function ForecastChart() {
                       return (
                         <g>
                           {sorted.map((goal, idx) => {
-                            const Ic = goalIcon(goal.icon);
+                            const Ic = GOAL_ICONS[goal.icon] ?? GOAL_ICONS.Target;
                             const oy = idx * gap;
                             const clr = "var(--fp-color-neutral-80)";
                             return (
@@ -834,13 +834,14 @@ function LegendPill({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={active}
       className={cn(
         "inline-flex h-7 items-center gap-2 rounded-full border px-3 text-xs transition-all duration-200",
         active
           ? "border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/70 text-[var(--fp-color-foreground)] font-medium shadow-[var(--fp-shadow-sm)]"
           : "border-[var(--fp-color-border)] bg-[var(--fp-color-muted)]/40 text-[var(--fp-color-muted-foreground)]/40 opacity-50 hover:opacity-75"
       )}
-      type="button"
       onClick={onClick}
     >
       {line ? (

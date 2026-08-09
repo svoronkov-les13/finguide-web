@@ -1,6 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { BookOpen, Lightbulb, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useI18n } from "@/i18n/I18nProvider";
 
 /**
  * Shared scaffolding for the large two-column form modals (cashflow, goals):
@@ -24,6 +25,7 @@ export function ModalShell({
   aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <Dialog.Root
       open={open}
@@ -49,6 +51,7 @@ export function ModalShell({
                 <Dialog.Close asChild>
                   <button
                     disabled={locked}
+                    aria-label={t("common.close")}
                     className="grid size-8 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)] disabled:pointer-events-none disabled:opacity-50"
                   >
                     <X className="size-4" />

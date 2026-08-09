@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { trackingYearSummary } from "@/pages/trackingYearSummary";
-import type { MonthData } from "@/pages/trackingMonths";
+import { trackingYearSummary } from "@/domain/trackingYearSummary";
+import type { MonthData } from "@/domain/trackingMonths";
 
 function month(id: number, status: MonthData["status"], amount?: number): MonthData {
   return {

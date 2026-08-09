@@ -32,6 +32,7 @@ const mockPlan = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  useNavigate: () => () => {},
 }));
 
 vi.mock("recharts", () => ({

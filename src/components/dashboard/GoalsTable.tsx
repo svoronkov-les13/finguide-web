@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, CheckCircle2, Target } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
-import { goalIcon } from "@/components/goals/goalIcons";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -82,7 +82,7 @@ export function GoalsTable() {
 function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const Icon = goalIcon(goal.icon);
+  const Icon = GOAL_ICONS[goal.icon] ?? Target;
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const month = goal.targetMonth ?? 12;

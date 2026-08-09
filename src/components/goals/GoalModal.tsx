@@ -6,7 +6,7 @@ import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModalShell, InstructionAside } from "@/components/ui/modal-shell";
-import { GOAL_ICONS, GOAL_ICON_NAMES, goalIcon } from "@/components/goals/goalIcons";
+import { GOAL_ICONS, GOAL_ICON_NAMES } from "@/components/goals/goalIcons";
 import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,7 +175,7 @@ export function GoalModal({
                     </div>
                     <div className="grid grid-cols-8 gap-3 md:gap-4 w-full justify-items-center">
                       {GOAL_ICON_NAMES.map((iconName) => {
-                        const Icon = GOAL_ICONS[iconName] ?? goalIcon(undefined);
+                        const Icon = GOAL_ICONS[iconName] ?? GOAL_ICONS.Target;
                         const isSelected = iconValue === iconName;
                         return (
                           <button

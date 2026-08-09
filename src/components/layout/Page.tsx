@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -50,9 +51,14 @@ export function Page({ children, className, bottom = true, scrollable = true }: 
  */
 export function BackButton({ className }: { className?: string }) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   return (
     <button
-      onClick={() => window.history.back()}
+      onClick={() => {
+        // Direct deep links have no in-app history: falling back beats leaving the site
+        if (window.history.length > 1) window.history.back();
+        else navigate({ to: "/dashboard" });
+      }}
       className={cn(
         "flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)]",
         "bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium",

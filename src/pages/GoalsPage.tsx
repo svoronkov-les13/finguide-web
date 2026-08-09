@@ -12,8 +12,8 @@ import { goalProgress } from "@/components/goals/goalProgress";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalPortfolioSummary, goalYearSummary } from "@/pages/goalsYearSummary";
-import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalPortfolioSummary, goalYearSummary } from "@/domain/goalsYearSummary";
+import { compareGoalTargetOrder, trackingActiveGoal } from "@/domain/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
 import { downloadPlanWorkbook } from "@/api/exportPlan";
 

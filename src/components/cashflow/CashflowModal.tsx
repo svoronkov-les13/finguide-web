@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X, Check, Trash2, Loader2 } from "lucide-react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import type { Cashflow } from "@/types/finance";
@@ -59,6 +59,7 @@ export function CashflowModal({
   const { data: plan } = usePlanQuery();
   const { t } = useI18n();
   const busy = saving || deleting;
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const form = useForm<CashflowFormData>({
     defaultValues: {
       growthRanges: [],
@@ -75,6 +76,8 @@ export function CashflowModal({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- delete confirmation resets when a new record opens
+      setConfirmingDelete(false);
       const startYear = plan?.settings.startYear ?? new Date().getFullYear();
       form.reset({
         ...initialData,
@@ -414,15 +417,37 @@ export function CashflowModal({
                   {t("cashflow.cancel")}
                 </button>
                 {initialData?.id && (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={onDelete}
-                    className="ml-auto inline-flex h-10 min-w-[104px] items-center justify-center gap-2 rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-5 text-sm font-semibold text-[var(--fp-color-danger)] transition hover:bg-[var(--fp-color-danger)]/20 disabled:pointer-events-none disabled:opacity-60"
-                  >
-                    {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                    {deleting ? t("cashflow.deleting") : t("cashflow.delete")}
-                  </button>
+                  confirmingDelete ? (
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-sm font-medium text-[var(--fp-color-danger)]">{t("common.confirmDelete")}</span>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={onDelete}
+                        className="inline-flex h-10 items-center rounded-full bg-[var(--fp-color-danger)] px-4 text-xs font-bold text-white transition hover:opacity-90 disabled:pointer-events-none disabled:opacity-60"
+                      >
+                        {deleting ? <Loader2 className="size-4 animate-spin" /> : t("goals.confirmYes")}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setConfirmingDelete(false)}
+                        className="inline-flex h-10 items-center rounded-full border border-[var(--fp-color-border)] px-4 text-xs font-bold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)] disabled:pointer-events-none disabled:opacity-60"
+                      >
+                        {t("goals.confirmNo")}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setConfirmingDelete(true)}
+                      className="ml-auto inline-flex h-10 min-w-[104px] items-center justify-center gap-2 rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-5 text-sm font-semibold text-[var(--fp-color-danger)] transition hover:bg-[var(--fp-color-danger)]/20 disabled:pointer-events-none disabled:opacity-60"
+                    >
+                      <Trash2 className="size-4" />
+                      {t("cashflow.delete")}
+                    </button>
+                  )
                 )}
               </div>
     </ModalShell>

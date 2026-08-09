@@ -11,7 +11,7 @@ import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
-import { pensionExpenseComparison } from "@/pages/pensionComparison";
+import { pensionExpenseComparison } from "@/domain/pensionComparison";
 import type { ForecastPoint, PlanSettings } from "@/types/finance";
 
 export function buildPensionChartData(

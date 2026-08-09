@@ -2,9 +2,9 @@ import { CheckCircle2, Edit2, GripVertical, TrendingUp } from "lucide-react";
 import type { Goal } from "@/types/finance";
 
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
-import { goalIcon } from "@/components/goals/goalIcons";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalProjectedCost } from "@/pages/goalsYearSummary";
+import { goalProjectedCost } from "@/domain/goalsYearSummary";
 
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/useFormat";
@@ -65,7 +65,7 @@ export function GoalListItem({
       <GripVertical className="size-4 text-[var(--fp-color-muted-foreground)] opacity-50" />
       <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--fp-color-surface)] border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)]">
          {(() => {
-           const GoalIcon = goalIcon(goal.icon);
+           const GoalIcon = GOAL_ICONS[goal.icon] ?? GOAL_ICONS.Target;
            return <GoalIcon className="size-3.5" />;
          })()}
       </div>
@@ -117,7 +117,7 @@ export function GoalListItem({
          </span>
       </div>
 
-      <button className="grid size-8 shrink-0 place-items-center rounded-full text-[var(--fp-color-muted-foreground)] opacity-0 transition-all group-hover:opacity-100 hover:bg-[var(--fp-color-background)] hover:text-[var(--fp-color-foreground)]">
+      <button type="button" aria-label={t("goals.editGoal")} className="grid size-8 shrink-0 place-items-center rounded-full text-[var(--fp-color-muted-foreground)] opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100 hover:bg-[var(--fp-color-background)] hover:text-[var(--fp-color-foreground)]">
         <Edit2 className="size-4" />
       </button>
     </div>

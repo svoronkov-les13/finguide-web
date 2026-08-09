@@ -33,7 +33,8 @@ export function ScrollArea({
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const [scrolling, setScrolling] = useState(false);
 
-  const updateThumb = useCallback(() => {
+  const thumbFrame = useRef(0);
+  const measureThumb = useCallback(() => {
     const el = viewportRef.current;
     if (!el) return;
     const { scrollTop, scrollHeight, clientHeight } = el;
@@ -51,6 +52,14 @@ export function ScrollArea({
       bottom: scrollTop + clientHeight < scrollHeight - 2,
     });
   }, []);
+
+  const updateThumb = useCallback(() => {
+    if (thumbFrame.current) return;
+    thumbFrame.current = requestAnimationFrame(() => {
+      thumbFrame.current = 0;
+      measureThumb();
+    });
+  }, [measureThumb]);
 
   const handleScroll = useCallback(() => {
     updateThumb();
@@ -70,6 +79,7 @@ export function ScrollArea({
     return () => {
       clearTimeout(timer);
       clearTimeout(idleTimer.current);
+      cancelAnimationFrame(thumbFrame.current);
       observer.disconnect();
     };
   }, [updateThumb]);

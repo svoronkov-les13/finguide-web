@@ -2,7 +2,7 @@ import { CheckCircle2, ChevronDown, GripVertical, TriangleAlert } from "lucide-r
 import type { Goal } from "@/types/finance";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/useFormat";
-import { goalIcon } from "@/components/goals/goalIcons";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
 
@@ -18,7 +18,7 @@ export function GoalCard({
 }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const Icon = goalIcon(item.icon);
+  const Icon = GOAL_ICONS[item.icon] ?? GOAL_ICONS.Target;
   
   const progress = goalProgress(item);
   const isActuallyAchieved = goalIsActuallyAchieved(item);

@@ -58,7 +58,3 @@ export const GOAL_ICONS: Record<string, LucideIcon> = {
 };
 
 export const GOAL_ICON_NAMES = Object.keys(GOAL_ICONS);
-
-export function goalIcon(name: string | undefined): LucideIcon {
-  return (name && GOAL_ICONS[name]) || Target;
-}

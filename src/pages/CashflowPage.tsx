@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { Plus, Info, Sparkles, ArrowRight, TrendingUp, Calendar, Zap, RotateCw, ChevronDown } from "lucide-react";
@@ -7,6 +7,7 @@ import { CashflowSkeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Cashflow } from "@/types/finance";
 import { CashflowCard } from "@/components/cashflow/CashflowCard";
+import { buildCashflowSparkline } from "@/components/cashflow/cashflowSparkline";
 import { CashflowModal } from "@/components/cashflow/CashflowModal";
 import { CashflowEmptyState } from "@/components/cashflow/CashflowEmptyState";
 import { CashflowInstructionModal } from "@/components/cashflow/CashflowInstructionModal";
@@ -31,6 +32,8 @@ const getStoredOrder = (planId: string, type: string, frequency: string): string
     return [];
   }
 };
+
+const EMPTY_CASHFLOWS: Cashflow[] = [];
 
 const setStoredOrder = (planId: string, type: string, frequency: string, order: string[]) => {
   try {
@@ -133,21 +136,13 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDragOverItemId(null);
   };
 
-  if (!plan) return <CashflowSkeleton />;
+  const cashflows = plan?.cashflows ?? EMPTY_CASHFLOWS;
+  const items = useMemo(
+    () => cashflows.filter((item) => item.type === type),
+    [cashflows, type],
+  );
 
-  const items = plan.cashflows.filter((item) => item.type === type);
-  const nextRoute = type === "income" ? "/expenses" : "/goals";
-
-  const totalYear = items.reduce((sum, i) => {
-    if (!i.enabled) return sum;
-    return sum + (i.frequency === "monthly" ? i.amount * 12 : i.amount);
-  }, 0);
-  const totalMonth = items.reduce((sum, i) => {
-    if (!i.enabled) return sum;
-    return sum + (i.frequency === "monthly" ? i.amount : Math.round(i.amount / 12));
-  }, 0);
-
-  const columns: CashflowColumn[] = [
+  const columns = useMemo<CashflowColumn[]>(() => [
     {
       id: "monthly",
       titleKey: "cashflow.monthly",
@@ -169,7 +164,46 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
       accentColor: type === "income" ? "#5B8DB8" : "#5B8DB8",
       icon: <Zap className="size-4" />,
     },
-  ];
+  ], [type]);
+
+  // Stable per-column item arrays: the drag state re-renders the page dozens
+  // of times per second, and unstable identities would reconnect every
+  // column's ResizeObserver on each of those renders.
+  const columnsData = useMemo(() => columns.map((column) => {
+    const freqOrder = orders[column.id] ?? [];
+    const colItems = items
+      .filter((i) => i.frequency === column.id)
+      .sort((a, b) => {
+        const idxA = freqOrder.indexOf(a.id);
+        const idxB = freqOrder.indexOf(b.id);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    const colTotalYear = colItems.reduce((sum, item) => {
+      if (!item.enabled) return sum;
+      return sum + (item.frequency === "monthly" ? item.amount * 12 : item.amount);
+    }, 0);
+    const colTotalMonth = colItems.reduce((sum, item) => {
+      if (!item.enabled) return sum;
+      return sum + (item.frequency === "monthly" ? item.amount : Math.round(item.amount / 12));
+    }, 0);
+    return { column, colItems, colTotalYear, colTotalMonth };
+  }), [columns, items, orders]);
+
+  if (!plan) return <CashflowSkeleton />;
+
+  const nextRoute = type === "income" ? "/expenses" : "/goals";
+
+  const totalYear = items.reduce((sum, i) => {
+    if (!i.enabled) return sum;
+    return sum + (i.frequency === "monthly" ? i.amount * 12 : i.amount);
+  }, 0);
+  const totalMonth = items.reduce((sum, i) => {
+    if (!i.enabled) return sum;
+    return sum + (i.frequency === "monthly" ? i.amount : Math.round(i.amount / 12));
+  }, 0);
 
   const handleAddItem = (defaultFrequency: Cashflow["frequency"]) => {
     setEditingItem({ frequency: defaultFrequency });
@@ -226,6 +260,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
           <>
             <button
               onClick={() => setInstructionOpen(true)}
+              aria-label={t("cashflow.instructionLabel")}
               className="grid size-9 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]"
             >
               <Info className="size-4" />
@@ -322,28 +357,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
           "grid items-stretch gap-x-5 gap-y-8 flex-1 min-h-0",
           activeFilter === "all" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
         )}>
-          {columns.filter(col => activeFilter === "all" || col.id === activeFilter).map((column) => {
-            const freqOrder = orders[column.id] ?? [];
-            const colItems = items
-              .filter((i) => i.frequency === column.id)
-              .sort((a, b) => {
-                const idxA = freqOrder.indexOf(a.id);
-                const idxB = freqOrder.indexOf(b.id);
-                if (idxA === -1 && idxB === -1) return 0;
-                if (idxA === -1) return 1;
-                if (idxB === -1) return -1;
-                return idxA - idxB;
-              });
-
-            const colTotalYear = colItems.reduce((sum, item) => {
-              if (!item.enabled) return sum;
-              return sum + (item.frequency === "monthly" ? item.amount * 12 : item.amount);
-            }, 0);
-            const colTotalMonth = colItems.reduce((sum, item) => {
-              if (!item.enabled) return sum;
-              return sum + (item.frequency === "monthly" ? item.amount : Math.round(item.amount / 12));
-            }, 0);
-
+          {columnsData.filter(({ column }) => activeFilter === "all" || column.id === activeFilter).map(({ column, colItems, colTotalYear, colTotalMonth }) => {
             return (
               <CashflowColumn
                 key={column.id}
@@ -463,57 +477,21 @@ function CashflowColumn({
   const [thumbTop, setThumbTop] = useState(0);
   const [hiddenBelowCount, setHiddenBelowCount] = useState(0);
 
-  // Generate dynamic sparkline based on the real API / cashflow items
-  const horizon = 20;
-  const yearlyValues: number[] = [];
-  
-  for (let year = startYear; year < startYear + horizon; year++) {
-    let yearSum = 0;
-    colItems.forEach((item) => {
-      if (!item.enabled) return;
-      
-      const isStarted = year >= item.startYear;
-      const isNotEnded = item.endYear === null || year <= item.endYear;
-      
-      if (isStarted && isNotEnded) {
-        const t = year - item.startYear;
-        const growthFactor = Math.pow(1 + (item.growth ?? 0) / 100, t);
-        const yearlyAmount = item.frequency === "monthly" 
-          ? (item.amount * 12) * growthFactor 
-          : item.amount * growthFactor;
-        
-        yearSum += yearlyAmount;
-      }
-    });
-    yearlyValues.push(yearSum);
-  }
+  const { strokePath, fillPath } = useMemo(
+    () => buildCashflowSparkline(colItems, startYear),
+    [colItems, startYear],
+  );
 
-  const minVal = Math.min(...yearlyValues);
-  const maxVal = Math.max(...yearlyValues);
-  const points: { x: number; y: number }[] = [];
-  const width = 96;
-  const height = 32;
-  const paddingBottom = 4;
-  const paddingTop = 4;
-  const chartHeight = height - paddingTop - paddingBottom; // 24px
-
-  yearlyValues.forEach((val, i) => {
-    const x = (i / (horizon - 1)) * width;
-    let y = height - paddingBottom; // default bottom
-    
-    if (maxVal > minVal) {
-      const pct = (val - minVal) / (maxVal - minVal);
-      y = height - paddingBottom - pct * chartHeight;
-    } else if (maxVal > 0) {
-      y = height / 2;
-    }
-    points.push({ x, y });
-  });
-
-  const strokePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const fillPath = `${strokePath} L96,32 L0,32 Z`;
-
+  const scrollbarFrame = useRef(0);
   const updateScrollbar = () => {
+    if (scrollbarFrame.current) return;
+    scrollbarFrame.current = requestAnimationFrame(() => {
+      scrollbarFrame.current = 0;
+      measureScrollbar();
+    });
+  };
+
+  const measureScrollbar = () => {
     const el = containerRef.current;
     if (!el) return;
 

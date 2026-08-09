@@ -1,20 +1,23 @@
-import { createRootRoute, createRoute, createRouter, Navigate, Outlet } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Navigate, Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/auth/ProtectedRoute";
 import { CashflowPage } from "@/pages/CashflowPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { FaqPage } from "@/pages/FaqPage";
 import { AuthCallbackPage } from "@/pages/AuthCallbackPage";
 import { AuthErrorPage } from "@/pages/AuthErrorPage";
-import { GeneralDataPage } from "@/pages/GeneralDataPage";
-import { GoalsPage } from "@/pages/GoalsPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LoginPage } from "@/pages/LoginPage";
-import { OnboardingPage } from "@/pages/OnboardingPage";
-import { PensionPage } from "@/pages/PensionPage";
 import { RegisterPage } from "@/pages/RegisterPage";
-import { SettingsPage } from "@/pages/SettingsPage";
-import { SummaryPage } from "@/pages/SummaryPage";
-import { TrackingPage } from "@/pages/TrackingPage";
+
+// Heavy pages (recharts, forms) load on demand so the login/onboarding path
+// ships without the whole dashboard bundle.
+const DashboardPage = lazyRouteComponent(() => import("@/pages/DashboardPage"), "DashboardPage");
+const FaqPage = lazyRouteComponent(() => import("@/pages/FaqPage"), "FaqPage");
+const GeneralDataPage = lazyRouteComponent(() => import("@/pages/GeneralDataPage"), "GeneralDataPage");
+const GoalsPage = lazyRouteComponent(() => import("@/pages/GoalsPage"), "GoalsPage");
+const OnboardingPage = lazyRouteComponent(() => import("@/pages/OnboardingPage"), "OnboardingPage");
+const PensionPage = lazyRouteComponent(() => import("@/pages/PensionPage"), "PensionPage");
+const SettingsPage = lazyRouteComponent(() => import("@/pages/SettingsPage"), "SettingsPage");
+const SummaryPage = lazyRouteComponent(() => import("@/pages/SummaryPage"), "SummaryPage");
+const TrackingPage = lazyRouteComponent(() => import("@/pages/TrackingPage"), "TrackingPage");
 
 const rootRoute = createRootRoute({
   component: Outlet,
