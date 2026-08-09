@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { X, Check, Trash2, Loader2 } from "lucide-react";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { Controller, useForm, useFieldArray, useWatch } from "react-hook-form";
 import type { Cashflow } from "@/types/finance";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -163,9 +164,12 @@ export function CashflowModal({
                   <div className="grid grid-cols-[1fr_120px_270px] items-end gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.amount")}</Label>
-                      <Input
-                        type="number"
-                        {...form.register("amount", { valueAsNumber: true })}
+                      <Controller
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <MoneyInput value={field.value} onChange={field.onChange} placeholder="0" />
+                        )}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -214,8 +218,16 @@ export function CashflowModal({
                       <Input
                         type="number"
                         placeholder={t("cashflow.indefinite")}
-                        {...form.register("endYear", { setValueAs: (v) => (v === "" || v === null ? null : Number(v)) })}
+                        aria-invalid={!!form.formState.errors.endYear}
+                        {...form.register("endYear", {
+                          setValueAs: (v) => (v === "" || v === null ? null : Number(v)),
+                          validate: (value) =>
+                            value == null || value >= form.getValues("startYear") || t("cashflow.validation.endBeforeStart"),
+                        })}
                       />
+                      {form.formState.errors.endYear && (
+                        <span className="text-xs text-[var(--fp-color-danger)]">{form.formState.errors.endYear.message}</span>
+                      )}
                     </div>
                   </div>
 

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Check } from "lucide-react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Label } from "@/components/ui/label";
 import { ModalShell, InstructionAside } from "@/components/ui/modal-shell";
 import { GOAL_ICONS, GOAL_ICON_NAMES } from "@/components/goals/goalIcons";
@@ -134,13 +135,13 @@ export function GoalModal({
                   <div className="grid grid-cols-[1fr_120px_240px] items-end gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.cost")}</Label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        {...form.register("cost", {
-                          valueAsNumber: true,
-                          min: { value: 1, message: t("goals.validation.costMin") },
-                        })}
+                      <Controller
+                        control={form.control}
+                        name="cost"
+                        rules={{ min: { value: 1, message: t("goals.validation.costMin") } }}
+                        render={({ field }) => (
+                          <MoneyInput value={field.value} onChange={field.onChange} placeholder="0" />
+                        )}
                       />
                       {errors.cost && <span className="text-xs text-[var(--fp-color-danger)]">{errors.cost.message}</span>}
                     </div>

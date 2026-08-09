@@ -6,7 +6,10 @@ import { CheckCircle2, ChevronUp, Info, Settings2, TriangleAlert, WalletCards, S
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Segmented } from "@/components/ui/segmented";
+import { Switch } from "@/components/ui/switch";
 import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -136,8 +139,10 @@ export function PensionPage() {
       <div className="grid gap-4 mt-2">
         {/* Параметры расчёта */}
         <div className="rounded-[24px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] overflow-hidden shadow-sm">
-          <div 
-            className="flex items-center justify-between p-6 cursor-pointer select-none transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+          <button
+            type="button"
+            aria-expanded={paramsOpen}
+            className="flex w-full items-center justify-between p-6 cursor-pointer select-none text-left transition-colors hover:bg-[var(--fp-color-surface-hover)]"
             onClick={() => setParamsOpen(!paramsOpen)}
           >
             <div className="flex items-center gap-3">
@@ -145,7 +150,7 @@ export function PensionPage() {
               <h2 className="text-[17px] font-semibold">{t("pension.calcParams")}</h2>
             </div>
             {paramsOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
-          </div>
+          </button>
 
           {paramsOpen && (
             <div className="px-6 pb-8 grid gap-10 pt-2">
@@ -225,16 +230,13 @@ export function PensionPage() {
               <div className="grid grid-cols-3 gap-6 max-[800px]:grid-cols-1">
                 <div>
                   <label className="text-[13px] text-[var(--fp-color-label)] mb-2 block leading-tight">{t("pension.desiredExpenses")}</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      value={formState.targetMonthlySpend || ""} 
-                      onChange={(e) => setFormState(s => ({ ...s, targetMonthlySpend: Number(e.target.value) }))}
-                      placeholder={t("pensionFormat.enterAmount")} 
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-16 outline-none font-medium text-sm placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30" 
-                    />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.perMonth")}</span>
-                  </div>
+                  <MoneyInput
+                    value={formState.targetMonthlySpend}
+                    onChange={(value) => setFormState(s => ({ ...s, targetMonthlySpend: value }))}
+                    placeholder={t("pensionFormat.enterAmount")}
+                    suffix={t("pension.perMonth")}
+                    aria-label={t("pension.desiredExpenses")}
+                  />
                   <div className="text-[12px] text-[var(--fp-color-label)] flex items-center gap-1.5 mt-2">
                     <Info className="size-[14px] shrink-0" /> <span className="leading-tight">{t("pension.currentPricesNote")}</span>
                   </div>
@@ -289,6 +291,7 @@ export function PensionPage() {
                     type="range" 
                     min="0" 
                     max="25" 
+                    aria-label={t("pension.expectedReturn")}
                     value={Math.round(formState.investmentReturn * 100)} 
                     onChange={(e) => setFormState(s => ({ ...s, investmentReturn: Number(e.target.value) / 100 }))}
                     className="w-full h-[4px] bg-[var(--fp-color-muted)] appearance-none cursor-pointer rounded-full outline-none
@@ -335,8 +338,10 @@ export function PensionPage() {
 
         {/* Сценарии расходования */}
         <div className="rounded-[24px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] overflow-hidden shadow-sm">
-          <div 
-            className="flex items-center justify-between p-6 cursor-pointer select-none transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+          <button
+            type="button"
+            aria-expanded={scenariosOpen}
+            className="flex w-full items-center justify-between p-6 cursor-pointer select-none text-left transition-colors hover:bg-[var(--fp-color-surface-hover)]"
             onClick={() => setScenariosOpen(!scenariosOpen)}
           >
             <div className="flex items-center gap-3">
@@ -344,7 +349,7 @@ export function PensionPage() {
               <h2 className="text-[17px] font-semibold">{t("pension.spendingScenarios")}</h2>
             </div>
             {scenariosOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
-          </div>
+          </button>
 
           {scenariosOpen && (
             <div className="px-6 pb-8 pt-0 grid gap-4">
@@ -361,9 +366,11 @@ export function PensionPage() {
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.saveCapitalDesc")}</p>
                   </div>
                 </div>
-                <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${spendingScenario === 'save' ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                  <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${spendingScenario === 'save' ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                </div>
+                <Switch
+                  checked={spendingScenario === 'save'}
+                  onCheckedChange={() => setSpendingScenario("save")}
+                  aria-label={t("pension.saveCapitalTitle")}
+                />
               </label>
 
               <label 
@@ -379,44 +386,47 @@ export function PensionPage() {
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.spendCapitalDesc")}</p>
                   </div>
                 </div>
-                <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${spendingScenario === 'spend' ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                  <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${spendingScenario === 'spend' ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                </div>
+                <Switch
+                  checked={spendingScenario === 'spend'}
+                  onCheckedChange={() => setSpendingScenario("spend")}
+                  aria-label={t("pension.spendCapitalTitle")}
+                />
               </label>
 
               <div className="grid gap-4 rounded-[18px] border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] p-4">
-                <label className="flex items-center gap-4 cursor-pointer" onClick={() => setFormState(s => ({ ...s, statePensionEnabled: !s.statePensionEnabled }))}>
-                  <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${formState.statePensionEnabled ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                    <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${formState.statePensionEnabled ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                  </div>
+                <label className="flex items-center gap-4 cursor-pointer">
+                  <Switch
+                    checked={formState.statePensionEnabled}
+                    onCheckedChange={(checked) => setFormState(s => ({ ...s, statePensionEnabled: checked }))}
+                  />
                   <div className="pt-0.5">
                     <h3 className="font-semibold text-[15px] mb-0.5 text-[var(--fp-color-foreground)]">{t("pension.useGovPensionTitle")}</h3>
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.useGovPensionDesc")}</p>
                   </div>
                 </label>
                 {formState.statePensionEnabled && (
-                  <div className="relative max-w-[360px]">
-                    <input
-                      type="number"
-                      value={formState.statePensionMonthly || ""}
-                      onChange={(e) => setFormState(s => ({ ...s, statePensionMonthly: Number(e.target.value) }))}
+                  <div className="max-w-[360px]">
+                    <MoneyInput
+                      value={formState.statePensionMonthly}
+                      onChange={(value) => setFormState(s => ({ ...s, statePensionMonthly: value }))}
                       placeholder={t("pensionFormat.enterAmount")}
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-20 outline-none font-medium text-sm transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
+                      suffix={t("pension.perMonth")}
+                      aria-label={t("pension.useGovPensionTitle")}
                     />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.perMonth")}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex items-center justify-end mt-2">
-                <button 
-                  className="h-[46px] px-8 rounded-full bg-[var(--fp-color-primary)] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2" 
+                <Button
+                  size="lg"
+                  className="px-8"
                   onClick={handleCalculate}
                   disabled={isUpdating || formState.retirementAge === ""}
                 >
                   {isUpdating && <Loader2 className="size-4 animate-spin" />}
                   {t("pension.calculate")}
-                </button>
+                </Button>
               </div>
             </div>
           )}

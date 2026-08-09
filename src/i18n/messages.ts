@@ -500,6 +500,9 @@ export const ru = {
     sourceCountFew: "{{count}} источника",
     sourceCountMany: "{{count}} источников",
     moreBelow: "ещё {{count}}",
+    validation: {
+      endBeforeStart: "Год окончания раньше года начала",
+    },
     howCalculated: "Как рассчитано",
     all: "Все",
     monthly: "Ежемесячные",
@@ -1361,6 +1364,9 @@ export const en = {
     sourceCountFew: "{{count}} sources",
     sourceCountMany: "{{count}} sources",
     moreBelow: "{{count}} more",
+    validation: {
+      endBeforeStart: "End year is before the start year",
+    },
     howCalculated: "How calculated",
     all: "All",
     monthly: "Monthly",
