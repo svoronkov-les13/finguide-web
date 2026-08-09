@@ -40,11 +40,18 @@ export type ApiMonthlyCashflowPoint = {
   capitalEndOfMonth: number;
 };
 
-export function mapScenarioComparisonForecasts(comparison: ApiScenarioComparison): FinancialPlan["scenarioForecasts"] {
+export function mapScenarioComparisonForecasts(
+  comparison: ApiScenarioComparison,
+  aliases?: Record<string, ScenarioId>,
+): FinancialPlan["scenarioForecasts"] {
   return Object.fromEntries(
     comparison.scenarios
-      .map((scenario) => [toScenarioId(scenario.scenarioId, 0), scenario.projection.map(mapForecastPoint)] as const)
-      .filter(([scenarioId]) => scenarioId === "base" || scenarioId === "optimistic" || scenarioId === "pessimistic"),
+      .map((scenario) => [
+        aliases?.[scenario.scenarioId] ?? toScenarioId(scenario.scenarioId, 0),
+        scenario.projection.map(mapForecastPoint),
+      ] as const)
+      .filter(([scenarioId]) =>
+        scenarioId === "base" || scenarioId === "optimistic" || scenarioId === "pessimistic" || scenarioId === "whatif"),
   );
 }
 

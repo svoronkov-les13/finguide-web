@@ -30,7 +30,6 @@ import type {
   Scenario as ApiScenario,
 } from "@/shared/api/generated/model";
 import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, MonthlyStatus, MonthlyTrackerEntry, PlanSummary, ScenarioId, TrackerEntry } from "@/types/finance";
-import { calculateForecast } from "@/engine/calculateForecast";
 import {
   baseExpenseFromCashflow,
   baseIncomeFromCashflow,
@@ -199,15 +198,25 @@ async function readBackendPlan() {
   return mapBackendPlan({ planState, dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
 }
 
+const WHATIF_SCENARIO_NAME = "Что если?";
+
+/** The persisted custom what-if scenario, if the plan has one (uuid id, fixed name). */
+function whatifScenarioUuid(scenarios: ApiScenario[]) {
+  const builtIns = new Set(["base", "optimistic", "pessimistic"]);
+  return scenarios.find((scenario) => scenario.name === WHATIF_SCENARIO_NAME && !builtIns.has(scenario.id))?.id;
+}
+
 async function readScenarioForecasts(scenarios: ApiScenario[]): Promise<FinancialPlan["scenarioForecasts"]> {
   const scenarioIds = ["base", "optimistic", "pessimistic"].filter((id) => scenarios.some((scenario) => scenario.id === id));
+  const whatifUuid = whatifScenarioUuid(scenarios);
+  if (whatifUuid) scenarioIds.push(whatifUuid);
   if (scenarioIds.length === 0) return undefined;
   const comparison = await backendJson<ApiScenarioComparison>("/scenarios/compare", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ scenarioIds }),
   }, "POST /scenarios/compare");
-  return mapScenarioComparisonForecasts(comparison);
+  return mapScenarioComparisonForecasts(comparison, whatifUuid ? { [whatifUuid]: "whatif" } : undefined);
 }
 
 function mapBackendPlan(input: {
@@ -257,11 +266,6 @@ function mapBackendPlan(input: {
     monthlyForecast,
     scenarioForecasts,
   };
-
-  if (activeScenario === "whatif") {
-    plan.forecast = calculateForecast(plan);
-    plan.dashboardSnapshot = mapDashboardSnapshot(dashboard, health, planState.pension, plan.forecast);
-  }
 
   lastFinancialPlan = plan;
   return plan;
@@ -556,14 +560,28 @@ export const backendPlanClient = {
     goalsCostDelta?: number;
     description?: string;
   }) {
-    const optimistic = await readBackendPlan();
-    optimistic.activeScenario = "whatif";
-    optimistic.scenarios = optimistic.scenarios.some((scenario) => scenario.id === "whatif")
-      ? optimistic.scenarios.map((scenario) => (scenario.id === "whatif" ? { ...scenario, ...input } : scenario))
-      : [...optimistic.scenarios, { id: "whatif", name: "Что если?", ...input }];
+    const toPct = (fraction: number | undefined) => Math.round((fraction ?? 0) * 1000) / 10;
+    const payload = {
+      name: WHATIF_SCENARIO_NAME,
+      description: input.description ?? "",
+      adjustments: {
+        incomeAdjPct: toPct(input.incomeGrowthDelta),
+        expenseAdjPct: toPct(input.expenseGrowthDelta),
+        returnAdjPct: toPct(input.returnDelta),
+        inflationAdjPct: toPct(input.inflationDelta),
+        retirementAgeShift: input.retirementAgeShift ?? 0,
+        goalsCostAdjPct: toPct(input.goalsCostDelta),
+      },
+    };
+    const scenarios = unwrapData<ApiScenario[]>(await getScenarios(await requestOptions()), "GET /scenarios");
+    const existingUuid = whatifScenarioUuid(scenarios);
+    await backendJson(existingUuid ? `/scenarios/${existingUuid}` : "/scenarios", {
+      method: existingUuid ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }, existingUuid ? "PATCH /scenarios/{id}" : "POST /scenarios");
     activeScenario = "whatif";
-    lastFinancialPlan = optimistic;
-    return optimistic;
+    return readBackendPlan();
   },
 
 
