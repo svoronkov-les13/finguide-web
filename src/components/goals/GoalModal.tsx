@@ -6,12 +6,11 @@ import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModalShell, InstructionAside } from "@/components/ui/modal-shell";
+import { GOAL_ICONS, GOAL_ICON_NAMES, goalIcon } from "@/components/goals/goalIcons";
 import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import * as Icons from "lucide-react";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 interface GoalFormData {
   id?: string;
@@ -176,12 +175,8 @@ export function GoalModal({
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.iconLabel")}</Label>
                     </div>
                     <div className="grid grid-cols-8 gap-3 md:gap-4 w-full justify-items-center">
-                      {[
-                        "Home", "Car", "Plane", "GraduationCap", "Heart", "Clock", "Briefcase", "Gem",
-                        "Shield", "Umbrella", "Gift", "Camera", "Laptop", "Palette", "Scissors", "Mountain",
-                        "Palmtree", "Trophy", "Wrench", "Sparkles", "PiggyBank", "Rocket", "RefreshCw", "Target"
-                      ].map((iconName) => {
-                        const Icon = iconMap[iconName] ?? Icons.Target;
+                      {GOAL_ICON_NAMES.map((iconName) => {
+                        const Icon = GOAL_ICONS[iconName] ?? goalIcon(undefined);
                         const isSelected = iconValue === iconName;
                         return (
                           <button

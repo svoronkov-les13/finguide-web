@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import * as Icons from "lucide-react";
 import { Eye, EyeOff, Lightbulb, Maximize2, Minimize2, X, ZoomIn, ZoomOut } from "lucide-react";
 import {
   Area,
@@ -23,8 +22,8 @@ import { useUiStore } from "@/store/uiStore";
 import type { ForecastPoint, FinancialPlan, Goal } from "@/types/finance";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useFormat } from "@/lib/useFormat";
+import { goalIcon } from "@/components/goals/goalIcons";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 const TypedBrush = Brush as any;
 
 function renderBrushTraveller(props: { x: number; y: number; width: number; height: number }) {
@@ -51,12 +50,12 @@ function renderBrushTraveller(props: { x: number; y: number; width: number; heig
 
 /* Style guide chart colors */
 const CHART_COLORS = {
-  income: "#3C8A75",
-  expenses: "#B05C50",
-  goals: "#5D8AA8",
-  savings: "#1A141D",
-  optimistic: "#3C8A75",
-  pessimistic: "#B05C50",
+  income: "var(--fp-chart-income)",
+  expenses: "var(--fp-chart-expense)",
+  goals: "var(--fp-chart-goal)",
+  savings: "var(--fp-chart-capital)",
+  optimistic: "var(--fp-chart-income)",
+  pessimistic: "var(--fp-chart-expense)",
   grid: "var(--fp-color-divider)",
   reference: "rgba(26, 20, 27, 0.14)",
   zeroLine: "rgba(26, 20, 27, 0.34)",
@@ -597,7 +596,7 @@ export function ForecastChart() {
                       return (
                         <g>
                           {sorted.map((goal, idx) => {
-                            const Ic = iconMap[goal.icon] ?? Icons.Target;
+                            const Ic = goalIcon(goal.icon);
                             const oy = idx * gap;
                             const clr = "var(--fp-color-neutral-80)";
                             return (

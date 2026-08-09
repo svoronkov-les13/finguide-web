@@ -14,9 +14,21 @@ interface FormatOptions {
   symbol?: string;
 }
 
+const numberFormatCache = new Map<string, Intl.NumberFormat>();
+
+function cachedNumberFormat(locale: string, maximumFractionDigits: number) {
+  const key = `${locale}:${maximumFractionDigits}`;
+  let format = numberFormatCache.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { maximumFractionDigits });
+    numberFormatCache.set(key, format);
+  }
+  return format;
+}
+
 /** Formats with an apostrophe as the group separator (1'498'432), keeping the locale decimal separator. */
 export function formatNumber(value: number, locale = "ru-RU", maximumFractionDigits = 0) {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits })
+  return cachedNumberFormat(locale, maximumFractionDigits)
     .formatToParts(value)
     .map((part) => (part.type === "group" ? "'" : part.value))
     .join("")
@@ -49,8 +61,15 @@ export function formatUsd(value: number, options: FormatOptions = {}) {
   return `${sign}${formatNumber(value, locale)} ${symbol}`;
 }
 
+const percentFormatCache = new Map<string, Intl.NumberFormat>();
+
 export function formatPercent(value: number, locale = "ru-RU") {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: 1, style: "percent" }).format(value);
+  let format = percentFormatCache.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, style: "percent" });
+    percentFormatCache.set(locale, format);
+  }
+  return format.format(value);
 }
 
 export function clamp(value: number, min: number, max: number) {

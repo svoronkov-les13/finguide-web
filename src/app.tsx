@@ -8,7 +8,18 @@ import { router } from "@/router";
 import { useUiStore } from "@/store/uiStore";
 
 export function App() {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // plan data is refreshed explicitly after mutations; tab focus must
+            // not re-trigger the whole multi-request plan pyramid
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

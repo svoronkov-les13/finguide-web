@@ -1,7 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
-import * as Icons from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Target } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
+import { goalIcon } from "@/components/goals/goalIcons";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -11,7 +12,6 @@ import type { Goal } from "@/types/finance";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useFormat } from "@/lib/useFormat";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 export function GoalsTable() {
   const { t } = useI18n();
@@ -47,7 +47,7 @@ export function GoalsTable() {
             type="button"
           >
             {t("goals.manageBtn")}
-            <Icons.ArrowRight className="size-3.5" />
+            <ArrowRight className="size-3.5" />
           </button>
         </div>
       </div>
@@ -59,7 +59,7 @@ export function GoalsTable() {
           <div className="table-header grid grid-cols-[1.5fr_1.8fr_120px_140px_120px] gap-4 border-b border-[var(--fp-color-border)] px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
             <span>{t("goals.colGoal")}</span>
             <span className="text-[var(--fp-color-foreground)] flex items-center gap-1.5 font-bold">
-              <Icons.Target className="size-3.5 text-[var(--fp-color-muted-foreground)]" />
+              <Target className="size-3.5 text-[var(--fp-color-muted-foreground)]" />
               {t("goals.totalLabel").toUpperCase()}: {formatRub(total)}
               <span className="text-[var(--fp-color-teal)] ml-1">● {counts.reachable}</span>
               <span className="text-[var(--fp-color-coral)]">● {counts.atRisk}</span>
@@ -82,7 +82,7 @@ export function GoalsTable() {
 function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const Icon = iconMap[goal.icon] ?? Icons.Target;
+  const Icon = goalIcon(goal.icon);
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const month = goal.targetMonth ?? 12;
@@ -95,7 +95,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
 
   const isReachable = isActuallyAchieved || goal.reachable;
   const statusColorClass = isReachable ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]";
-  const StatusIcon = isReachable ? Icons.CheckCircle2 : Icons.AlertTriangle;
+  const StatusIcon = isReachable ? CheckCircle2 : AlertTriangle;
 
   return (
     <div className="grid grid-cols-[1.5fr_1.8fr_120px_140px_120px] items-center gap-4 border-b border-[var(--fp-color-border)] px-2 py-4 text-sm last:border-b-0">
