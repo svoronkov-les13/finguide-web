@@ -158,7 +158,7 @@ export function GoalsPage() {
   const currentYear = now.getFullYear();
   const currentMonthIdx = now.getMonth();
   const monthsInYear = plan.settings.monthsInYear ?? 12;
-  const { totalProjectedCost: totalCost, accumulatedPercent } = goalPortfolioSummary(goals);
+  const { totalProjectedCost: totalCost } = goalPortfolioSummary(goals);
   
   const filteredGoals = goals.filter((goal) => {
     const matchesSearch = goal.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -230,10 +230,10 @@ export function GoalsPage() {
         title={t("goals.title")}
         actions={
           <>
-            <Button variant="secondary" className="max-[760px]:hidden">
+            <Button variant="secondary" size="sm" className="max-[760px]:hidden">
               {t("goals.viewExample")}
             </Button>
-            <Button variant="default" onClick={handleCreate}>
+            <Button variant="default" size="sm" onClick={handleCreate}>
               <Plus className="size-4 shrink-0" />
               {t("goals.addGoal")}
             </Button>
@@ -249,11 +249,6 @@ export function GoalsPage() {
             <span className="font-bold text-[var(--fp-color-foreground)] text-base">{formatRub(totalCost)}</span>
           </div>
           
-          <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm">
-            <span className="font-bold text-[var(--fp-color-foreground)] text-base">{accumulatedPercent}%</span>
-            <span className="font-medium text-[var(--fp-color-muted-foreground)]">{t("goals.totalAccumulated")}</span>
-          </div>
-
           <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm text-[var(--fp-color-muted-foreground)]">
             <Target className="size-4" />
             {formatGoalsCount(goals.length)}

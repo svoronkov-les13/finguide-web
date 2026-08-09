@@ -112,9 +112,9 @@ export function SummaryPage() {
               <span className="mt-1.5 size-1.5 rounded-full bg-[var(--fp-color-teal)] shrink-0" />
               <span>
                 {t("summary.insightGoalsSaved")}{" "}
-                <strong className="text-[var(--fp-color-teal)]">{formatRub(goalsSaved, { compact: true })}</strong>{" "}
+                <strong className="text-[var(--fp-color-teal)]">{formatRub(goalsSaved)}</strong>{" "}
                 {t("summary.outOf")}{" "}
-                <strong>{formatRub(goalsTotal, { compact: true })}</strong>{" "}
+                <strong>{formatRub(goalsTotal)}</strong>{" "}
                 ({Math.round(goalsPercent)}%).
               </span>
             </li>
@@ -168,12 +168,12 @@ export function SummaryPage() {
           </div>
           <div className="text-right shrink-0">
             <div className="text-[12px] text-[var(--fp-color-label)] mb-1">{t("summary.forecastCapital")}</div>
-            <div className="text-[24px] font-bold">{formatRub(plan.dashboardSnapshot?.pensionCapitalRub || 0, { compact: true })}</div>
+            <div className="text-[24px] font-bold">{formatRub(plan.dashboardSnapshot?.pensionCapitalRub || 0)}</div>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pt-5 border-t border-[var(--fp-color-border)]">
           {[
-            { label: t("summary.availableForPension"), value: `${formatRub(pensionAvailable, { compact: true })} / ${t("summary.yr")}` },
+            { label: t("summary.availableForPension"), value: `${formatRub(pensionAvailable)} / ${t("summary.yr")}` },
             { label: t("summary.retirementAt"), value: `${plan.settings.retirementAge} ${t("summary.years")}` },
             { label: t("summary.desiredExpenses"), value: `${formatRub(plan.settings.targetMonthlySpend)} / ${t("summary.mo")}` },
             { label: t("summary.returnInflation"), value: `${formatPercent(plan.settings.investmentReturn)} / ${formatPercent(plan.settings.inflation)}` },
@@ -363,9 +363,9 @@ function GoalsTable({
             <div className="font-semibold">{t("summary.currentEstimate")}</div>
             <div className="flex items-center gap-3">
               <span className="text-[var(--fp-color-label)]">
-                {t("summary.saved")}: {formatRub(goalsSaved, { compact: true })} ({Math.round(goalsPercent)}%)
+                {t("summary.saved")}: {formatRub(goalsSaved)} ({Math.round(goalsPercent)}%)
               </span>
-              <span className="font-bold text-[15px]">{formatRub(goalsTotal, { compact: true })}</span>
+              <span className="font-bold text-[15px]">{formatRub(goalsTotal)}</span>
             </div>
           </div>
           <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--fp-color-border)]">

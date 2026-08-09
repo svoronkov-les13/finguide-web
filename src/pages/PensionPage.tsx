@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, Che
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
+import { Segmented } from "@/components/ui/segmented";
 import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
@@ -16,15 +17,26 @@ import type { ForecastPoint, PlanSettings } from "@/types/finance";
 export function buildPensionChartData(
   forecast: Array<Pick<ForecastPoint, "age" | "capital" | "year">>,
   settings: Pick<PlanSettings, "currentAge" | "pensionCalculationYears">,
+  retirementAge?: number,
 ) {
-  const maxAge = settings.currentAge + settings.pensionCalculationYears;
-  return forecast
-    .filter((point) => point.age <= maxAge)
-    .map((point) => ({
-      age: point.age,
-      capital: point.capital,
-      year: point.year,
-    }));
+  const points = forecast.map((point) => ({
+    age: point.age,
+    capital: point.capital,
+    year: point.year,
+  }));
+
+  if (retirementAge == null) {
+    const maxAge = settings.currentAge + settings.pensionCalculationYears;
+    return points.filter((point) => point.age <= maxAge);
+  }
+
+  // Window: five years before retirement, then either five years past the
+  // capital zero-crossing or age 100 when the capital never runs out.
+  const minAge = retirementAge - 5;
+  const zeroCross = points.find((point) => point.age >= retirementAge && point.capital <= 0);
+  const maxAge = zeroCross ? zeroCross.age + 5 : 100;
+  const windowed = points.filter((point) => point.age >= minAge && point.age <= maxAge);
+  return windowed.length > 0 ? windowed : points;
 }
 
 type PensionFormState = {
@@ -89,7 +101,7 @@ export function PensionPage() {
   const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
   const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital || 2373688270;
   
-  const chartData = buildPensionChartData(plan.pensionForecast ?? plan.forecast, settings);
+  const chartData = buildPensionChartData(plan.pensionForecast ?? plan.forecast, settings, effectiveRetirementAge);
 
   const isCapitalSufficient = retirementCapital >= targetCapital;
 
@@ -178,20 +190,16 @@ export function PensionPage() {
                         {retirementMode === "age" ? t("pension.years") : t("pension.year", { defaultValue: "год" })}
                       </span>
                     </div>
-                    <div className="flex bg-[#f3f4f6] rounded-[14px] p-1 items-center h-[44px]">
-                      <button 
-                        onClick={() => setRetirementMode("age")}
-                        className={`h-full px-3.5 rounded-[10px] text-[13px] font-medium transition-colors ${retirementMode === "age" ? "bg-white shadow-sm text-[var(--fp-color-foreground)]" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.age")}
-                      </button>
-                      <button 
-                        onClick={() => setRetirementMode("year")}
-                        className={`h-full px-3.5 rounded-[10px] text-[13px] font-medium transition-colors ${retirementMode === "year" ? "bg-white shadow-sm text-[var(--fp-color-foreground)]" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.year")}
-                      </button>
-                    </div>
+                    <Segmented
+                      value={retirementMode}
+                      onChange={setRetirementMode}
+                      grow={false}
+                      className="h-[44px] shrink-0"
+                      options={[
+                        { value: "age", label: t("pension.age") },
+                        { value: "year", label: t("pension.year") },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -416,7 +424,7 @@ export function PensionPage() {
                 {t("pension.targetCapitalIntro", { amount: formatRub(targetMonthlySpend) })}
               </p>
               <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital, { compact: true })}</span>
+                <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital)}</span>
                 <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">

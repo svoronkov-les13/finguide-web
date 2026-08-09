@@ -56,7 +56,7 @@ export function GoalsTable() {
       <div className="scrollbar-thin overflow-x-auto">
         <div className="min-w-[900px]">
           {/* Table Header Row */}
-          <div className="table-header grid grid-cols-[1.5fr_1.8fr_120px_140px_160px_120px] gap-4 border-b border-[var(--fp-color-border)] px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
+          <div className="table-header grid grid-cols-[1.5fr_1.8fr_120px_140px_120px] gap-4 border-b border-[var(--fp-color-border)] px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">
             <span>{t("goals.colGoal")}</span>
             <span className="text-[var(--fp-color-foreground)] flex items-center gap-1.5 font-bold">
               <Icons.Target className="size-3.5 text-[var(--fp-color-muted-foreground)]" />
@@ -66,7 +66,6 @@ export function GoalsTable() {
             </span>
             <span className="text-center">{t("goals.colYearHeader")}</span>
             <span className="text-right">{t("goals.colCostHeader")}</span>
-            <span>{t("goals.colSavedHeader")}</span>
             <span className="text-right">{t("goals.colStatus")}</span>
           </div>
 
@@ -99,7 +98,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const StatusIcon = isReachable ? Icons.CheckCircle2 : Icons.AlertTriangle;
 
   return (
-    <div className="grid grid-cols-[1.5fr_1.8fr_120px_140px_160px_120px] items-center gap-4 border-b border-[var(--fp-color-border)] px-2 py-4 text-sm last:border-b-0">
+    <div className="grid grid-cols-[1.5fr_1.8fr_120px_140px_120px] items-center gap-4 border-b border-[var(--fp-color-border)] px-2 py-4 text-sm last:border-b-0">
       <div className="flex min-w-0 items-center gap-2.5 font-semibold">
         <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--fp-color-teal)]/35 bg-[var(--fp-color-teal-soft)] text-[var(--fp-color-teal)]">
           <Icon className="size-3.5" />
@@ -107,11 +106,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
         <span className="truncate text-[var(--fp-color-foreground)]">{goal.name}</span>
       </div>
       <div className="min-w-0 pr-4 flex flex-col justify-center">
-        <div className="flex items-baseline justify-between mb-1">
-          <span className="font-semibold text-[13px]">
-            {formatRub(progress.saved, { compact: false })}
-            <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-normal"> / {formatRub(progress.cost)}</span>
-          </span>
+        <div className="flex items-baseline justify-end mb-1">
           <span className="text-[10px] text-[var(--fp-color-muted-foreground)] font-medium">{progress.percent}%</span>
         </div>
         <ProgressBar value={progress.percent} size="sm" variant={progress.percent > 0 ? "success" : "default"} className="h-1.5" />
@@ -125,9 +120,6 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
       <div className="text-right">
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost)}</div>
         <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: String(Math.round(goal.growth * 100)) })}</div>
-      </div>
-      <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">
-        {formatRub(progress.saved, { compact: false })}
       </div>
       <div className="flex justify-end">
         <Badge variant={isReachable ? "success" : "danger"} className={`bg-transparent border-none ${statusColorClass} shadow-none px-0 gap-1.5 font-semibold text-xs`}>

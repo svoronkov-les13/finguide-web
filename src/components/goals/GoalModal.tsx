@@ -5,6 +5,8 @@ import { useForm, useWatch } from "react-hook-form";
 import type { Goal } from "@/types/finance";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ModalShell, InstructionAside } from "@/components/ui/modal-shell";
+import { Segmented } from "@/components/ui/segmented";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as Icons from "lucide-react";
@@ -95,29 +97,28 @@ export function GoalModal({
   const { errors } = form.formState;
 
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content
-          className="fixed inset-0 z-50 flex items-stretch justify-center data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-          style={{ padding: "32px 0" }}
-          onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false); }}
-        >
-          <div className="mx-auto flex w-full max-w-[1100px] overflow-hidden rounded-[32px] bg-[var(--fp-color-card)] shadow-elevated border border-[var(--fp-color-border)]" onClick={(e) => e.stopPropagation()}>
-            {/* Left Column: Form */}
-            <div className="flex flex-1 flex-col overflow-y-auto">
-              <div className="flex items-center justify-between p-8 md:p-10 pb-4">
-                <Dialog.Title className="text-xl font-bold text-[var(--fp-color-foreground)]">
-                  {initialData?.id ? t("goals.editGoal") : t("goals.newGoal")}
-                </Dialog.Title>
-                <Dialog.Close asChild>
-                  <button className="grid size-8 place-items-center rounded-full border border-[var(--fp-color-border)] text-[var(--fp-color-muted-foreground)] transition-colors hover:bg-[var(--fp-color-surface-hover)] hover:text-[var(--fp-color-foreground)]">
-                    <X className="size-4" />
-                  </button>
-                </Dialog.Close>
-              </div>
-
-              <div className="flex-1 px-8 md:px-10 pb-6">
+    <ModalShell
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={initialData?.id ? t("goals.editGoal") : t("goals.newGoal")}
+      aside={
+        <InstructionAside
+          label={t("goals.modalInstructionTitle")}
+          intro={t("goals.modalInstructionDesc")}
+          steps={[
+            { title: t("goals.modalStep1Title"), description: t("goals.modalStep1Desc") },
+            { title: t("goals.modalStep2Title"), description: t("goals.modalStep2Desc") },
+            { title: t("goals.colType"), description: t("goals.modalStep3Desc") },
+            { title: t("goals.iconLabel"), description: t("goals.modalStep4Desc") },
+            { title: t("goals.modalStep5Title"), description: t("goals.modalStep5Desc") },
+            { title: t("goals.modalStep6Title"), description: t("goals.modalStep6Desc") },
+          ]}
+          tipsLabel={t("goals.tipsTitle")}
+          tips={[t("goals.modalTip1"), t("goals.modalTip2"), t("goals.modalTip3")]}
+        />
+      }
+    >
+      <div className="flex-1 px-8 md:px-10 pb-6">
                 <form id="goal-form" onSubmit={handleSubmit} className="grid gap-6">
                   {/* Name */}
                   <div className="grid gap-2">
@@ -158,30 +159,14 @@ export function GoalModal({
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.colType")}</Label>
-                      <div className="flex h-12 items-center gap-1 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] p-1">
-                        <button
-                          type="button"
-                          onClick={() => form.setValue("type", "onetime")}
-                          className={`flex-1 rounded-full text-sm font-semibold transition-all h-full ${
-                            typeValue === "onetime"
-                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
-                              : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
-                          }`}
-                        >
-                          {t("goals.typeOneTimeShort")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => form.setValue("type", "periodic")}
-                          className={`flex-1 rounded-full text-sm font-semibold transition-all h-full ${
-                            typeValue === "periodic"
-                              ? "bg-[var(--fp-color-surface-hover)] text-[var(--fp-color-foreground)] shadow-sm font-bold"
-                              : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]"
-                          }`}
-                        >
-                          {t("goals.typePeriodicShort")}
-                        </button>
-                      </div>
+                      <Segmented
+                        value={typeValue}
+                        onChange={(next) => form.setValue("type", next)}
+                        options={[
+                          { value: "onetime", label: t("goals.typeOneTimeShort") },
+                          { value: "periodic", label: t("goals.typePeriodicShort") },
+                        ]}
+                      />
                     </div>
                   </div>
 
@@ -216,8 +201,8 @@ export function GoalModal({
                     </div>
                   </div>
 
-                  {/* Year, Month, and Saved */}
-                  <div className="grid grid-cols-[140px_160px_1fr] items-end gap-4">
+                  {/* Year and Month */}
+                  <div className="grid grid-cols-[140px_1fr] items-end gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.targetYear")}</Label>
                       <Input
@@ -245,18 +230,6 @@ export function GoalModal({
                             ))}
                           </SelectContent>
                         </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.saved")}</Label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        {...form.register("saved", {
-                          valueAsNumber: true,
-                          min: { value: 0, message: t("goals.validation.savedMin") },
-                        })}
-                      />
-                      {errors.saved && <span className="text-xs text-[var(--fp-color-danger)]">{errors.saved.message}</span>}
                     </div>
                   </div>
 
@@ -318,13 +291,13 @@ export function GoalModal({
                   <div className="flex items-center gap-4 pt-4">
                     <button
                       type="submit"
-                      className="inline-flex h-12 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-8 text-sm font-semibold text-white transition hover:opacity-90"
+                      className="inline-flex h-10 items-center gap-2 rounded-full bg-[var(--fp-color-foreground)] px-6 text-sm font-semibold text-white transition hover:opacity-90"
                     >
                       <Check className="size-4" />
                       {initialData?.id ? t("goals.saveBtnEdit") : t("goals.saveBtnAdd")}
                     </button>
                     <Dialog.Close asChild>
-                      <button type="button" className="inline-flex h-12 items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-6 text-sm font-semibold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)]">
+                      <button type="button" className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-transparent px-5 text-sm font-semibold text-[var(--fp-color-foreground)] transition hover:bg-[var(--fp-color-surface-hover)]">
                         <X className="size-4" />
                         {t("cashflow.cancel")}
                       </button>
@@ -354,7 +327,7 @@ export function GoalModal({
                           <button
                             type="button"
                             onClick={() => setIsDeleting(true)}
-                            className="inline-flex h-12 place-items-center rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-6 text-sm font-semibold text-[var(--fp-color-danger)] transition-colors hover:bg-[var(--fp-color-danger)]/20"
+                            className="inline-flex h-10 place-items-center rounded-full border border-[var(--fp-color-danger)]/20 bg-[var(--fp-color-danger)]/10 px-5 text-sm font-semibold text-[var(--fp-color-danger)] transition-colors hover:bg-[var(--fp-color-danger)]/20"
                           >
                             {t("goals.deleteGoalBtn")}
                           </button>
@@ -364,88 +337,7 @@ export function GoalModal({
                   </div>
                 </form>
               </div>
-            </div>
-
-            {/* Right Column: Instructions */}
-            <div className="hidden w-[360px] shrink-0 flex-col bg-[var(--fp-color-surface)] p-8 md:p-10 md:flex border-l border-[var(--fp-color-border)] overflow-y-auto">
-              <div className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--fp-color-foreground)]">
-                <Icons.BookOpen className="size-4" />
-                <span>{t("goals.modalInstructionTitle")}</span>
-              </div>
-              <p className="text-xs leading-relaxed text-[var(--fp-color-muted-foreground)] mb-8">
-                {t("goals.modalInstructionDesc")}
-              </p>
-              
-              <ul className="flex flex-col gap-6 text-xs text-[var(--fp-color-muted-foreground)] mb-10">
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">1</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.modalStep1Title")}</strong>
-                    {t("goals.modalStep1Desc")}
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">2</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.modalStep2Title")}</strong>
-                    {t("goals.modalStep2Desc")}
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">3</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.colType")}</strong>
-                    {t("goals.modalStep3Desc")}
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">4</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.iconLabel")}</strong>
-                    {t("goals.modalStep4Desc")}
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">5</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.modalStep5Title")}</strong>
-                    {t("goals.modalStep5Desc")}
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <div className="grid size-5 shrink-0 place-items-center rounded-full bg-[var(--fp-color-foreground)] text-[10px] font-bold text-white">6</div>
-                  <div>
-                    <strong className="text-[var(--fp-color-foreground)] block mb-0.5">{t("goals.modalStep6Title")}</strong>
-                    {t("goals.modalStep6Desc")}
-                  </div>
-                </li>
-              </ul>
-
-              <div className="mt-auto">
-                <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--fp-color-muted-foreground)]">
-                  <Icons.Lightbulb className="size-4" />
-                  <span>{t("goals.tipsTitle")}</span>
-                </div>
-                <ul className="flex flex-col gap-2.5">
-                  <li className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--fp-color-primary)] opacity-50" />
-                    <span>{t("goals.modalTip1")}</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--fp-color-primary)] opacity-50" />
-                    <span>{t("goals.modalTip2")}</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--fp-color-primary)] opacity-50" />
-                    <span>{t("goals.modalTip3")}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </ModalShell>
   );
 }
 

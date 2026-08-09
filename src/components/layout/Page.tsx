@@ -27,7 +27,12 @@ export function Page({ children, className, bottom = true, scrollable = true }: 
         "mx-auto w-full page-enter",
         scrollable
           ? cn("grid gap-6", bottom && "pb-12")
-          : cn("flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0", bottom && "pb-12"),
+          : cn(
+              // On small screens the app shell scrolls natively, so the fixed
+              // viewport height would squeeze stacked columns into one screen.
+              "flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0 max-[760px]:h-auto max-[760px]:min-h-0",
+              bottom && "pb-12",
+            ),
         PAGE_MAX_W,
         className,
       )}

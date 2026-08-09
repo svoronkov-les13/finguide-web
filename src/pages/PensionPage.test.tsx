@@ -140,4 +140,30 @@ describe("PensionPage", () => {
       { age: 36, year: 2027, capital: 200 },
     ]);
   });
+
+  it("windows the chart from five years before retirement to five years past zero-crossing", () => {
+    const forecast = Array.from({ length: 41 }, (_, i) => ({
+      age: 50 + i,
+      year: 2026 + i,
+      capital: 50 + i < 70 ? 1_000_000 : 0,
+    }));
+
+    const chartData = buildPensionChartData(forecast, { currentAge: 50, pensionCalculationYears: 50 }, 60);
+
+    expect(chartData[0]?.age).toBe(55);
+    expect(chartData.at(-1)?.age).toBe(75);
+  });
+
+  it("extends the chart to age 100 when the capital never runs out", () => {
+    const forecast = Array.from({ length: 61 }, (_, i) => ({
+      age: 50 + i,
+      year: 2026 + i,
+      capital: 1_000_000,
+    }));
+
+    const chartData = buildPensionChartData(forecast, { currentAge: 50, pensionCalculationYears: 60 }, 60);
+
+    expect(chartData[0]?.age).toBe(55);
+    expect(chartData.at(-1)?.age).toBe(100);
+  });
 });

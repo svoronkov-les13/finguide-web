@@ -83,9 +83,10 @@ export function unwrapData<T>(response: ApiResponse, operation: string): T {
     if (response.status === 401) {
       clearAuthSession();
     }
-    const envelope = response.data as { error?: { message?: string } } | undefined;
+    const envelope = response.data as { error?: { message?: string; requestId?: string } } | undefined;
     const detail = envelope?.error?.message ? `: ${envelope.error.message}` : "";
-    throw new Error(`${operation} failed with HTTP ${response.status}${detail}`);
+    const requestId = envelope?.error?.requestId ? ` [trace_id: ${envelope.error.requestId}]` : "";
+    throw new Error(`${operation} failed with HTTP ${response.status}${detail}${requestId}`);
   }
 
   const envelope = response.data as { data?: T; error?: { message?: string } } | undefined;
@@ -151,7 +152,12 @@ async function readBackendPlan() {
     getPlansPlanIdAnalyticsCashflow(planId, { years: settings.dashboardCalculationYears }, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
-    getPlansPlanIdAnalyticsCashflow(planId, { years: settings.pensionCalculationYears }, await requestOptions()).then((response) =>
+    getPlansPlanIdAnalyticsCashflow(
+      planId,
+      // The pension chart may extend to age 100, so fetch at least that far.
+      { years: Math.max(settings.pensionCalculationYears, 100 - settings.currentAge + 1) },
+      await requestOptions(),
+    ).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
     backendJson<ApiMonthlyCashflowPoint[]>(`/plans/${planId}/analytics/cashflow/monthly`, undefined, "GET /analytics/cashflow/monthly")
@@ -342,6 +348,7 @@ function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions |
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
+    continueAfterRetirement: source.continueAfterRetirement ?? true,
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
   };
@@ -555,6 +562,7 @@ function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.startYe
     frequency: input.frequency === "onetime" ? "one_time" : input.frequency,
     growthType: input.growthType === "inflation" ? "inflation" : "manual",
     growthPct: input.growth * 100,
+    continueAfterRetirement: input.continueAfterRetirement ?? true,
     growthSchedule,
     startDate: startDateFromYear(input.startYear),
     endDate: endDateFromYear(effectiveEndYear),
@@ -564,8 +572,11 @@ function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.startYe
 }
 
 function baseExpenseFromCashflow(input: Cashflow, fallbackEndYear?: number): ExpenseItem {
+  // continueAfterRetirement is income-only; keep it out of expense payloads
+  const base: Partial<IncomeSource> = { ...baseIncomeFromCashflow(input, fallbackEndYear) };
+  delete base.continueAfterRetirement;
   return {
-    ...baseIncomeFromCashflow(input, fallbackEndYear),
+    ...(base as Omit<IncomeSource, "continueAfterRetirement">),
     growthLabel: input.growth === 0 ? "Без индексации" : `${Math.round(input.growth * 1000) / 10}%`,
     budgetClass: "needs",
   };
