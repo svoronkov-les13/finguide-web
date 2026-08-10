@@ -22,9 +22,7 @@ interface CashflowFormData {
   startYear: number;
   endYear: number | null;
   growth: number;
-  /** Average yearly growth in percent, shown in the "custom" mode input. */
-  growthPercent: number;
-  growthType: "inflation" | "custom" | "ranges";
+  growthType: "inflation" | "ranges";
   growthRanges: { startYear: number; endYear: number | null; growthPercent: number }[];
   continueAfterRetirement: boolean;
   enabled: boolean;
@@ -88,13 +86,20 @@ export function CashflowModal({
         startYear: initialData?.startYear ?? startYear,
         endYear: initialData?.endYear ?? null,
         growth: initialData?.growth || 0,
-        growthPercent: Math.round((initialData?.growth || 0) * 1000) / 10,
-        growthType: initialData?.growthRanges?.length
+        growthType: initialData?.growthRanges?.length || (initialData?.growthType === "custom" && (initialData?.growth || 0) !== 0)
           ? "ranges"
+          : "inflation",
+        // A record saved with a single manual percent shows up as one range,
+        // so the value stays visible and editable
+        growthRanges: initialData?.growthRanges?.length
+          ? initialData.growthRanges
           : initialData?.growthType === "custom" && (initialData?.growth || 0) !== 0
-            ? "custom"
-            : "inflation",
-        growthRanges: initialData?.growthRanges || [],
+            ? [{
+                startYear: initialData?.startYear ?? startYear,
+                endYear: initialData?.endYear ?? null,
+                growthPercent: Math.round((initialData?.growth || 0) * 1000) / 10,
+              }]
+            : [],
         continueAfterRetirement: initialData?.continueAfterRetirement ?? true,
         type: type,
         frequency: initialData?.frequency || "monthly",
@@ -103,13 +108,10 @@ export function CashflowModal({
   }, [open, initialData, plan, type, form]);
 
   const handleSubmit = form.handleSubmit((data) => {
-    const { growthPercent, ...submitData } = data;
+    const submitData = { ...data };
     if (data.growthType === "inflation") {
       submitData.growthRanges = [];
       submitData.growth = 0; // Using default inflation logic
-    } else if (data.growthType === "custom") {
-      submitData.growthRanges = [];
-      submitData.growth = (growthPercent || 0) / 100;
     }
     onSubmit(submitData);
   });
@@ -264,49 +266,11 @@ export function CashflowModal({
                       <Switch
                         checked={growthType === "inflation"}
                         onCheckedChange={(checked) =>
-                          form.setValue("growthType", checked ? "inflation" : "custom")
+                          form.setValue("growthType", checked ? "inflation" : "ranges")
                         }
                       />
                     </div>
 
-                    {/* Custom average growth percent */}
-                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">
-                            {t(`cashflow.growthCustom_${type}` as Parameters<typeof t>[0])}
-                          </div>
-                          <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
-                            {t(`cashflow.growthCustomDesc_${type}` as Parameters<typeof t>[0])}
-                          </div>
-                        </div>
-                        <Switch
-                          checked={growthType === "custom"}
-                          onCheckedChange={(checked) =>
-                            form.setValue("growthType", checked ? "custom" : "inflation")
-                          }
-                        />
-                      </div>
-
-                      {growthType === "custom" && (
-                        <div className="mt-5 border-t border-[var(--fp-color-border)] pt-5">
-                          <div className="grid max-w-[220px] gap-1.5">
-                            <Label className="text-xs text-[var(--fp-color-muted-foreground)]">{t("cashflow.growthCustomLabel")}</Label>
-                            <div className="relative">
-                              <Input
-                                type="number"
-                                step="0.1"
-                                {...form.register("growthPercent", { valueAsNumber: true })}
-                                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-4 pr-8 text-center text-sm font-semibold text-[var(--fp-color-foreground)] outline-none transition-all focus:border-[var(--fp-color-border-strong)]"
-                              />
-                              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">
-                                %
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
 
                     {/* Range growth */}
                     <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 p-5">

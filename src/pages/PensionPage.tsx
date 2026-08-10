@@ -14,6 +14,7 @@ import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
+import { formatNumber } from "@/lib/utils";
 import { pensionExpenseComparison } from "@/domain/pensionComparison";
 import type { ForecastPoint, PlanSettings } from "@/types/finance";
 
@@ -267,9 +268,9 @@ export function PensionPage() {
                   </label>
                   <div className="relative">
                     <input 
-                      type="number" 
+                      type="text" 
                       readOnly 
-                      value={Math.round(futureMonthlySpend)} 
+                      value={formatNumber(Math.round(futureMonthlySpend))} 
                       className="h-12 w-full rounded-2xl border border-transparent bg-[var(--fp-color-input-disabled)] pl-5 pr-16 outline-none font-medium text-sm text-[var(--fp-color-label)] opacity-70" 
                     />
                     <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-label)]">{t("pension.perMonth")}</span>
