@@ -17,6 +17,7 @@ export function MoneyInput({
   onChange,
   placeholder,
   disabled,
+  autoFocus,
   className,
   suffix,
   "aria-label": ariaLabel,
@@ -25,6 +26,7 @@ export function MoneyInput({
   onChange: (value: number) => void;
   placeholder?: string;
   disabled?: boolean;
+  autoFocus?: boolean;
   className?: string;
   suffix?: string;
   "aria-label"?: string;
@@ -49,6 +51,7 @@ export function MoneyInput({
         aria-label={ariaLabel}
         placeholder={placeholder}
         disabled={disabled}
+        autoFocus={autoFocus}
         value={text}
         onChange={(event) => {
           const digits = event.target.value.replace(/\D/g, "").slice(0, 15);

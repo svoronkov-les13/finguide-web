@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, BookOpen, CircleDollarSign, Info, SlidersHorizontal, TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { useNavigate } from "@tanstack/react-router";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
@@ -16,6 +16,7 @@ import { settingsSchema, type SettingsFormValues } from "@/forms/settingsSchema"
 import { useI18n } from "@/i18n/I18nProvider";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { useFormat } from "@/lib/useFormat";
+import { MoneyInput } from "@/components/ui/money-input";
 
 export function GeneralDataPage() {
   const { t } = useI18n();
@@ -103,7 +104,13 @@ export function GeneralDataPage() {
                 <Input value={t("general.rubCurrencyName")} readOnly />
               </Field>
               <Field label={t("general.startingCapital")} hint={t("general.startingCapitalHint")} error={form.formState.errors.startingCapital?.message}>
-                <Input type="number" {...form.register("startingCapital")} />
+                <Controller
+                  control={form.control}
+                  name="startingCapital"
+                  render={({ field }) => (
+                    <MoneyInput value={Number(field.value) || 0} onChange={field.onChange} />
+                  )}
+                />
               </Field>
             </div>
           </FormSection>
