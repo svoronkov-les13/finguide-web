@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useI18n } from "@/i18n/I18nProvider";
 import { navigation, systemRoutes, tools } from "@/routes";
 import { useUiStore } from "@/store/uiStore";
@@ -22,7 +23,7 @@ export function CommandPalette() {
           <Search className="size-4 text-muted-foreground" />
           <Input className="border-0 bg-transparent px-0 shadow-none focus:ring-0" autoFocus placeholder={t("command.placeholder")} />
         </div>
-        <div className="max-h-[360px] overflow-auto p-2">
+        <ScrollArea className="max-h-[360px]" contentClassName="p-2">
           {routes.map((route) => {
             const Icon = route.icon;
             return (
@@ -39,7 +40,7 @@ export function CommandPalette() {
               </Link>
             );
           })}
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

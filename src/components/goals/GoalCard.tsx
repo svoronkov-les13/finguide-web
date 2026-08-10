@@ -1,12 +1,11 @@
-import { CheckCircle2, ChevronDown, GripVertical, Target, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, GripVertical, TriangleAlert } from "lucide-react";
 import type { Goal } from "@/types/finance";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/useFormat";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
-import * as Icons from "lucide-react";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 export function GoalCard({
   item,
@@ -19,7 +18,7 @@ export function GoalCard({
 }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const Icon = iconMap[item.icon] ?? Target;
+  const Icon = GOAL_ICONS[item.icon] ?? GOAL_ICONS.Target;
   
   const progress = goalProgress(item);
   const isActuallyAchieved = goalIsActuallyAchieved(item);
@@ -79,13 +78,8 @@ export function GoalCard({
       {/* Right: Amounts */}
       <div className="shrink-0 text-right pl-2">
         <div className={cn("font-semibold text-[var(--fp-color-foreground)] num", compact ? "text-xs" : "text-[15px]")}>
-          {formatRub(item.cost, { compact: true })}
+          {formatRub(item.cost)}
         </div>
-        {!compact && (
-          <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)] num">
-            {formatRub(progress.saved, { compact: true })} {t("goals.saved").toLowerCase()}
-          </div>
-        )}
       </div>
 
       {/* Chevron */}

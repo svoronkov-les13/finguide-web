@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveMonthlyActuals, yearActualTotal, yearDeviation } from "@/engine/resolveTracker";
-import type { MonthData } from "@/pages/trackingMonths";
+import type { MonthData } from "@/domain/trackingMonths";
 
 function makeMonth(id: number, status: MonthData["status"], amount?: number): MonthData {
   return {

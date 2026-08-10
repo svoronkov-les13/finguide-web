@@ -6,9 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
-import { trackingYearSummary } from "@/pages/trackingYearSummary";
+import { TrackingSkeleton } from "@/components/ui/skeleton";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/domain/trackingGoal";
+import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/domain/trackingMonths";
+import { trackingYearSummary } from "@/domain/trackingYearSummary";
 import type { MonthlyStatus } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
 
@@ -196,6 +197,8 @@ export function TrackingPage() {
 
   // Fetch tracker data for the currently viewed year (merges into shared cache)
   useMonthlyTrackerForYear(viewYear);
+
+  if (!plan) return <TrackingSkeleton />;
 
   const activeGoal = trackingActiveGoal(plan?.goals);
   const activeGoalProgress = activeGoal ? trackingGoalProgress(activeGoal) : null;

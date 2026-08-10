@@ -38,9 +38,15 @@
   /* --- Neutral tints --- */
   --fp-color-neutral-80: #5b6776;
   --fp-color-muted: #dfddd8;
-  --fp-color-muted-foreground: #807688;
+  --fp-color-muted-foreground: #6d6375;
   --fp-color-label: #5b6776;
-  --fp-color-text-muted: #b5adb8;
+  --fp-color-text-muted: #8f8694;
+
+  /* Chart semantics: the single source for income/expense/goal hues in graphics */
+  --fp-chart-income: #3c8a75;
+  --fp-chart-expense: #b05c50;
+  --fp-chart-goal: #5d8aa8;
+  --fp-chart-capital: #1a141d;
   --fp-color-border: rgba(26, 20, 30, 0.12);
   --fp-color-border-strong: rgba(26, 20, 30, 0.18);
   --fp-color-border-hover: rgba(26, 20, 30, 0.22);

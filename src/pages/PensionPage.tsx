@@ -2,29 +2,44 @@
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Page, PageHeader } from "@/components/layout/Page";
-import { CheckCircle2, ChevronUp, Info, Settings2, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronUp, Info, Settings2, TriangleAlert, WalletCards, ShieldCheck, ChevronDown, Shield, Loader2 } from "lucide-react";
 import { usePlanQuery, useUpdateSettingsMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/money-input";
+import { Segmented } from "@/components/ui/segmented";
+import { Switch } from "@/components/ui/switch";
 import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
-import { pensionExpenseComparison } from "@/pages/pensionComparison";
+import { pensionExpenseComparison } from "@/domain/pensionComparison";
 import type { ForecastPoint, PlanSettings } from "@/types/finance";
 
 export function buildPensionChartData(
   forecast: Array<Pick<ForecastPoint, "age" | "capital" | "year">>,
   settings: Pick<PlanSettings, "currentAge" | "pensionCalculationYears">,
+  retirementAge?: number,
 ) {
-  const maxAge = settings.currentAge + settings.pensionCalculationYears;
-  return forecast
-    .filter((point) => point.age <= maxAge)
-    .map((point) => ({
-      age: point.age,
-      capital: point.capital,
-      year: point.year,
-    }));
+  const points = forecast.map((point) => ({
+    age: point.age,
+    capital: point.capital,
+    year: point.year,
+  }));
+
+  if (retirementAge == null) {
+    const maxAge = settings.currentAge + settings.pensionCalculationYears;
+    return points.filter((point) => point.age <= maxAge);
+  }
+
+  // Window: five years before retirement, then either five years past the
+  // capital zero-crossing or age 100 when the capital never runs out.
+  const minAge = retirementAge - 5;
+  const zeroCross = points.find((point) => point.age >= retirementAge && point.capital <= 0);
+  const maxAge = zeroCross ? zeroCross.age + 5 : 100;
+  const windowed = points.filter((point) => point.age >= minAge && point.age <= maxAge);
+  return windowed.length > 0 ? windowed : points;
 }
 
 type PensionFormState = {
@@ -86,12 +101,19 @@ export function PensionPage() {
   });
   const futureMonthlySpend = expenseComparison.plannedMonthlyAtRetirement;
   
-  const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub || 80330049;
-  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital || 2373688270;
-  
-  const chartData = buildPensionChartData(plan.pensionForecast ?? plan.forecast, settings);
+  const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub ?? null;
+  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital ?? null;
 
-  const isCapitalSufficient = retirementCapital >= targetCapital;
+  const pensionPoints = plan.pensionForecast ?? plan.forecast;
+  const chartData = buildPensionChartData(pensionPoints, settings, effectiveRetirementAge);
+
+  const depletionPoint = pensionPoints.find(
+    (point) => point.age >= effectiveRetirementAge && point.capital <= 0,
+  );
+  const depletionAge = depletionPoint?.age ?? null;
+
+  const isCapitalSufficient = targetCapital != null && retirementCapital != null && retirementCapital >= targetCapital;
+  const hasResults = targetCapital != null;
 
   const handleCalculate = () => {
     if (formState.retirementAge === "") return;
@@ -117,8 +139,10 @@ export function PensionPage() {
       <div className="grid gap-4 mt-2">
         {/* Параметры расчёта */}
         <div className="rounded-[24px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] overflow-hidden shadow-sm">
-          <div 
-            className="flex items-center justify-between p-6 cursor-pointer select-none transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+          <button
+            type="button"
+            aria-expanded={paramsOpen}
+            className="flex w-full items-center justify-between p-6 cursor-pointer select-none text-left transition-colors hover:bg-[var(--fp-color-surface-hover)]"
             onClick={() => setParamsOpen(!paramsOpen)}
           >
             <div className="flex items-center gap-3">
@@ -126,7 +150,7 @@ export function PensionPage() {
               <h2 className="text-[17px] font-semibold">{t("pension.calcParams")}</h2>
             </div>
             {paramsOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
-          </div>
+          </button>
 
           {paramsOpen && (
             <div className="px-6 pb-8 grid gap-10 pt-2">
@@ -178,20 +202,16 @@ export function PensionPage() {
                         {retirementMode === "age" ? t("pension.years") : t("pension.year", { defaultValue: "год" })}
                       </span>
                     </div>
-                    <div className="flex bg-[#f3f4f6] rounded-[14px] p-1 items-center h-[44px]">
-                      <button 
-                        onClick={() => setRetirementMode("age")}
-                        className={`h-full px-3.5 rounded-[10px] text-[13px] font-medium transition-colors ${retirementMode === "age" ? "bg-white shadow-sm text-[var(--fp-color-foreground)]" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.age")}
-                      </button>
-                      <button 
-                        onClick={() => setRetirementMode("year")}
-                        className={`h-full px-3.5 rounded-[10px] text-[13px] font-medium transition-colors ${retirementMode === "year" ? "bg-white shadow-sm text-[var(--fp-color-foreground)]" : "text-[var(--fp-color-label)] hover:text-[var(--fp-color-foreground)]"}`}
-                      >
-                        {t("pension.year")}
-                      </button>
-                    </div>
+                    <Segmented
+                      value={retirementMode}
+                      onChange={setRetirementMode}
+                      grow={false}
+                      className="h-[44px] shrink-0"
+                      options={[
+                        { value: "age", label: t("pension.age") },
+                        { value: "year", label: t("pension.year") },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -210,16 +230,13 @@ export function PensionPage() {
               <div className="grid grid-cols-3 gap-6 max-[800px]:grid-cols-1">
                 <div>
                   <label className="text-[13px] text-[var(--fp-color-label)] mb-2 block leading-tight">{t("pension.desiredExpenses")}</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      value={formState.targetMonthlySpend || ""} 
-                      onChange={(e) => setFormState(s => ({ ...s, targetMonthlySpend: Number(e.target.value) }))}
-                      placeholder={t("pensionFormat.enterAmount")} 
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-16 outline-none font-medium text-sm placeholder:text-[var(--fp-color-text-muted)] transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30" 
-                    />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.perMonth")}</span>
-                  </div>
+                  <MoneyInput
+                    value={formState.targetMonthlySpend}
+                    onChange={(value) => setFormState(s => ({ ...s, targetMonthlySpend: value }))}
+                    placeholder={t("pensionFormat.enterAmount")}
+                    suffix={t("pension.perMonth")}
+                    aria-label={t("pension.desiredExpenses")}
+                  />
                   <div className="text-[12px] text-[var(--fp-color-label)] flex items-center gap-1.5 mt-2">
                     <Info className="size-[14px] shrink-0" /> <span className="leading-tight">{t("pension.currentPricesNote")}</span>
                   </div>
@@ -274,6 +291,7 @@ export function PensionPage() {
                     type="range" 
                     min="0" 
                     max="25" 
+                    aria-label={t("pension.expectedReturn")}
                     value={Math.round(formState.investmentReturn * 100)} 
                     onChange={(e) => setFormState(s => ({ ...s, investmentReturn: Number(e.target.value) / 100 }))}
                     className="w-full h-[4px] bg-[var(--fp-color-muted)] appearance-none cursor-pointer rounded-full outline-none
@@ -320,8 +338,10 @@ export function PensionPage() {
 
         {/* Сценарии расходования */}
         <div className="rounded-[24px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] overflow-hidden shadow-sm">
-          <div 
-            className="flex items-center justify-between p-6 cursor-pointer select-none transition-colors hover:bg-[var(--fp-color-surface-hover)]"
+          <button
+            type="button"
+            aria-expanded={scenariosOpen}
+            className="flex w-full items-center justify-between p-6 cursor-pointer select-none text-left transition-colors hover:bg-[var(--fp-color-surface-hover)]"
             onClick={() => setScenariosOpen(!scenariosOpen)}
           >
             <div className="flex items-center gap-3">
@@ -329,7 +349,7 @@ export function PensionPage() {
               <h2 className="text-[17px] font-semibold">{t("pension.spendingScenarios")}</h2>
             </div>
             {scenariosOpen ? <ChevronUp className="size-5 text-[var(--fp-color-muted-foreground)]" /> : <ChevronDown className="size-5 text-[var(--fp-color-muted-foreground)]" />}
-          </div>
+          </button>
 
           {scenariosOpen && (
             <div className="px-6 pb-8 pt-0 grid gap-4">
@@ -346,9 +366,11 @@ export function PensionPage() {
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.saveCapitalDesc")}</p>
                   </div>
                 </div>
-                <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${spendingScenario === 'save' ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                  <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${spendingScenario === 'save' ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                </div>
+                <Switch
+                  checked={spendingScenario === 'save'}
+                  onCheckedChange={() => setSpendingScenario("save")}
+                  aria-label={t("pension.saveCapitalTitle")}
+                />
               </label>
 
               <label 
@@ -364,44 +386,47 @@ export function PensionPage() {
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.spendCapitalDesc")}</p>
                   </div>
                 </div>
-                <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${spendingScenario === 'spend' ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                  <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${spendingScenario === 'spend' ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                </div>
+                <Switch
+                  checked={spendingScenario === 'spend'}
+                  onCheckedChange={() => setSpendingScenario("spend")}
+                  aria-label={t("pension.spendCapitalTitle")}
+                />
               </label>
 
               <div className="grid gap-4 rounded-[18px] border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] p-4">
-                <label className="flex items-center gap-4 cursor-pointer" onClick={() => setFormState(s => ({ ...s, statePensionEnabled: !s.statePensionEnabled }))}>
-                  <div className={`relative inline-flex h-7 w-[46px] shrink-0 items-center rounded-full transition-colors ${formState.statePensionEnabled ? 'bg-[var(--fp-color-primary)]' : 'bg-[var(--fp-color-muted)]'}`}>
-                    <span className={`inline-block size-[22px] transform rounded-full bg-[var(--fp-color-card)] shadow-sm transition-transform ${formState.statePensionEnabled ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
-                  </div>
+                <label className="flex items-center gap-4 cursor-pointer">
+                  <Switch
+                    checked={formState.statePensionEnabled}
+                    onCheckedChange={(checked) => setFormState(s => ({ ...s, statePensionEnabled: checked }))}
+                  />
                   <div className="pt-0.5">
                     <h3 className="font-semibold text-[15px] mb-0.5 text-[var(--fp-color-foreground)]">{t("pension.useGovPensionTitle")}</h3>
                     <p className="text-[13px] text-[var(--fp-color-label)]">{t("pension.useGovPensionDesc")}</p>
                   </div>
                 </label>
                 {formState.statePensionEnabled && (
-                  <div className="relative max-w-[360px]">
-                    <input
-                      type="number"
-                      value={formState.statePensionMonthly || ""}
-                      onChange={(e) => setFormState(s => ({ ...s, statePensionMonthly: Number(e.target.value) }))}
+                  <div className="max-w-[360px]">
+                    <MoneyInput
+                      value={formState.statePensionMonthly}
+                      onChange={(value) => setFormState(s => ({ ...s, statePensionMonthly: value }))}
                       placeholder={t("pensionFormat.enterAmount")}
-                      className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] pl-5 pr-20 outline-none font-medium text-sm transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
+                      suffix={t("pension.perMonth")}
+                      aria-label={t("pension.useGovPensionTitle")}
                     />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-[var(--fp-color-muted-foreground)]">{t("pension.perMonth")}</span>
                   </div>
                 )}
               </div>
 
               <div className="flex items-center justify-end mt-2">
-                <button 
-                  className="h-[46px] px-8 rounded-full bg-[var(--fp-color-primary)] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2" 
+                <Button
+                  size="lg"
+                  className="px-8"
                   onClick={handleCalculate}
                   disabled={isUpdating || formState.retirementAge === ""}
                 >
                   {isUpdating && <Loader2 className="size-4 animate-spin" />}
                   {t("pension.calculate")}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -416,8 +441,9 @@ export function PensionPage() {
                 {t("pension.targetCapitalIntro", { amount: formatRub(targetMonthlySpend) })}
               </p>
               <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital, { compact: true })}</span>
-                <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
+                <span className="text-[44px] leading-none font-bold tracking-tight">
+                  {targetCapital != null ? formatRub(targetCapital) : "—"}
+                </span>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
                 <span>{t("pension.targetYearInfo", { year: retirementYear, age: effectiveRetirementAge })}</span>
@@ -427,10 +453,12 @@ export function PensionPage() {
                 <span>{t("pension.annualReturn", { percent: formatPercent(settings.pensionInvestmentReturn) })}</span>
               </div>
             </div>
-            <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>
-              <CheckCircle2 className="size-[22px]" />
-              <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
-            </div>
+            {hasResults && (
+              <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>
+                {isCapitalSufficient ? <CheckCircle2 className="size-[22px]" /> : <TriangleAlert className="size-[22px]" />}
+                <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
+              </div>
+            )}
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -478,10 +506,23 @@ export function PensionPage() {
             {/* На сколько хватит капитала? */}
             <Card className="p-8 flex flex-col justify-center text-center rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
               <h3 className="text-[15px] font-semibold text-[var(--fp-color-label)] mb-6">{t("pension.howLongTitle")}</h3>
-              <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-teal)]">{t("pension.hundredPlusYears")}</div>
-              <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
-                {t("pension.capitalPreserved")}
-              </p>
+              {depletionAge == null ? (
+                <>
+                  <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-teal)]">{t("pension.hundredPlusYears")}</div>
+                  <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
+                    {t("pension.capitalPreserved")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-coral)]">
+                    {t("pension.lastsYears", { years: Math.max(0, depletionAge - effectiveRetirementAge) })}
+                  </div>
+                  <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
+                    {t("pension.depletesAtAge", { age: depletionAge })}
+                  </p>
+                </>
+              )}
             </Card>
           </div>
 

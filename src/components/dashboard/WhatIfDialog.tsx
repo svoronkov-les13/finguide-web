@@ -7,6 +7,7 @@ import { useSaveWhatIfScenarioMutation } from "@/api/planQueries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { whatIfSchema, type WhatIfFormValues } from "@/forms/settingsSchema";
 import { cn } from "@/lib/utils";
 
@@ -103,7 +104,8 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
           </DialogHeader>
         </div>
 
-        <form className="scrollbar-thin max-h-[calc(100vh-186px)] overflow-auto px-7 py-6 max-[760px]:px-5" onSubmit={onSubmit}>
+        <ScrollArea className="max-h-[calc(100vh-186px)]">
+        <form className="px-7 py-6 max-[760px]:px-5" onSubmit={onSubmit}>
           <SectionTitle>{t("dashboard.whatifBase")}</SectionTitle>
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             {Object.values(presets).map((preset) => (
@@ -147,6 +149,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
             </Button>
           </div>
         </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

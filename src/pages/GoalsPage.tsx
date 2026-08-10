@@ -12,9 +12,10 @@ import { goalProgress } from "@/components/goals/goalProgress";
 import { GoalEmptyState } from "@/components/goals/GoalEmptyState";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalPortfolioSummary, goalYearSummary } from "@/pages/goalsYearSummary";
-import { compareGoalTargetOrder, trackingActiveGoal } from "@/pages/trackingGoal";
+import { goalPortfolioSummary, goalYearSummary } from "@/domain/goalsYearSummary";
+import { compareGoalTargetOrder, trackingActiveGoal } from "@/domain/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
+import { downloadPlanWorkbook } from "@/api/exportPlan";
 
 export function GoalsPage() {
   const { t, locale } = useI18n();
@@ -158,7 +159,7 @@ export function GoalsPage() {
   const currentYear = now.getFullYear();
   const currentMonthIdx = now.getMonth();
   const monthsInYear = plan.settings.monthsInYear ?? 12;
-  const { totalProjectedCost: totalCost, accumulatedPercent } = goalPortfolioSummary(goals);
+  const { totalProjectedCost: totalCost } = goalPortfolioSummary(goals);
   
   const filteredGoals = goals.filter((goal) => {
     const matchesSearch = goal.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -204,8 +205,9 @@ export function GoalsPage() {
   };
 
   const handleModalSubmit = (data: Partial<Goal>) => {
+    const closeModal = () => setModalOpen(false);
     if (data.id) {
-      updateGoal.mutate({ id: data.id, patch: data });
+      updateGoal.mutate({ id: data.id, patch: data }, { onSuccess: closeModal });
     } else {
       addGoal.mutate({
         name: data.name || t("goals.newGoal"),
@@ -217,9 +219,8 @@ export function GoalsPage() {
         growth: data.growth || 0,
         reachable: data.reachable ?? true,
         type: data.type || "onetime",
-      });
+      }, { onSuccess: closeModal });
     }
-    setModalOpen(false);
   };
 
   return (
@@ -230,10 +231,7 @@ export function GoalsPage() {
         title={t("goals.title")}
         actions={
           <>
-            <Button variant="secondary" className="max-[760px]:hidden">
-              {t("goals.viewExample")}
-            </Button>
-            <Button variant="default" onClick={handleCreate}>
+            <Button variant="default" size="sm" onClick={handleCreate}>
               <Plus className="size-4 shrink-0" />
               {t("goals.addGoal")}
             </Button>
@@ -249,11 +247,6 @@ export function GoalsPage() {
             <span className="font-bold text-[var(--fp-color-foreground)] text-base">{formatRub(totalCost)}</span>
           </div>
           
-          <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm">
-            <span className="font-bold text-[var(--fp-color-foreground)] text-base">{accumulatedPercent}%</span>
-            <span className="font-medium text-[var(--fp-color-muted-foreground)]">{t("goals.totalAccumulated")}</span>
-          </div>
-
           <div className="flex items-center gap-2 rounded-full border border-[var(--fp-color-border)] bg-[var(--fp-color-background)] px-5 py-3 text-sm text-[var(--fp-color-muted-foreground)]">
             <Target className="size-4" />
             {formatGoalsCount(goals.length)}
@@ -266,7 +259,11 @@ export function GoalsPage() {
             </div>
           )}
 
-          <Button variant="secondary" className="px-5 py-3 h-auto ml-auto rounded-full font-medium">
+          <Button
+            variant="secondary"
+            className="px-5 py-3 h-auto ml-auto rounded-full font-medium"
+            onClick={() => plan && downloadPlanWorkbook(plan)}
+          >
             <Download className="size-4 mr-2" />
             {t("goals.export")}
           </Button>
@@ -478,7 +475,7 @@ export function GoalsPage() {
         initialData={editingItem}
         defaultGrowth={plan?.settings.inflation}
         onSubmit={handleModalSubmit}
-        onDelete={(id) => deleteGoal.mutate(id)}
+        onDelete={(id) => deleteGoal.mutate(id, { onSuccess: () => setModalOpen(false) })}
       />
     </Page>
   );

@@ -21,8 +21,9 @@ function useCurrentPlanQueryKey() {
 }
 
 export function updatePlanCacheAndRefresh(queryClient: QueryClient, queryKey: readonly unknown[], plan: FinancialPlan) {
+  // The mutation already returns a freshly re-read plan — a follow-up
+  // invalidate would immediately refetch the same multi-request pyramid.
   queryClient.setQueryData(queryKey, plan);
-  queryClient.invalidateQueries({ queryKey });
 }
 
 export function usePlanQuery() {

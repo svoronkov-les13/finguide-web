@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/pages/trackingMonths";
+import { makeEmptyYear, monthFormTarget, shouldShowEmptyAmountPlaceholder } from "@/domain/trackingMonths";
 
 describe("makeEmptyYear", () => {
   it("marks past months in the current year as pending (not missed) when no data exists", () => {

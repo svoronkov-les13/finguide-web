@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pensionExpenseComparison } from "@/pages/pensionComparison";
+import { pensionExpenseComparison } from "@/domain/pensionComparison";
 import type { Cashflow } from "@/types/finance";
 
 function cashflow(overrides: Partial<Cashflow>): Cashflow {

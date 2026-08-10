@@ -1,17 +1,8 @@
-import ExcelJS from "exceljs";
-import * as XLSX from "xlsx";
 import type { FinancialPlan } from "@/types/finance";
 
-export function createPlanWorkbookWithSheetJs(plan: FinancialPlan) {
-  const workbook = XLSX.utils.book_new();
-  const forecastSheet = XLSX.utils.json_to_sheet(plan.forecast);
-  const goalsSheet = XLSX.utils.json_to_sheet(plan.goals);
-  XLSX.utils.book_append_sheet(workbook, forecastSheet, "Forecast");
-  XLSX.utils.book_append_sheet(workbook, goalsSheet, "Goals");
-  return XLSX.write(workbook, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
-}
-
-export async function createPlanWorkbookWithExcelJs(plan: FinancialPlan) {
+export async function createPlanWorkbook(plan: FinancialPlan): Promise<ArrayBuffer> {
+  // exceljs is heavy, so it stays out of the main bundle until export is clicked
+  const { default: ExcelJS } = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Finguide";
 
@@ -38,4 +29,15 @@ export async function createPlanWorkbookWithExcelJs(plan: FinancialPlan) {
   goals.addRows(plan.goals);
 
   return workbook.xlsx.writeBuffer();
+}
+
+export async function downloadPlanWorkbook(plan: FinancialPlan, fileName = "finguide-plan.xlsx") {
+  const buffer = await createPlanWorkbook(plan);
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 }
