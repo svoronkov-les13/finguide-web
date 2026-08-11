@@ -146,9 +146,6 @@ export function GeneralDataPage() {
               <Field label={t("general.birthYear")} hint={t("general.birthYearHint")} error={form.formState.errors.birthYear?.message}>
                 <Input type="number" {...form.register("birthYear", { valueAsNumber: true })} />
               </Field>
-              <Field label={t("general.pensionCalculationYears")} hint={t("general.pensionCalculationYearsHint")} error={form.formState.errors.pensionCalculationYears?.message}>
-                <Input type="number" {...form.register("pensionCalculationYears", { valueAsNumber: true })} />
-              </Field>
               <Field label={t("general.dashboardCalculationYears")} hint={t("general.dashboardCalculationYearsHint")} error={form.formState.errors.dashboardCalculationYears?.message}>
                 <Input type="number" {...form.register("dashboardCalculationYears", { valueAsNumber: true })} />
               </Field>
@@ -158,6 +155,7 @@ export function GeneralDataPage() {
           {/* Hidden technical fields */}
           <input type="hidden" {...form.register("startYear", { valueAsNumber: true })} />
           <input type="hidden" {...form.register("monthsInYear", { valueAsNumber: true })} />
+          <input type="hidden" {...form.register("pensionCalculationYears", { valueAsNumber: true })} />
 
           <div className="flex flex-wrap gap-3">
             <Button type="submit" size="lg" disabled={updateSettings.isPending} className="px-8 font-semibold">
