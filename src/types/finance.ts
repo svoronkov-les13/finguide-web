@@ -32,8 +32,6 @@ export interface Cashflow {
   growth: number;
   growthType?: "inflation" | "custom" | "ranges";
   growthRanges?: GrowthRange[];
-  /** Incomes only: keep flowing after retirement age. Defaults to true. */
-  continueAfterRetirement?: boolean;
   enabled: boolean;
   category: string;
 }

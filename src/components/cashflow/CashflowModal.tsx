@@ -24,7 +24,6 @@ interface CashflowFormData {
   growth: number;
   growthType: "inflation" | "ranges";
   growthRanges: { startYear: number; endYear: number | null; growthPercent: number }[];
-  continueAfterRetirement: boolean;
   enabled: boolean;
   type: "income" | "expense";
   frequency: "monthly" | "yearly" | "onetime";
@@ -100,7 +99,6 @@ export function CashflowModal({
                 growthPercent: Math.round((initialData?.growth || 0) * 1000) / 10,
               }]
             : [],
-        continueAfterRetirement: initialData?.continueAfterRetirement ?? true,
         type: type,
         frequency: initialData?.frequency || "monthly",
       } as CashflowFormData);
@@ -122,7 +120,12 @@ export function CashflowModal({
 
   const frequencyValue = useWatch({ control: form.control, name: "frequency" });
   const currencyValue = useWatch({ control: form.control, name: "currency" });
-  const continueAfterRetirementValue = useWatch({ control: form.control, name: "continueAfterRetirement" });
+  const endYearValue = useWatch({ control: form.control, name: "endYear" });
+
+  // Retirement is a milestone of the model, not a field on the record: the form
+  // only states where the entered period sits relative to it.
+  const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : null;
+  const runsPastRetirement = retirementYear != null && (endYearValue == null || endYearValue > retirementYear);
 
   const growthRangesValues = useWatch({ control: form.control, name: "growthRanges" });
 
@@ -207,7 +210,7 @@ export function CashflowModal({
                   </div>
 
                   {/* Dates */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 items-start gap-4">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.startDate")}</Label>
                       <Input
@@ -228,26 +231,18 @@ export function CashflowModal({
                         })}
                       />
                       {form.formState.errors.endYear && (
-                        <span className="text-xs text-[var(--fp-color-danger)]">{form.formState.errors.endYear.message}</span>
+                        <span className="px-5 text-xs text-[var(--fp-color-danger)]">{form.formState.errors.endYear.message}</span>
+                      )}
+                      {retirementYear != null && (
+                        <span className="px-5 text-xs text-[var(--fp-color-muted-foreground)]">
+                          {runsPastRetirement
+                            ? t("cashflow.retirementHintBeyond", { year: String(retirementYear) })
+                            : t("cashflow.retirementHint", { year: String(retirementYear) })}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Continue after retirement (incomes only) */}
-                  {type === "income" && (
-                    <div className="flex items-center justify-between rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/60 p-5">
-                      <div>
-                        <div className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.continueAfterRetirement")}</div>
-                        <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
-                          {t("cashflow.continueAfterRetirementDesc")}
-                        </div>
-                      </div>
-                      <Switch
-                        checked={continueAfterRetirementValue ?? true}
-                        onCheckedChange={(checked) => form.setValue("continueAfterRetirement", checked)}
-                      />
-                    </div>
-                  )}
 
                   {/* Growth */}
                   <div className="grid gap-4">
