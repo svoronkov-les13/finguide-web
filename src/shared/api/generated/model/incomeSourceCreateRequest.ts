@@ -18,8 +18,6 @@ export interface IncomeSourceCreateRequest {
      * @maximum 100
      */
   growthPct: number;
-  /** Whether this income keeps flowing after retirement age is reached. Defaults to true (income continues). */
-  continueAfterRetirement?: boolean;
   startDate: string;
   /** @nullable */
   endDate?: string | null;

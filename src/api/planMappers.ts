@@ -126,7 +126,6 @@ export function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssump
     growth: source.growthPct / 100,
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
-    continueAfterRetirement: source.continueAfterRetirement ?? true,
     enabled: true,
     category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
   };
@@ -340,7 +339,6 @@ export function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.
     frequency: input.frequency === "onetime" ? "one_time" : input.frequency,
     growthType: input.growthType === "inflation" ? "inflation" : "manual",
     growthPct: input.growth * 100,
-    continueAfterRetirement: input.continueAfterRetirement ?? true,
     growthSchedule,
     startDate: startDateFromYear(input.startYear),
     endDate: endDateFromYear(effectiveEndYear),
@@ -350,11 +348,8 @@ export function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.
 }
 
 export function baseExpenseFromCashflow(input: Cashflow, fallbackEndYear?: number): ExpenseItem {
-  // continueAfterRetirement is income-only; keep it out of expense payloads
-  const base: Partial<IncomeSource> = { ...baseIncomeFromCashflow(input, fallbackEndYear) };
-  delete base.continueAfterRetirement;
   return {
-    ...(base as Omit<IncomeSource, "continueAfterRetirement">),
+    ...baseIncomeFromCashflow(input, fallbackEndYear),
     growthLabel: input.growth === 0 ? "Без индексации" : `${Math.round(input.growth * 1000) / 10}%`,
     budgetClass: "needs",
   };

@@ -33,7 +33,6 @@ export function ScrollArea({
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const [scrolling, setScrolling] = useState(false);
 
-  const thumbFrame = useRef(0);
   const measureThumb = useCallback(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -53,36 +52,27 @@ export function ScrollArea({
     });
   }, []);
 
-  const updateThumb = useCallback(() => {
-    if (thumbFrame.current) return;
-    thumbFrame.current = requestAnimationFrame(() => {
-      thumbFrame.current = 0;
-      measureThumb();
-    });
-  }, [measureThumb]);
-
   const handleScroll = useCallback(() => {
-    updateThumb();
+    measureThumb();
     if (!autoHide) return;
     setScrolling(true);
     clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => setScrolling(false), 800);
-  }, [autoHide, updateThumb]);
+  }, [autoHide, measureThumb]);
 
   useEffect(() => {
-    updateThumb();
+    measureThumb();
     // let layout and children settle before the first accurate measure
-    const timer = setTimeout(updateThumb, 50);
-    const observer = new ResizeObserver(updateThumb);
+    const timer = setTimeout(measureThumb, 50);
+    const observer = new ResizeObserver(measureThumb);
     if (viewportRef.current) observer.observe(viewportRef.current);
     if (contentRef.current) observer.observe(contentRef.current);
     return () => {
       clearTimeout(timer);
       clearTimeout(idleTimer.current);
-      cancelAnimationFrame(thumbFrame.current);
       observer.disconnect();
     };
-  }, [updateThumb]);
+  }, [measureThumb]);
 
   return (
     <div className={cn("relative min-h-0", className)}>
@@ -97,14 +87,14 @@ export function ScrollArea({
       </div>
       {edges.top && (
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-10"
-          style={{ background: `linear-gradient(to bottom, ${fadeColor}, transparent)` }}
+          className="pointer-events-none absolute inset-x-0 top-0 h-12"
+          style={{ background: `linear-gradient(to bottom, ${fadeColor} 35%, transparent)` }}
         />
       )}
       {edges.bottom && (
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-10"
-          style={{ background: `linear-gradient(to top, ${fadeColor}, transparent)` }}
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+          style={{ background: `linear-gradient(to top, ${fadeColor} 35%, transparent)` }}
         />
       )}
       {thumb && (

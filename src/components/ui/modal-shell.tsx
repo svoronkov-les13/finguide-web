@@ -58,7 +58,7 @@ export function ModalShell({
                   </button>
                 </Dialog.Close>
               </div>
-              <ScrollArea className="flex-1" autoHide>
+              <ScrollArea className="flex-1">
                 {children}
               </ScrollArea>
             </div>
@@ -68,7 +68,6 @@ export function ModalShell({
                 className="hidden w-[360px] shrink-0 border-l border-[var(--fp-color-border)] bg-[var(--fp-color-surface)] md:block"
                 contentClassName="p-8 md:p-10"
                 fadeColor="var(--fp-color-surface)"
-                autoHide
               >
                 {aside}
               </ScrollArea>

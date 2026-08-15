@@ -40,10 +40,12 @@ export function Segmented<T extends string>({
           disabled={disabled}
           onClick={() => onChange(option.value)}
           className={cn(
-            "h-full rounded-full px-4 text-sm font-semibold transition-all",
+            // Border and font weight stay constant across states: adding them
+            // only to the active segment resizes it and shifts its neighbours.
+            "h-full rounded-full border border-transparent px-4 text-sm font-semibold transition-colors",
             grow && "flex-1",
             option.value === value
-              ? "border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] font-bold text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)]"
+              ? "border-[var(--fp-color-border)] bg-[var(--fp-color-card)] text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)]"
               : "text-[var(--fp-color-muted-foreground)] hover:text-[var(--fp-color-foreground)]",
           )}
         >

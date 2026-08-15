@@ -2586,11 +2586,6 @@
             "minimum": 0,
             "maximum": 100
           },
-          "continueAfterRetirement": {
-            "type": "boolean",
-            "description": "Whether this income keeps flowing after retirement age is reached. Defaults to true (income continues).",
-            "default": true
-          },
           "startDate": {
             "type": "string",
             "format": "date"
@@ -3766,11 +3761,6 @@
             "minimum": 0,
             "maximum": 100
           },
-          "continueAfterRetirement": {
-            "type": "boolean",
-            "description": "Whether this income keeps flowing after retirement age is reached. Defaults to true (income continues).",
-            "default": true
-          },
           "startDate": {
             "type": "string",
             "format": "date"
@@ -3812,11 +3802,6 @@
             "type": "number",
             "minimum": 0,
             "maximum": 100
-          },
-          "continueAfterRetirement": {
-            "type": "boolean",
-            "description": "Whether this income keeps flowing after retirement age is reached. Defaults to true (income continues).",
-            "default": true
           },
           "startDate": {
             "type": "string",
