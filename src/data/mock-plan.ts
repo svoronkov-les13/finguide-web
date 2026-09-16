@@ -1,4 +1,23 @@
-import type { FinancialPlan } from "@/types/finance";
+import { calculatePensionRequiredCapital } from "@/engine/calculatePensionRequiredCapital";
+import type { FinancialPlan, PlanSettings } from "@/types/finance";
+
+const mockSettings: PlanSettings = {
+  startYear: 2024,
+  birthYear: 1993,
+  currentAge: 33,
+  retirementAge: 50,
+  pensionCalculationYears: 17,
+  dashboardCalculationYears: 12,
+  monthsInYear: 12,
+  inflation: 0.031,
+  investmentReturn: 0.06,
+  pensionInvestmentReturn: 0.09,
+  startingCapital: 2_500_000,
+  targetMonthlySpend: 10_000,
+  withdrawalStrategy: "spend_down_30y",
+  statePensionEnabled: true,
+  statePensionMonthly: 22_000,
+};
 
 export const mockPlan: FinancialPlan = {
   owner: {
@@ -7,23 +26,8 @@ export const mockPlan: FinancialPlan = {
     planName: "Основной план",
     tier: "Pro",
   },
-  settings: {
-    startYear: 2024,
-    birthYear: 1993,
-    currentAge: 33,
-    retirementAge: 50,
-    pensionCalculationYears: 17,
-    dashboardCalculationYears: 12,
-    monthsInYear: 12,
-    inflation: 0.031,
-    investmentReturn: 0.06,
-    pensionInvestmentReturn: 0.09,
-    startingCapital: 2_500_000,
-    targetMonthlySpend: 10_000,
-    withdrawalStrategy: "spend_down_30y",
-    statePensionEnabled: true,
-    statePensionMonthly: 22_000,
-  },
+  settings: mockSettings,
+  pensionProjection: calculatePensionRequiredCapital(mockSettings),
   activeScenario: "base",
   dashboardSnapshot: {
     recommendationYear: 2076,

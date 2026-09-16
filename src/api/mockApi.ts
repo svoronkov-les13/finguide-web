@@ -1,5 +1,6 @@
 import { mockPlan } from "@/data/mock-plan";
 import { calculateForecast } from "@/engine/calculateForecast";
+import { calculatePensionRequiredCapital } from "@/engine/calculatePensionRequiredCapital";
 import type { Cashflow, EditablePlanPatch, FinancialPlan, Goal, PlanSummary, ScenarioId, TrackerEntry } from "@/types/finance";
 
 const STORAGE_KEY = "finguide.mock-plan.v1";
@@ -23,7 +24,10 @@ function writeStoredPlan(plan: FinancialPlan) {
   }
 }
 
-let db: FinancialPlan = readStoredPlan() ?? structuredClone(mockPlan);
+const storedPlan = readStoredPlan();
+let db: FinancialPlan = storedPlan
+  ? { ...storedPlan, pensionProjection: calculatePensionRequiredCapital(storedPlan.settings) }
+  : structuredClone(mockPlan);
 let mockPlanCreatedAt = new Date().toISOString();
 
 function commit(next: FinancialPlan, options: { preserveDashboardSnapshot?: boolean } = {}) {
@@ -36,7 +40,11 @@ function commit(next: FinancialPlan, options: { preserveDashboardSnapshot?: bool
 }
 
 function snapshot() {
-  return structuredClone({ ...db, forecast: calculateForecast(db) });
+  return structuredClone({
+    ...db,
+    pensionProjection: db.pensionProjection ?? calculatePensionRequiredCapital(db.settings),
+    forecast: calculateForecast(db),
+  });
 }
 
 function assertExists<T>(item: T | undefined, message: string): T {
@@ -99,7 +107,12 @@ export const mockApi = {
 
   async updateSettings(patch: EditablePlanPatch) {
     await wait();
-    return commit({ ...db, settings: { ...db.settings, ...patch } });
+    const settings = { ...db.settings, ...patch };
+    return commit({
+      ...db,
+      settings,
+      pensionProjection: calculatePensionRequiredCapital(settings),
+    });
   },
 
   async updateCashflow(id: string, patch: Partial<Cashflow>) {

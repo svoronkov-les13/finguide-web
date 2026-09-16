@@ -26,6 +26,13 @@ const mockPlan = vi.hoisted(() => ({
     statePensionMonthly: 0,
   },
   dashboardSnapshot: { pensionCapitalRub: 80_330_049 },
+  pensionProjection: {
+    preserveCapital: {
+      requiredCapitalAtRetirement: 40_000_000 as number | null,
+      requiredCapitalStatus: "calculated" as "calculated" | "non_positive_real_return",
+    },
+    spendDown: { requiredCapitalAtRetirement: 25_000_000 },
+  },
   cashflows: [],
   forecast: [{ age: 60, year: 2050, capital: 2_373_688_270 }],
 }));
@@ -58,9 +65,15 @@ vi.mock("@/i18n/I18nProvider", () => ({
       if (key === "pension.retirementAge") return "Возраст выхода на пенсию";
       if (key === "pension.year") return "год";
       if (key === "pension.rub") return "₽ RUB - Российский рубль";
+      if (key === "pension.targetCapitalIntro") return `Капитал для ${values?.amount}`;
       if (key === "pension.targetYearInfo") return `${values?.year} / ${values?.age}`;
       if (key === "pension.yearsToSave") return `${values?.years} лет`;
       if (key === "pension.annualReturn") return `${values?.percent}`;
+      if (key === "pension.requiredCapitalNonPositiveReturn") return "Доходность должна быть выше инфляции.";
+      if (key === "pension.requiredCapitalUnavailable") return "Расчёт необходимого капитала недоступен.";
+      if (key === "format.millionRub") return "млн";
+      if (key === "format.thousandRub") return "тыс.";
+      if (key === "format.symbolRub") return "₽";
       return key;
     },
   }),
@@ -72,6 +85,19 @@ describe("PensionPage", () => {
 
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    mockPlan.settings.withdrawalStrategy = "spend_down_30y";
+    mockPlan.dashboardSnapshot.pensionCapitalRub = 80_330_049;
+    mockPlan.pensionProjection = {
+      preserveCapital: {
+        requiredCapitalAtRetirement: 40_000_000,
+        requiredCapitalStatus: "calculated",
+      },
+      spendDown: { requiredCapitalAtRetirement: 25_000_000 },
+    };
+    mockPlan.forecast = [
+      { age: 60, year: 2051, capital: 2_373_688_270 },
+      { age: 65, year: 2056, capital: 1_000_000 },
+    ];
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -126,6 +152,115 @@ describe("PensionPage", () => {
     expect(html).toContain('data-testid="pension-currency-value"');
     expect(html).toContain("₽ RUB");
     expect(html).not.toContain("$ USD");
+  });
+
+  it("renders spend-down required capital from the pension projection", () => {
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain('data-testid="required-pension-capital"');
+    expect(html).toContain("25 млн");
+    expect(html).not.toContain("80,3 млн");
+    expect(html).not.toContain("80.3 млн");
+    expect(html).toMatch(/data-testid="required-pension-capital"[^>]*role="status"[^>]*aria-live="polite"/);
+  });
+
+  it("renders preserve-capital required capital from the pension projection", () => {
+    mockPlan.settings.withdrawalStrategy = "preserve_capital";
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain('data-testid="required-pension-capital"');
+    expect(html).toContain("40 млн");
+  });
+
+  it("explains when preserve-capital cannot be calculated with a non-positive real return", () => {
+    mockPlan.settings.withdrawalStrategy = "preserve_capital";
+    mockPlan.pensionProjection.preserveCapital = {
+      requiredCapitalAtRetirement: null,
+      requiredCapitalStatus: "non_positive_real_return",
+    };
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain('data-testid="required-pension-capital-status"');
+    expect(html).toContain("Доходность должна быть выше инфляции.");
+    expect(html).not.toContain('data-testid="required-pension-capital"');
+    expect(html).toMatch(/data-testid="required-pension-capital-status"[^>]*role="status"[^>]*aria-live="polite"/);
+  });
+
+  it("treats calculated preserve-capital with a null amount as unavailable", () => {
+    mockPlan.settings.withdrawalStrategy = "preserve_capital";
+    mockPlan.pensionProjection.preserveCapital = {
+      requiredCapitalAtRetirement: null,
+      requiredCapitalStatus: "calculated",
+    };
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain("Расчёт необходимого капитала недоступен.");
+    expect(html).not.toContain("Доходность должна быть выше инфляции.");
+  });
+
+  it("renders an unavailable state when the pension projection is missing", () => {
+    const projection = mockPlan.pensionProjection;
+    Object.assign(mockPlan, { pensionProjection: undefined });
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain('data-testid="required-pension-capital-status"');
+    expect(html).toContain("Расчёт необходимого капитала недоступен.");
+    expect(html).not.toContain('data-testid="required-pension-capital"');
+    expect(html).not.toContain("80,3 млн");
+    expect(html).not.toContain("80.3 млн");
+
+    mockPlan.pensionProjection = projection;
+  });
+
+  it("reports that a legitimate zero retirement capital needs adjustment", () => {
+    mockPlan.forecast = [{ age: 60, year: 2051, capital: 0 }];
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).toContain("pension.needsAdjustment");
+    expect(html).not.toContain("pension.onTrack");
+  });
+
+  it("hides sufficiency when the retirement forecast point is missing", () => {
+    mockPlan.forecast = [];
+
+    const html = renderToStaticMarkup(<PensionPage />);
+
+    expect(html).not.toContain("pension.onTrack");
+    expect(html).not.toContain("pension.needsAdjustment");
+  });
+
+  it("keeps result metadata aligned with persisted settings while form edits are unsaved", () => {
+    act(() => {
+      root.render(<PensionPage />);
+    });
+
+    const retirementAge = container.querySelector('input[name="retirementAge"]') as HTMLInputElement;
+    const targetSpend = container.querySelector('input[type="number"][placeholder="pensionFormat.enterAmount"]') as HTMLInputElement;
+
+    act(() => {
+      retirementAge.value = "65";
+      retirementAge.dispatchEvent(new Event("input", { bubbles: true }));
+      targetSpend.value = "200000";
+      targetSpend.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    const resultCard = container.querySelector('[data-testid="pension-result-card"]');
+    const resultText = resultCard?.textContent?.replace(/\s+/g, " ");
+
+    expect(resultCard).not.toBeNull();
+    expect(resultText).toContain("100 000 ₽");
+    expect(resultText).toContain("2051 / 60");
+    expect(resultText).toContain("25 лет");
+    expect(resultText).toContain("10 %");
+    expect(resultText).toContain("pension.onTrack");
+    expect(resultText).not.toContain("200 000 ₽");
+    expect(resultText).not.toContain("2056 / 65");
+    expect(resultText).not.toContain("pension.needsAdjustment");
   });
 
   it("uses pension forecast years only to limit chart rendering", () => {

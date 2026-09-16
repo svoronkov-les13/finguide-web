@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockApi } from "@/api/mockApi";
+import { mockPlan } from "@/data/mock-plan";
 
 describe("mockApi", () => {
   beforeEach(async () => {
@@ -41,6 +44,38 @@ describe("mockApi", () => {
 
     expect(reset.dashboardSnapshot?.independenceYear).toBe(2076);
     expect(reset.settings.retirementAge).toBe(50);
+    expect(reset.pensionProjection).toBeDefined();
+  });
+
+  it("recalculates pension projection when spending and pension return change", async () => {
+    const initial = await mockApi.getPlan();
+    const higherSpending = await mockApi.updateSettings({ targetMonthlySpend: 100_000 });
+    const higherReturn = await mockApi.updateSettings({ pensionInvestmentReturn: 0.12 });
+
+    expect(higherSpending.pensionProjection!.spendDown.requiredCapitalAtRetirement).toBeGreaterThan(
+      initial.pensionProjection!.spendDown.requiredCapitalAtRetirement,
+    );
+    expect(higherSpending.pensionProjection!.preserveCapital.requiredCapitalAtRetirement).not.toBeNull();
+    expect(higherReturn.pensionProjection!.preserveCapital.requiredCapitalAtRetirement!).toBeLessThan(
+      higherSpending.pensionProjection!.preserveCapital.requiredCapitalAtRetirement!,
+    );
+    expect(higherReturn.pensionProjection!.spendDown.requiredCapitalAtRetirement).toBeLessThan(
+      higherSpending.pensionProjection!.spendDown.requiredCapitalAtRetirement,
+    );
+  });
+
+  it("keeps the selected withdrawal strategy while recalculating the projection", async () => {
+    await mockApi.updateSettings({
+      withdrawalStrategy: "preserve_capital",
+      targetMonthlySpend: 100_000,
+    });
+
+    const updated = await mockApi.updateSettings({ pensionInvestmentReturn: 0.12 });
+
+    expect(updated.settings.withdrawalStrategy).toBe("preserve_capital");
+    expect(updated.pensionProjection?.preserveCapital.requiredCapitalStatus).toBe("calculated");
+    expect(updated.pensionProjection?.preserveCapital.requiredCapitalAtRetirement).toBeTypeOf("number");
+    expect(updated.pensionProjection?.spendDown.requiredCapitalAtRetirement).toBeTypeOf("number");
   });
 
   it("applies a what-if scenario without mutating base settings", async () => {
@@ -57,5 +92,26 @@ describe("mockApi", () => {
     expect(next.activeScenario).toBe("whatif");
     expect(next.settings).toEqual(initial.settings);
     expect(next.forecast.at(-1)?.capital).not.toBe(initial.forecast.at(-1)?.capital);
+  });
+
+  it("migrates a stored legacy plan without a pension projection on fresh import", async () => {
+    const legacyPlan = structuredClone(mockPlan);
+    delete legacyPlan.pensionProjection;
+    localStorage.setItem("finguide.mock-plan.v1", JSON.stringify(legacyPlan));
+    vi.resetModules();
+
+    try {
+      const { mockApi: freshMockApi } = await import("@/api/mockApi");
+      const migrated = await freshMockApi.getPlan();
+
+      expect(migrated.pensionProjection).toBeDefined();
+
+      await freshMockApi.updateSettings({ targetMonthlySpend: 100_000 });
+      const stored = JSON.parse(localStorage.getItem("finguide.mock-plan.v1") ?? "null");
+      expect(stored.pensionProjection).toBeDefined();
+    } finally {
+      localStorage.clear();
+      vi.resetModules();
+    }
   });
 });
