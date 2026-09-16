@@ -108,6 +108,16 @@ export interface PlanSettings {
   statePensionMonthly: number;
 }
 
+export interface PensionRequiredCapitalProjection {
+  preserveCapital: {
+    requiredCapitalAtRetirement: number | null;
+    requiredCapitalStatus: "calculated" | "non_positive_real_return";
+  };
+  spendDown: {
+    requiredCapitalAtRetirement: number;
+  };
+}
+
 export interface FinancialPlan {
   planId?: string;
   owner: {
@@ -125,6 +135,7 @@ export interface FinancialPlan {
   tracker: TrackerEntry[];
   forecast: ForecastPoint[];
   pensionForecast?: ForecastPoint[];
+  pensionProjection?: PensionRequiredCapitalProjection;
   monthlyForecast?: ForecastPoint[];
   scenarioForecasts?: Partial<Record<ScenarioId, ForecastPoint[]>>;
 }

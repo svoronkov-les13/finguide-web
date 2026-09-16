@@ -101,9 +101,27 @@ export function PensionPage() {
     yearsToRetirement,
   });
   const futureMonthlySpend = expenseComparison.plannedMonthlyAtRetirement;
-  
-  const targetCapital = plan.dashboardSnapshot?.pensionCapitalRub ?? null;
-  const retirementCapital = plan.forecast.find(p => p.age === effectiveRetirementAge)?.capital ?? null;
+  const persistedYearsToRetirement = Math.max(0, settings.retirementAge - settings.currentAge);
+  const persistedRetirementYear = settings.startYear + persistedYearsToRetirement;
+  const preserveProjection = plan.pensionProjection?.preserveCapital;
+  const projectedRequiredCapital = settings.withdrawalStrategy === "preserve_capital"
+    ? preserveProjection?.requiredCapitalAtRetirement
+    : plan.pensionProjection?.spendDown.requiredCapitalAtRetirement;
+  const targetCapital = preserveProjection?.requiredCapitalStatus === "non_positive_real_return"
+    && settings.withdrawalStrategy === "preserve_capital"
+    ? null
+    : typeof projectedRequiredCapital === "number" && Number.isFinite(projectedRequiredCapital)
+      ? projectedRequiredCapital
+      : null;
+  const targetCapitalStatus = !plan.pensionProjection
+    ? "unavailable"
+    : settings.withdrawalStrategy === "preserve_capital"
+      && preserveProjection?.requiredCapitalStatus === "non_positive_real_return"
+      ? "non_positive_real_return"
+      : targetCapital === null
+        ? "unavailable"
+        : "calculated";
+  const retirementCapital = plan.forecast.find(p => p.age === settings.retirementAge)?.capital;
 
   const pensionPoints = plan.pensionForecast ?? plan.forecast;
   const chartData = buildPensionChartData(pensionPoints, settings, effectiveRetirementAge);
@@ -113,8 +131,12 @@ export function PensionPage() {
   );
   const depletionAge = depletionPoint?.age ?? null;
 
-  const isCapitalSufficient = targetCapital != null && retirementCapital != null && retirementCapital >= targetCapital;
-  const hasResults = targetCapital != null;
+  const isCapitalSufficient = typeof retirementCapital === "number"
+    && Number.isFinite(retirementCapital)
+    && targetCapital !== null
+    && Number.isFinite(targetCapital)
+    ? retirementCapital >= targetCapital
+    : null;
 
   const handleCalculate = () => {
     if (formState.retirementAge === "") return;
@@ -436,25 +458,31 @@ export function PensionPage() {
 
       {/* Results Section */}
       <div className="mt-8 grid gap-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-          <Card className="overflow-hidden bg-[var(--fp-color-card)] border-[var(--fp-color-border)] rounded-[24px]">
+          <Card data-testid="pension-result-card" className="overflow-hidden bg-[var(--fp-color-card)] border-[var(--fp-color-border)] rounded-[24px]">
             <div className="p-8 pb-6 border-b border-[var(--fp-color-border)]">
               <p className="text-[15px] font-medium text-[var(--fp-color-label)] mb-3">
-                {t("pension.targetCapitalIntro", { amount: formatRub(targetMonthlySpend) })}
+                {t("pension.targetCapitalIntro", { amount: formatRub(settings.targetMonthlySpend) })}
               </p>
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-[44px] leading-none font-bold tracking-tight">
-                  {targetCapital != null ? formatRub(targetCapital) : "—"}
-                </span>
-              </div>
+              {typeof targetCapital === "number" ? (
+                <div data-testid="required-pension-capital" role="status" aria-live="polite" className="flex items-baseline gap-2 mb-4">
+                  <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital, { compact: true })}</span>
+                </div>
+              ) : (
+                <p data-testid="required-pension-capital-status" role="status" aria-live="polite" className="mb-4 max-w-2xl text-[16px] font-medium leading-6 text-[var(--fp-color-foreground)]">
+                  {targetCapitalStatus === "non_positive_real_return"
+                    ? t("pension.requiredCapitalNonPositiveReturn")
+                    : t("pension.requiredCapitalUnavailable")}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
-                <span>{t("pension.targetYearInfo", { year: retirementYear, age: effectiveRetirementAge })}</span>
+                <span>{t("pension.targetYearInfo", { year: persistedRetirementYear, age: settings.retirementAge })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
-                <span>{t("pension.yearsToSave", { years: yearsToRetirement })}</span>
+                <span>{t("pension.yearsToSave", { years: persistedYearsToRetirement })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
                 <span>{t("pension.annualReturn", { percent: formatPercent(settings.pensionInvestmentReturn) })}</span>
               </div>
             </div>
-            {hasResults && (
+            {isCapitalSufficient !== null && (
               <div className={`px-8 py-5 flex items-center gap-3 ${isCapitalSufficient ? "bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "bg-[var(--fp-color-orange)]/10 text-[var(--fp-color-orange)]"}`}>
                 {isCapitalSufficient ? <CheckCircle2 className="size-[22px]" /> : <TriangleAlert className="size-[22px]" />}
                 <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
