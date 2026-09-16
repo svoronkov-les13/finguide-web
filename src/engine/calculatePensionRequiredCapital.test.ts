@@ -82,7 +82,7 @@ describe("calculatePensionRequiredCapital", () => {
     expect(balance).toBeCloseTo(0, 1);
   });
 
-  it("matches the backend scale-12 HALF_UP spend-down golden value", () => {
+  it("matches the backend scale-12 HALF_UP golden values", () => {
     // Backend vector: monthly need 137149.4465613, 0 years to retirement,
     // inflation 4%, return 8.000000000049%, no state pension. Backend rate
     // division rounds the decimal return to 0.080000000000 at scale 12.
@@ -97,6 +97,10 @@ describe("calculatePensionRequiredCapital", () => {
       statePensionMonthly: 0,
     });
 
+    expect(projection.preserveCapital).toEqual({
+      requiredCapitalAtRetirement: 41_144_833.97,
+      requiredCapitalStatus: "calculated",
+    });
     expect(projection.spendDown.requiredCapitalAtRetirement).toBe(27_883_023.15);
   });
 });
