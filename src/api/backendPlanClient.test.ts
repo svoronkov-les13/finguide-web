@@ -78,6 +78,7 @@ describe("backendPlanClient settings mutations", () => {
         return jsonResponse({ data: body });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -109,6 +110,7 @@ describe("backendPlanClient settings mutations", () => {
       if (url.endsWith("/plans/plan-1/analytics/assumptions") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -168,6 +170,7 @@ describe("backendPlanClient settings mutations", () => {
       }
       if (url.endsWith("/plans/plan-1/pension") && method === "PATCH") return jsonResponse({ data: body });
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -221,6 +224,7 @@ describe("backendPlanClient settings mutations", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -229,10 +233,51 @@ describe("backendPlanClient settings mutations", () => {
       throw new Error(`Unexpected request ${method} ${url}`);
     });
 
-    await backendPlanClient.getPlan();
+    const plan = await backendPlanClient.getPlan();
 
     expect(urls.some((url) => url.includes("/analytics/cashflow?years=12"))).toBe(true);
     expect(urls.some((url) => url.includes("/analytics/cashflow?years=40"))).toBe(true);
+    expect(urls.some((url) => url.endsWith("/plans/plan-1/pension/projection"))).toBe(true);
+    expect(plan.pensionProjection).toEqual({
+      preserveCapital: {
+        requiredCapitalAtRetirement: 40_000_000,
+        requiredCapitalStatus: "calculated",
+      },
+      spendDown: {
+        requiredCapitalAtRetirement: 25_000_000,
+      },
+    });
+  });
+
+  it("preserves a non-positive real return pension projection", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+
+      if (url.endsWith("/plans/current") && method === "GET") return jsonResponse({ data: planState([]) });
+      if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) {
+        return jsonResponse({
+          data: pensionProjection({
+            requiredCapitalAtRetirement: null,
+            requiredCapitalStatus: "non_positive_real_return",
+          }),
+        });
+      }
+      if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
+      if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
+      if (url.endsWith("/scenarios")) return jsonResponse({ data: [] });
+      if (url.endsWith("/tracker/entries")) return jsonResponse({ data: [] });
+      throw new Error(`Unexpected request ${method} ${url}`);
+    });
+
+    const plan = await backendPlanClient.getPlan();
+
+    expect(plan.pensionProjection?.preserveCapital).toEqual({
+      requiredCapitalAtRetirement: null,
+      requiredCapitalStatus: "non_positive_real_return",
+    });
   });
 });
 
@@ -300,6 +345,7 @@ describe("backendPlanClient income periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -342,6 +388,7 @@ describe("backendPlanClient income periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -375,6 +422,7 @@ describe("backendPlanClient income periods", () => {
         return jsonResponse({ data: body }, 201);
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -439,6 +487,7 @@ describe("backendPlanClient expense periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -481,6 +530,7 @@ describe("backendPlanClient expense periods", () => {
         });
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -514,6 +564,7 @@ describe("backendPlanClient expense periods", () => {
         return jsonResponse({ data: body }, 201);
       }
       if (url.endsWith("/dashboard")) return jsonResponse({ data: dashboardMetrics() });
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/cashflow/monthly")) return jsonResponse({ data: [] });
       if (url.endsWith("/analytics/health")) return jsonResponse({ data: { score: 80, status: "good", signals: [] } });
@@ -574,6 +625,7 @@ describe("backendPlanClient goal mutations", () => {
           },
         });
       }
+      if (url.endsWith("/plans/plan-1/pension/projection")) return jsonResponse({ data: pensionProjection() });
       if (isYearlyCashflowUrl(url)) {
         return jsonResponse({
           data: mutationPhase
@@ -907,5 +959,44 @@ function dashboardMetrics() {
     emergencyFundCurrent: 0,
     emergencyFundPct: 0,
     yearlyProjection: [],
+  };
+}
+
+function pensionProjection(preserveCapital: {
+  requiredCapitalAtRetirement: number | null;
+  requiredCapitalStatus: "calculated" | "non_positive_real_return";
+} = {
+  requiredCapitalAtRetirement: 40_000_000,
+  requiredCapitalStatus: "calculated",
+}) {
+  return {
+    currentAge: 33,
+    retirementAge: 60,
+    retirementYear: 2053,
+    capitalAtRetirement: 30_000_000,
+    nominalReturnPct: 10,
+    averageInflationPct: 7,
+    realReturnPct: 2.8,
+    preserveCapital: {
+      annualSpendableAtRetirement: 840_000,
+      annualSpendableCurrentPrices: 360_000,
+      monthlySpendableCurrentPrices: 30_000,
+      ...preserveCapital,
+    },
+    spendDown: {
+      desiredMonthlyExpensesCurrentPrices: 150_000,
+      desiredAnnualExpensesAtRetirement: 4_200_000,
+      requiredCapitalAtRetirement: 25_000_000,
+      retirementYears: 30,
+      depletionAge: 90,
+      series: [{
+        year: 2053,
+        age: 60,
+        beginningCapital: 30_000_000,
+        plannedExpense: 4_200_000,
+        nominalReturnPct: 10,
+        endingCapital: 28_800_000,
+      }],
+    },
   };
 }

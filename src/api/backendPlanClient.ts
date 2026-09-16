@@ -6,6 +6,7 @@ import {
   getPlansPlanIdAnalyticsCashflow,
   getPlansPlanIdAnalyticsHealth,
   getPlansPlanIdDashboard,
+  getPlansPlanIdPensionProjection,
   getScenarios,
   patchPlansPlanIdAnalyticsAssumptions,
   patchPlansPlanIdExpensesId,
@@ -27,6 +28,7 @@ import type {
   HealthScore,
   IncomeSource,
   ModelAssumptions,
+  PensionProjection,
   PensionSettings,
   PlanState,
   Scenario as ApiScenario,
@@ -146,13 +148,16 @@ async function readBackendPlan() {
   const planId = planState.id;
   const settings = mapSettings(planState, planState.modelAssumptions);
 
-  const [dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios] = await Promise.all([
+  const [dashboard, cashflow, pensionCashflow, pensionProjection, monthlyCashflow, health, scenarios] = await Promise.all([
     getPlansPlanIdDashboard(planId, await requestOptions()).then((response) => unwrapData<DashboardMetrics>(response, "GET /dashboard")),
     getPlansPlanIdAnalyticsCashflow(planId, { years: settings.dashboardCalculationYears }, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
     ),
     getPlansPlanIdAnalyticsCashflow(planId, { years: settings.pensionCalculationYears }, await requestOptions()).then((response) =>
       unwrapData<CashFlowProjectionPoint[]>(response, "GET /analytics/cashflow"),
+    ),
+    getPlansPlanIdPensionProjection(planId, await requestOptions()).then((response) =>
+      unwrapData<PensionProjection>(response, "GET /pension/projection"),
     ),
     backendJson<ApiMonthlyCashflowPoint[]>(`/plans/${planId}/analytics/cashflow/monthly`, undefined, "GET /analytics/cashflow/monthly")
       .catch(() => [] as ApiMonthlyCashflowPoint[]),
@@ -168,7 +173,7 @@ async function readBackendPlan() {
     readScenarioForecasts(scenarios),
   ]);
 
-  return mapBackendPlan({ planState, dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
+  return mapBackendPlan({ planState, dashboard, cashflow, pensionCashflow, pensionProjection, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
 }
 
 async function readScenarioForecasts(scenarios: ApiScenario[]): Promise<FinancialPlan["scenarioForecasts"]> {
@@ -187,13 +192,14 @@ function mapBackendPlan(input: {
   dashboard: DashboardMetrics;
   cashflow: CashFlowProjectionPoint[];
   pensionCashflow: CashFlowProjectionPoint[];
+  pensionProjection: PensionProjection;
   monthlyCashflow: ApiMonthlyCashflowPoint[];
   health: HealthScore;
   scenarios: ApiScenario[];
   tracker: ApiTrackerEntry[];
   scenarioForecasts?: FinancialPlan["scenarioForecasts"];
 }): FinancialPlan {
-  const { planState, dashboard, cashflow, pensionCashflow, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
+  const { planState, dashboard, cashflow, pensionCashflow, pensionProjection, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
   const planName = (planState as PlanState & { name?: string }).name ?? "Основной план";
@@ -226,6 +232,15 @@ function mapBackendPlan(input: {
     tracker: tracker.map(trackerEntryFromApi),
     forecast,
     pensionForecast,
+    pensionProjection: {
+      preserveCapital: {
+        requiredCapitalAtRetirement: pensionProjection.preserveCapital.requiredCapitalAtRetirement,
+        requiredCapitalStatus: pensionProjection.preserveCapital.requiredCapitalStatus,
+      },
+      spendDown: {
+        requiredCapitalAtRetirement: pensionProjection.spendDown.requiredCapitalAtRetirement,
+      },
+    },
     monthlyForecast,
     scenarioForecasts,
   };

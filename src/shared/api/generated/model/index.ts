@@ -85,6 +85,7 @@ export * from './patchPlansPlanIdPension200';
 export * from './patchScenariosScenarioId200';
 export * from './pensionProjection';
 export * from './pensionProjectionPreserveCapital';
+export * from './pensionProjectionPreserveCapitalRequiredCapitalStatus';
 export * from './pensionProjectionSpendDown';
 export * from './pensionSettings';
 export * from './pensionSettingsWithdrawalStrategy';
