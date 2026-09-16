@@ -442,7 +442,6 @@ export function PensionPage() {
               {typeof targetCapital === "number" ? (
                 <div data-testid="required-pension-capital" role="status" aria-live="polite" className="flex items-baseline gap-2 mb-4">
                   <span className="text-[44px] leading-none font-bold tracking-tight">{formatRub(targetCapital, { compact: true })}</span>
-                  <span className="text-xl font-medium text-[var(--fp-color-muted-foreground)]">₽</span>
                 </div>
               ) : (
                 <p data-testid="required-pension-capital-status" role="status" aria-live="polite" className="mb-4 max-w-2xl text-[16px] font-medium leading-6 text-[var(--fp-color-foreground)]">

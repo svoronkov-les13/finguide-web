@@ -71,8 +71,8 @@ vi.mock("@/i18n/I18nProvider", () => ({
       if (key === "pension.annualReturn") return `${values?.percent}`;
       if (key === "pension.requiredCapitalNonPositiveReturn") return "Доходность должна быть выше инфляции.";
       if (key === "pension.requiredCapitalUnavailable") return "Расчёт необходимого капитала недоступен.";
-      if (key === "format.millionRub") return "млн";
-      if (key === "format.thousandRub") return "тыс.";
+      if (key === "format.millionRub") return "млн ₽";
+      if (key === "format.thousandRub") return "тыс. ₽";
       if (key === "format.symbolRub") return "₽";
       return key;
     },
@@ -156,9 +156,12 @@ describe("PensionPage", () => {
 
   it("renders spend-down required capital from the pension projection", () => {
     const html = renderToStaticMarkup(<PensionPage />);
+    const capitalStart = html.indexOf('data-testid="required-pension-capital"');
+    const capitalMarkup = html.slice(capitalStart, html.indexOf("</div>", capitalStart));
 
     expect(html).toContain('data-testid="required-pension-capital"');
     expect(html).toContain("25 млн");
+    expect(capitalMarkup.match(/₽/g)).toHaveLength(1);
     expect(html).not.toContain("80,3 млн");
     expect(html).not.toContain("80.3 млн");
     expect(html).toMatch(/data-testid="required-pension-capital"[^>]*role="status"[^>]*aria-live="polite"/);
