@@ -236,7 +236,8 @@ describe("backendPlanClient settings mutations", () => {
     const plan = await backendPlanClient.getPlan();
 
     expect(urls.some((url) => url.includes("/analytics/cashflow?years=12"))).toBe(true);
-    expect(urls.some((url) => url.includes("/analytics/cashflow?years=40"))).toBe(true);
+    // pension horizon covers age 100: max(pensionCalculationYears=40, 100 - currentAge(33) + 1)
+    expect(urls.some((url) => url.includes("/analytics/cashflow?years=68"))).toBe(true);
     expect(urls.some((url) => url.endsWith("/plans/plan-1/pension/projection"))).toBe(true);
     expect(plan.pensionProjection).toEqual({
       preserveCapital: {

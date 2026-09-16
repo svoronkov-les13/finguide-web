@@ -1,4 +1,4 @@
-import type { MonthData } from "@/pages/trackingMonths";
+import type { MonthData } from "@/domain/trackingMonths";
 
 /**
  * Resolves the effective savings amount for each month of a year,

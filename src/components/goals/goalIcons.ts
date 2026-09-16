@@ -1,0 +1,60 @@
+import {
+  Briefcase,
+  Camera,
+  Car,
+  Clock,
+  Gem,
+  Gift,
+  GraduationCap,
+  Heart,
+  Home,
+  Laptop,
+  Mountain,
+  Palette,
+  Palmtree,
+  PiggyBank,
+  Plane,
+  RefreshCw,
+  Rocket,
+  Scissors,
+  Shield,
+  Sparkles,
+  Target,
+  Trophy,
+  Umbrella,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
+
+/**
+ * The only goal icons the product uses. Importing them by name (instead of
+ * `import * as Icons`) keeps the other ~1600 lucide icons out of the bundle.
+ */
+export const GOAL_ICONS: Record<string, LucideIcon> = {
+  Home,
+  Car,
+  Plane,
+  GraduationCap,
+  Heart,
+  Clock,
+  Briefcase,
+  Gem,
+  Shield,
+  Umbrella,
+  Gift,
+  Camera,
+  Laptop,
+  Palette,
+  Scissors,
+  Mountain,
+  Palmtree,
+  Trophy,
+  Wrench,
+  Sparkles,
+  PiggyBank,
+  Rocket,
+  RefreshCw,
+  Target,
+};
+
+export const GOAL_ICON_NAMES = Object.keys(GOAL_ICONS);

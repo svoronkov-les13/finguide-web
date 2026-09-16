@@ -64,7 +64,7 @@ export function KpiCards() {
             <span className="text-[14px] font-medium text-[var(--fp-color-muted-foreground)]">₽{t("dashboard.perMonth")}</span>
           </div>
           <div className="text-[13px] font-medium text-[var(--fp-color-muted-foreground)] mt-2">
-            {formatRub(annualTarget, { compact: true })}{t("dashboard.perYear")}
+            {formatRub(annualTarget)}{t("dashboard.perYear")}
           </div>
         </Card>
 

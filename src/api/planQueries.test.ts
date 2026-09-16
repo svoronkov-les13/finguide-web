@@ -39,7 +39,7 @@ describe("planQueryKeyForAuth", () => {
 });
 
 describe("mutation cache updates", () => {
-  it("writes returned plan data immediately and starts a background refresh", () => {
+  it("writes returned plan data immediately without re-fetching the plan pyramid", () => {
     const queryClient = {
       setQueryData: vi.fn(),
       invalidateQueries: vi.fn(),
@@ -51,7 +51,9 @@ describe("mutation cache updates", () => {
     updatePlanCacheAndRefresh(queryClient as any, planKey, plan as never);
 
     expect(queryClient.setQueryData).toHaveBeenCalledWith(planKey, plan);
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: planKey });
+    // the mutation response is already a fresh full plan — invalidating here
+    // would refetch the same multi-request pyramid a second time
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("partitions monthly tracker cache by plan id", () => {

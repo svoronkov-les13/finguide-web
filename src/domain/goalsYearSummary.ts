@@ -1,5 +1,5 @@
 import type { Goal } from "@/types/finance";
-import { goalFundedAmount } from "@/components/goals/goalProgress";
+import { goalFundedAmount, goalProgressCost } from "@/components/goals/goalProgress";
 
 export interface GoalYearSummary {
   totalProjectedCost: number;
@@ -15,7 +15,7 @@ export interface GoalPortfolioSummary {
 }
 
 export function goalProjectedCost(goal: Goal) {
-  return goal.projectedCost ?? goal.cost;
+  return goalProgressCost(goal);
 }
 
 export function goalPortfolioSummary(goals: Goal[]): GoalPortfolioSummary {

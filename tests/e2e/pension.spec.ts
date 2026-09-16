@@ -15,13 +15,12 @@ test("pension required capital refreshes from the selected backend projection", 
   const requiredCapital = page.getByTestId("required-pension-capital");
   const initialCapital = (await requiredCapital.textContent())?.trim();
 
-  const numberInputs = page.locator('input[type="number"]');
-  await numberInputs.nth(2).fill("200000");
+  await page.getByRole("textbox", { name: "Желаемые расходы на пенсии (в месяц)" }).fill("200000");
   await page.locator('input[type="range"]').fill("15");
   await page.getByRole("button", { name: "Рассчитать" }).click();
 
   await expect(requiredCapital).not.toHaveText(initialCapital ?? "");
-  await expect(page.getByText(/Чтобы получать 200\s*000 ₽\/мес на пенсии/)).toBeVisible();
+  await expect(page.getByText(/Чтобы получать 200['\s]000 ₽\/мес на пенсии/)).toBeVisible();
 
   await page.getByText("Сохранить капитал — жить на проценты + гос. пенсия", { exact: true }).click();
   await page.locator('input[type="range"]').fill("6");

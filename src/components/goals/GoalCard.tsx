@@ -1,12 +1,11 @@
-import { CheckCircle2, ChevronDown, GripVertical, Target, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, GripVertical, TriangleAlert } from "lucide-react";
 import type { Goal } from "@/types/finance";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/useFormat";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 import { useI18n } from "@/i18n/I18nProvider";
 import { goalIsActuallyAchieved, goalProgress } from "@/components/goals/goalProgress";
-import * as Icons from "lucide-react";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 
 export function GoalCard({
   item,
@@ -19,16 +18,17 @@ export function GoalCard({
 }) {
   const { t } = useI18n();
   const { formatRub } = useFormat();
-  const Icon = iconMap[item.icon] ?? Target;
+  const Icon = GOAL_ICONS[item.icon] ?? GOAL_ICONS.Target;
   
   const progress = goalProgress(item);
   const isActuallyAchieved = goalIsActuallyAchieved(item);
+  const isDoneOrReachable = isActuallyAchieved || item.reachable;
 
   return (
     <div
       className={cn(
         "group relative flex cursor-pointer items-center gap-3 rounded-2xl border bg-[var(--fp-color-card)] px-4 transition-all hover:border-[var(--fp-color-border-hover)] hover:shadow-[var(--fp-shadow-card)]",
-        item.reachable ? "border-[var(--fp-color-border)]" : "border-[var(--fp-color-coral)]/30",
+        isDoneOrReachable ? "border-[var(--fp-color-border)]" : "border-[var(--fp-color-coral)]/30",
         compact ? "py-2" : "py-4"
       )}
       onClick={onClick}
@@ -40,7 +40,7 @@ export function GoalCard({
       <div className={cn(
         "grid shrink-0 place-items-center rounded-[14px]",
         compact ? "size-7" : "size-10",
-        item.reachable ? "border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "border border-[var(--fp-color-coral)]/20 bg-[var(--fp-color-coral)]/10 text-[var(--fp-color-coral)]"
+        isDoneOrReachable ? "border border-[var(--fp-color-teal)]/20 bg-[var(--fp-color-teal)]/10 text-[var(--fp-color-teal)]" : "border border-[var(--fp-color-coral)]/20 bg-[var(--fp-color-coral)]/10 text-[var(--fp-color-coral)]"
       )}>
         <Icon className={cn(compact ? "size-3.5" : "size-5")} />
       </div>
@@ -50,7 +50,7 @@ export function GoalCard({
         <div className="flex items-center gap-2">
           <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-[15px]")}>{item.name}</div>
           {!compact && (
-            item.reachable ? (
+            isDoneOrReachable ? (
               <CheckCircle2 className="size-3.5 text-[var(--fp-color-teal)] shrink-0" />
             ) : (
               <TriangleAlert className="size-3.5 text-[var(--fp-color-coral)] shrink-0" />
@@ -78,13 +78,8 @@ export function GoalCard({
       {/* Right: Amounts */}
       <div className="shrink-0 text-right pl-2">
         <div className={cn("font-semibold text-[var(--fp-color-foreground)] num", compact ? "text-xs" : "text-[15px]")}>
-          {formatRub(item.cost, { compact: true })}
+          {formatRub(item.cost)}
         </div>
-        {!compact && (
-          <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)] num">
-            {formatRub(progress.saved, { compact: true })} {t("goals.saved").toLowerCase()}
-          </div>
-        )}
       </div>
 
       {/* Chevron */}

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -27,7 +28,12 @@ export function Page({ children, className, bottom = true, scrollable = true }: 
         "mx-auto w-full page-enter",
         scrollable
           ? cn("grid gap-6", bottom && "pb-12")
-          : cn("flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0", bottom && "pb-12"),
+          : cn(
+              // On small screens the app shell scrolls natively, so the fixed
+              // viewport height would squeeze stacked columns into one screen.
+              "flex flex-col gap-6 h-[calc(100vh-52px-64px)] min-h-0 max-[760px]:h-auto max-[760px]:min-h-0",
+              bottom && "pb-12",
+            ),
         PAGE_MAX_W,
         className,
       )}
@@ -45,9 +51,14 @@ export function Page({ children, className, bottom = true, scrollable = true }: 
  */
 export function BackButton({ className }: { className?: string }) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   return (
     <button
-      onClick={() => window.history.back()}
+      onClick={() => {
+        // Direct deep links have no in-app history: falling back beats leaving the site
+        if (window.history.length > 1) window.history.back();
+        else navigate({ to: "/dashboard" });
+      }}
       className={cn(
         "flex items-center gap-1.5 rounded-full border border-[var(--fp-color-border)]",
         "bg-[var(--fp-color-background)] px-4 py-2 text-sm font-medium",

@@ -2767,6 +2767,12 @@
             "type": "integer",
             "minimum": 2024
           },
+          "targetMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "Month within targetYear (1-12). Defaults to December when omitted."
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -2788,6 +2794,29 @@
           "priority": {
             "type": "integer",
             "minimum": 1
+          },
+          "projectedTargetCost": {
+            "type": "number",
+            "description": "Cost inflated to the goal target year for projected allocation."
+          },
+          "projectedSavedAmount": {
+            "type": "number",
+            "description": "Forecast amount allocated from income minus expenses by goal priority."
+          },
+          "projectedProgressPct": {
+            "type": "number",
+            "description": "Forecast progress toward projectedTargetCost, capped at 100."
+          },
+          "projectedReachable": {
+            "type": "boolean",
+            "description": "Whether projectedSavedAmount reaches projectedTargetCost."
+          },
+          "projectedCompletionYear": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "First forecast year when the goal is fully allocated."
           },
           "createdAt": {
             "type": "string",
@@ -3969,6 +3998,12 @@
             "type": "integer",
             "minimum": 2024
           },
+          "targetMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "Month within targetYear (1-12). Defaults to December when omitted."
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -4025,6 +4060,12 @@
           "targetYear": {
             "type": "integer",
             "minimum": 2024
+          },
+          "targetMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "Month within targetYear (1-12). Omitted value keeps current month."
           },
           "type": {
             "type": "string",

@@ -48,10 +48,10 @@ vi.mock("@/api/planQueries", () => ({
 describe("GoalsTable", () => {
   it("renders goal cost and saved amounts in full rubles without compact abbreviations", () => {
     const html = renderToStaticMarkup(<GoalsTable />);
-    const normalized = html.replace(/\u00a0/g, " ");
+    const normalized = html.replace(/&#x27;/g, "'");
 
-    expect(normalized).toContain("1 500 000 ₽");
-    expect(normalized).toContain("500 000 ₽");
+    expect(normalized).toContain("1'500'000 ₽");
+    expect(normalized).toContain("500'000 ₽");
     expect(normalized).not.toContain("1,5 млн ₽");
     expect(normalized).not.toContain("500 тыс. ₽");
   });

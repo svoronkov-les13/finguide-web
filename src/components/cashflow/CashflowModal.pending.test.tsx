@@ -72,6 +72,9 @@ describe("CashflowModal pending state", () => {
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     globalThis.ResizeObserver = class ResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        void callback;
+      }
       observe() {}
       unobserve() {}
       disconnect() {}

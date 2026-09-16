@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalPortfolioSummary, goalYearSummary, goalProjectedCost } from "@/pages/goalsYearSummary";
+import { goalPortfolioSummary, goalYearSummary, goalProjectedCost } from "@/domain/goalsYearSummary";
 import type { Goal } from "@/types/finance";
 
 function goal(overrides: Partial<Goal>): Goal {

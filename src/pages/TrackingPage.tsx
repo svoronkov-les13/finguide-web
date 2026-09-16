@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { CheckCircle2, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePlanQuery, useMonthlyTrackerQuery, useMonthlyTrackerForYear, useSaveMonthlyTrackerMutation } from "@/api/planQueries";
@@ -6,11 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n/I18nProvider";
-import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/pages/trackingGoal";
-import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/pages/trackingMonths";
-import { trackingYearSummary } from "@/pages/trackingYearSummary";
+import { TrackingSkeleton } from "@/components/ui/skeleton";
+import { goalSavingNeeds, nearestGoalMonthlyTarget, trackingActiveGoal, trackingGoalProgress } from "@/domain/trackingGoal";
+import { makeEmptyYear, monthFormTarget, getMonthNames, type MonthData, type MonthStatus } from "@/domain/trackingMonths";
+import { trackingYearSummary } from "@/domain/trackingYearSummary";
 import type { MonthlyStatus } from "@/types/finance";
 import { useFormat } from "@/lib/useFormat";
+import { MoneyInput } from "@/components/ui/money-input";
 
 // ─── Month Form Dialog ────────────────────────────────────────────────────────
 
@@ -30,7 +32,6 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
   const { formatRub } = useFormat();
   const [amount, setAmount] = useState<string>(String(month.amount ?? monthlyTarget));
   const [note, setNote] = useState<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -39,7 +40,6 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
         setAmount(initialAmount);
         setNote("");
       });
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open, month.amount, monthlyTarget]);
 
@@ -89,18 +89,13 @@ function MonthFormDialog({ month, monthKey, monthlyTarget, plan, open, onClose, 
             <span className="text-[13px] font-medium text-[var(--fp-color-label)]">
               {t("tracking.monthFormAmount")}
             </span>
-            <div className="relative">
-              <input
-                ref={inputRef}
-                type="number"
-                min="0"
-                step="1000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-input)] px-5 pr-8 text-sm font-semibold text-[var(--fp-color-foreground)] outline-none transition-all hover:border-[var(--fp-color-border-hover)] focus:border-[var(--fp-color-border-strong)] focus:ring-2 focus:ring-[var(--fp-color-accent-gold)]/30"
-              />
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--fp-color-label)]">₽</span>
-            </div>
+            <MoneyInput
+              autoFocus
+              value={amount === "" ? null : Number(amount)}
+              onChange={(value) => setAmount(value === 0 ? "" : String(value))}
+              suffix="₽"
+              aria-label={t("tracking.monthFormAmount")}
+            />
             <div className="text-[12px] text-[var(--fp-color-label)]">
               {t("tracking.monthFormNorm", { amount: formatRub(monthlyTarget) })}
             </div>
@@ -196,6 +191,8 @@ export function TrackingPage() {
 
   // Fetch tracker data for the currently viewed year (merges into shared cache)
   useMonthlyTrackerForYear(viewYear);
+
+  if (!plan) return <TrackingSkeleton />;
 
   const activeGoal = trackingActiveGoal(plan?.goals);
   const activeGoalProgress = activeGoal ? trackingGoalProgress(activeGoal) : null;

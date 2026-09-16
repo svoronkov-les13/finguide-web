@@ -42,6 +42,14 @@ export function CashflowCard({
   const yearlyAmount = isMonthly ? item.amount * 12 : item.amount;
   const monthlyAmount = isMonthly ? item.amount : Math.round(item.amount / 12);
   const growthPct = Math.round(item.growth * 100);
+  const growthLabel = item.growthType === "ranges" && item.growthRanges?.length
+    ? item.growthRanges.map((range) => `${range.growthPercent > 0 ? "+" : ""}${range.growthPercent}%`).join(", ")
+    : growthPct !== 0
+      ? `${growthPct > 0 ? "+" : ""}${growthPct}%`
+      : null;
+  const growthPositive = item.growthType === "ranges" && item.growthRanges?.length
+    ? item.growthRanges.some((range) => range.growthPercent > 0)
+    : growthPct > 0;
   const endLabel = !item.endYear || item.endYear > item.startYear + 50 ? t("cashflow.indefinite") : `${item.endYear}`;
 
   return (
@@ -86,13 +94,13 @@ export function CashflowCard({
         {!compact && (
           <div className="mt-0.5 flex items-center justify-end gap-2 text-xs text-[var(--fp-color-muted-foreground)] num">
             {t("cashflow.avgPerMonth", { amount: formatMoney(monthlyAmount, item.currency) })}
-            {growthPct !== 0 && (
+            {growthLabel && (
               <span className={cn(
                 "flex items-center gap-0.5 font-medium",
-                growthPct > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]"
+                growthPositive ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]"
               )}>
                 <TrendingUp className="size-3" />
-                {growthPct > 0 ? "+" : ""}{growthPct}%
+                {growthLabel}
               </span>
             )}
           </div>

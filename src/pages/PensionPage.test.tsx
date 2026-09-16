@@ -39,6 +39,7 @@ const mockPlan = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  useNavigate: () => () => {},
 }));
 
 vi.mock("recharts", () => ({
@@ -243,7 +244,7 @@ describe("PensionPage", () => {
     });
 
     const retirementAge = container.querySelector('input[name="retirementAge"]') as HTMLInputElement;
-    const targetSpend = container.querySelector('input[type="number"][placeholder="pensionFormat.enterAmount"]') as HTMLInputElement;
+    const targetSpend = container.querySelector('input[aria-label="pension.desiredExpenses"]') as HTMLInputElement;
 
     act(() => {
       retirementAge.value = "65";
@@ -256,12 +257,12 @@ describe("PensionPage", () => {
     const resultText = resultCard?.textContent?.replace(/\s+/g, " ");
 
     expect(resultCard).not.toBeNull();
-    expect(resultText).toContain("100 000 ₽");
+    expect(resultText).toContain("100'000 ₽");
     expect(resultText).toContain("2051 / 60");
     expect(resultText).toContain("25 лет");
     expect(resultText).toContain("10 %");
     expect(resultText).toContain("pension.onTrack");
-    expect(resultText).not.toContain("200 000 ₽");
+    expect(resultText).not.toContain("200'000 ₽");
     expect(resultText).not.toContain("2056 / 65");
     expect(resultText).not.toContain("pension.needsAdjustment");
   });
@@ -277,5 +278,31 @@ describe("PensionPage", () => {
       { age: 35, year: 2026, capital: 100 },
       { age: 36, year: 2027, capital: 200 },
     ]);
+  });
+
+  it("windows the chart from five years before retirement to five years past zero-crossing", () => {
+    const forecast = Array.from({ length: 41 }, (_, i) => ({
+      age: 50 + i,
+      year: 2026 + i,
+      capital: 50 + i < 70 ? 1_000_000 : 0,
+    }));
+
+    const chartData = buildPensionChartData(forecast, { currentAge: 50, pensionCalculationYears: 50 }, 60);
+
+    expect(chartData[0]?.age).toBe(55);
+    expect(chartData.at(-1)?.age).toBe(75);
+  });
+
+  it("extends the chart to age 100 when the capital never runs out", () => {
+    const forecast = Array.from({ length: 61 }, (_, i) => ({
+      age: 50 + i,
+      year: 2026 + i,
+      capital: 1_000_000,
+    }));
+
+    const chartData = buildPensionChartData(forecast, { currentAge: 50, pensionCalculationYears: 60 }, 60);
+
+    expect(chartData[0]?.age).toBe(55);
+    expect(chartData.at(-1)?.age).toBe(100);
   });
 });

@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import * as Icons from "lucide-react";
 import { Eye, EyeOff, Lightbulb, Maximize2, Minimize2, X, ZoomIn, ZoomOut } from "lucide-react";
 import {
   Area,
@@ -23,18 +22,40 @@ import { useUiStore } from "@/store/uiStore";
 import type { ForecastPoint, FinancialPlan, Goal } from "@/types/finance";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useFormat } from "@/lib/useFormat";
+import { GOAL_ICONS } from "@/components/goals/goalIcons";
 
-const iconMap = Icons as unknown as Record<string, Icons.LucideIcon>;
 const TypedBrush = Brush as any;
+
+function renderBrushTraveller(props: { x: number; y: number; width: number; height: number }) {
+  const { x, y, width, height } = props;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y + 2}
+        width={width}
+        height={height - 4}
+        rx={width / 2}
+        fill="var(--fp-color-card)"
+        stroke="var(--fp-color-border-strong)"
+        strokeWidth={1}
+      />
+      <line x1={centerX - 1.5} y1={centerY - 4} x2={centerX - 1.5} y2={centerY + 4} stroke="var(--fp-color-border-strong)" strokeWidth={1} strokeLinecap="round" />
+      <line x1={centerX + 1.5} y1={centerY - 4} x2={centerX + 1.5} y2={centerY + 4} stroke="var(--fp-color-border-strong)" strokeWidth={1} strokeLinecap="round" />
+    </g>
+  );
+}
 
 /* Style guide chart colors */
 const CHART_COLORS = {
-  income: "#3C8A75",
-  expenses: "#B05C50",
-  goals: "#5D8AA8",
-  savings: "#1A141D",
-  optimistic: "#3C8A75",
-  pessimistic: "#B05C50",
+  income: "var(--fp-chart-income)",
+  expenses: "var(--fp-chart-expense)",
+  goals: "var(--fp-chart-goal)",
+  savings: "var(--fp-chart-capital)",
+  optimistic: "var(--fp-chart-income)",
+  pessimistic: "var(--fp-chart-expense)",
   grid: "var(--fp-color-divider)",
   reference: "rgba(26, 20, 27, 0.14)",
   zeroLine: "rgba(26, 20, 27, 0.34)",
@@ -129,7 +150,17 @@ export function ForecastChart() {
   });
 
   const forecast = resolveForecastForChart(plan);
-  const data = useMemo(() => buildForecastChartData(forecast, plan?.scenarioForecasts), [forecast, plan?.scenarioForecasts]);
+  // The solid line always shows the ACTIVE scenario, so drop its duplicate
+  // dashed overlay and label the line with the scenario name instead of "Базовый".
+  const activeScenarioId = plan?.activeScenario ?? "base";
+  const scenarioOverlays = useMemo(() => ({
+    optimistic: activeScenarioId === "optimistic" ? undefined : plan?.scenarioForecasts?.optimistic,
+    pessimistic: activeScenarioId === "pessimistic" ? undefined : plan?.scenarioForecasts?.pessimistic,
+  }), [activeScenarioId, plan?.scenarioForecasts]);
+  const solidLineLabel = activeScenarioId === "base"
+    ? t("chart.baseFull")
+    : plan?.scenarios.find((scenario) => scenario.id === activeScenarioId)?.name ?? t("chart.baseFull");
+  const data = useMemo(() => buildForecastChartData(forecast, scenarioOverlays), [forecast, scenarioOverlays]);
   const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
   const retirementYear = plan ? plan.settings.birthYear + plan.settings.retirementAge : undefined;
@@ -161,6 +192,9 @@ export function ForecastChart() {
     });
     return groups;
   }, [goalsByYear, visibleSeries.goals, plan]);
+
+  const moneyToneClass = (value: number) =>
+    cn("font-bold", value < 0 ? "text-[var(--fp-color-coral)]" : "text-[var(--fp-color-foreground)]");
 
   const formatAge = (age: number) => {
     const lastDigit = age % 10;
@@ -353,14 +387,14 @@ export function ForecastChart() {
             active={visibleSeries.savings}
             onClick={() => toggleSeries("savings")}
           />
-          {plan.scenarioForecasts?.optimistic && (
+          {scenarioOverlays.optimistic && (
             <LegendLabel
               color={CHART_COLORS.optimistic}
               label={t("chart.optimisticFull")}
               dashed
             />
           )}
-          {plan.scenarioForecasts?.pessimistic && (
+          {scenarioOverlays.pessimistic && (
             <LegendLabel
               color={CHART_COLORS.pessimistic}
               label={t("chart.pessimisticFull")}
@@ -390,7 +424,7 @@ export function ForecastChart() {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={visibleData} syncId="finance" margin={{ top: 18, right: 22, left: 0, bottom: 8 }}>
               <CartesianGrid vertical={false} stroke="var(--fp-color-border)" strokeDasharray="3 3" />
-              {plan.scenarioForecasts?.optimistic && plan.scenarioForecasts?.pessimistic ? (
+              {scenarioOverlays.optimistic && scenarioOverlays.pessimistic ? (
                 <Area
                   isAnimationActive={false}
                   type="monotone"
@@ -432,7 +466,7 @@ export function ForecastChart() {
                     : formatAge(row.age);
                   const yearGoals = goalsByYear.get(row.year) ?? [];
                   return (
-                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
+                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto scrollbar-thin">
                       <div className="mb-2 font-bold text-[var(--fp-color-foreground)] text-sm">
                         {titleText}
                       </div>
@@ -446,8 +480,8 @@ export function ForecastChart() {
                               <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: CHART_COLORS.pessimistic }} />
                               <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.pessimisticFull")}</span>
                             </div>
-                            <span className="font-bold text-[var(--fp-color-foreground)]">
-                              {formatRub(row.capitalPessimisticRubMln * 1_000_000, { compact: true })}
+                            <span className={moneyToneClass(row.capitalPessimisticRubMln)}>
+                              {formatRub(row.capitalPessimisticRubMln * 1_000_000)}
                             </span>
                           </div>
                         ) : null}
@@ -457,18 +491,18 @@ export function ForecastChart() {
                               <span className="h-0 w-3 border-t border-dashed" style={{ borderColor: CHART_COLORS.optimistic }} />
                               <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.optimisticFull")}</span>
                             </div>
-                            <span className="font-bold text-[var(--fp-color-foreground)]">
-                              {formatRub(row.capitalOptimisticRubMln * 1_000_000, { compact: true })}
+                            <span className={moneyToneClass(row.capitalOptimisticRubMln)}>
+                              {formatRub(row.capitalOptimisticRubMln * 1_000_000)}
                             </span>
                           </div>
                         ) : null}
                         <div className="flex items-center justify-between gap-6">
                           <div className="flex items-center gap-2">
                             <span className="h-0.5 w-3 rounded-full" style={{ backgroundColor: CHART_COLORS.savings }} />
-                            <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.baseFull")}</span>
+                            <span className="text-[var(--fp-color-muted-foreground)] font-medium">{solidLineLabel}</span>
                           </div>
-                          <span className="font-bold text-[var(--fp-color-foreground)]">
-                            {formatRub(row.capitalRubMln * 1_000_000, { compact: true })}
+                          <span className={moneyToneClass(row.capitalRubMln)}>
+                            {formatRub(row.capitalRubMln * 1_000_000)}
                           </span>
                         </div>
                       </div>
@@ -539,8 +573,8 @@ export function ForecastChart() {
                 );
               })()}
               <Line isAnimationActive={false} type="monotone" dataKey="capitalRubMln" stroke={CHART_COLORS.savings} strokeWidth={3} dot={false} name={t("chart.savings")} hide={!visibleSeries.savings} />
-              {plan.scenarioForecasts?.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
-              {plan.scenarioForecasts?.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {scenarioOverlays.optimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalOptimisticRubMln" stroke={CHART_COLORS.optimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.optimisticFull")} hide={!visibleSeries.savings} /> : null}
+              {scenarioOverlays.pessimistic ? <Line isAnimationActive={false} type="monotone" dataKey="capitalPessimisticRubMln" stroke={CHART_COLORS.pessimistic} strokeDasharray="6 6" strokeWidth={2} dot={false} name={t("chart.pessimisticFull")} hide={!visibleSeries.savings} /> : null}
               {/* Goal icons — placed AFTER Lines and Tooltip in JSX so they
                   render above the cursor line in SVG paint order */}
               {goalReferenceLines.map((group) => {
@@ -562,7 +596,7 @@ export function ForecastChart() {
                       return (
                         <g>
                           {sorted.map((goal, idx) => {
-                            const Ic = iconMap[goal.icon] ?? Icons.Target;
+                            const Ic = GOAL_ICONS[goal.icon] ?? GOAL_ICONS.Target;
                             const oy = idx * gap;
                             const clr = "var(--fp-color-neutral-80)";
                             return (
@@ -625,7 +659,7 @@ export function ForecastChart() {
                   const yearGoals = goalsByYear.get(row.year) ?? [];
 
                   return (
-                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto">
+                    <div className="rounded-[20px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] p-4 text-xs shadow-[var(--fp-shadow-tooltip)] min-w-[220px] max-h-[70vh] overflow-y-auto scrollbar-thin">
                       <div className="mb-3 font-bold text-[var(--fp-color-foreground)] text-sm">
                         {titleText}
                       </div>
@@ -640,7 +674,7 @@ export function ForecastChart() {
                               <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.income")}</span>
                             </div>
                             <span className="font-bold text-[var(--fp-color-foreground)]">
-                              {formatRub(row.incomeRubMln * 1_000_000, { compact: true })}
+                              {formatRub(row.incomeRubMln * 1_000_000)}
                             </span>
                           </div>
                         )}
@@ -651,7 +685,7 @@ export function ForecastChart() {
                               <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.expenses")}</span>
                             </div>
                             <span className="font-bold text-[var(--fp-color-foreground)]">
-                              {formatRub(row.onlyExpensesRubMln * 1_000_000, { compact: true })}
+                              {formatRub(row.onlyExpensesRubMln * 1_000_000)}
                             </span>
                           </div>
                         )}
@@ -662,7 +696,7 @@ export function ForecastChart() {
                               <span className="text-[var(--fp-color-muted-foreground)] font-medium">{t("chart.goals")}</span>
                             </div>
                             <span className="font-bold text-[var(--fp-color-foreground)]">
-                              {formatRub(row.goalsAbs * 1_000_000, { compact: true })}
+                              {formatRub(row.goalsAbs * 1_000_000)}
                             </span>
                           </div>
                         )}
@@ -697,8 +731,9 @@ export function ForecastChart() {
           </ResponsiveContainer>
         </div>
 
-        {/* Standalone Brush Timeline Horizon Slider */}
-        <div className="mt-3 w-full h-[24px] overflow-hidden relative">
+        {/* Standalone Brush Timeline Horizon Slider: minimap with the capital
+            line inside, grippy travellers and year labels while dragging */}
+        <div className="mt-3 w-full h-[36px] overflow-hidden relative">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 0, right: 22, left: 68, bottom: 0 }}>
               <XAxis dataKey={xAxisMode} hide />
@@ -711,15 +746,36 @@ export function ForecastChart() {
                   debounceBrush(e.startIndex ?? undefined, e.endIndex ?? undefined);
                 }}
                 dataKey={xAxisMode}
-                height={16}
+                height={36}
                 stroke="var(--fp-color-border-strong)"
                 fill="var(--fp-color-surface)"
-                travellerWidth={6}
-                tickFormatter={() => ''}
-                className="opacity-80"
-              />
+                travellerWidth={10}
+                traveller={renderBrushTraveller}
+                tickFormatter={(value: number) => (xAxisMode === "age" ? formatAge(Number(value)) : String(value))}
+              >
+                <ComposedChart>
+                  <Area
+                    isAnimationActive={false}
+                    type="monotone"
+                    dataKey="capitalRubMln"
+                    stroke={CHART_COLORS.savings}
+                    strokeWidth={1}
+                    strokeOpacity={0.5}
+                    fill={CHART_COLORS.savings}
+                    fillOpacity={0.08}
+                  />
+                </ComposedChart>
+              </TypedBrush>
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--fp-color-muted-foreground)]">
+          <span>{t("chart.brushHint")}</span>
+          <span className="num font-medium text-[var(--fp-color-foreground)]">
+            {visibleData.length > 0 && (xAxisMode === "age"
+              ? `${formatAge(visibleData[0].age)} — ${formatAge(visibleData[visibleData.length - 1].age)}`
+              : `${visibleData[0].year} — ${visibleData[visibleData.length - 1].year}`)}
+          </span>
         </div>
       </div>
     );
@@ -752,7 +808,7 @@ export function ForecastChart() {
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
         <DialogContent
           hideClose
-          className="max-w-[95vw] w-[95vw] h-[92vh] max-h-[92vh] p-6 bg-[var(--fp-color-background)] border-[var(--fp-color-border)] rounded-[var(--fp-radius-2xl)] shadow-2xl flex flex-col justify-start overflow-y-auto"
+          className="max-w-[95vw] w-[95vw] h-[92vh] max-h-[92vh] p-6 bg-[var(--fp-color-background)] border-[var(--fp-color-border)] rounded-[var(--fp-radius-2xl)] shadow-2xl flex flex-col justify-start overflow-y-auto scrollbar-thin"
         >
           {isFullscreen && renderUnifiedChart(true)}
         </DialogContent>
@@ -778,13 +834,14 @@ function LegendPill({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={active}
       className={cn(
         "inline-flex h-7 items-center gap-2 rounded-full border px-3 text-xs transition-all duration-200",
         active
           ? "border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/70 text-[var(--fp-color-foreground)] font-medium shadow-[var(--fp-shadow-sm)]"
           : "border-[var(--fp-color-border)] bg-[var(--fp-color-muted)]/40 text-[var(--fp-color-muted-foreground)]/40 opacity-50 hover:opacity-75"
       )}
-      type="button"
       onClick={onClick}
     >
       {line ? (

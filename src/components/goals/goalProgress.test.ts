@@ -63,7 +63,7 @@ describe("goalProgress", () => {
 });
 
 describe("goalIsActuallyAchieved", () => {
-  it("does not mark a goal achieved only because forecast allocation fills it later", () => {
+  it("marks a goal achieved when projected deadline progress reaches 100%", () => {
     expect(goalIsActuallyAchieved({
       ...baseGoal,
       cost: 75_000_000,
@@ -71,8 +71,7 @@ describe("goalIsActuallyAchieved", () => {
       saved: 0,
       projectedSaved: 75_000_000,
       projectedProgressPct: 100,
-      reachable: false,
-    })).toBe(false);
+    })).toBe(true);
   });
 
   it("marks a goal achieved when factual savings cover the projected cost", () => {

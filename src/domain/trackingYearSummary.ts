@@ -1,5 +1,5 @@
 import { resolveMonthlyActuals, yearActualTotal } from "@/engine/resolveTracker";
-import type { MonthData } from "@/pages/trackingMonths";
+import type { MonthData } from "@/domain/trackingMonths";
 
 export function trackingYearSummary(
   months: MonthData[],
