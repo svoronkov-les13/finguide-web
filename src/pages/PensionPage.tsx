@@ -358,7 +358,7 @@ export function PensionPage() {
           )}
         </div>
 
-        {/* Сценарии расходования */}
+        {/* Сценарии расходования и результат расчёта: кнопка «Рассчитать» и то, что она считает, в одной карточке */}
         <div className="rounded-[24px] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)] overflow-hidden shadow-sm">
           <button
             type="button"
@@ -452,13 +452,8 @@ export function PensionPage() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Results Section */}
-      <div className="mt-8 grid gap-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
-          <Card data-testid="pension-result-card" className="overflow-hidden bg-[var(--fp-color-card)] border-[var(--fp-color-border)] rounded-[24px]">
-            <div className="p-8 pb-6 border-b border-[var(--fp-color-border)]">
+          <div data-testid="pension-result-card" className="border-t border-[var(--fp-color-border)]">
+            <div className="p-6 md:p-8 md:pb-6">
               <p className="text-[15px] font-medium text-[var(--fp-color-label)] mb-3">
                 {t("pension.targetCapitalIntro", { amount: formatRub(settings.targetMonthlySpend) })}
               </p>
@@ -487,8 +482,12 @@ export function PensionPage() {
                 <span className="font-semibold text-[15px]">{isCapitalSufficient ? t("pension.onTrack") : t("pension.needsAdjustment")}</span>
               </div>
             )}
-          </Card>
+          </div>
+        </div>
+      </div>
 
+      {/* Results Section */}
+      <div className="mt-8 grid gap-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Сравнение с текущими расходами */}
             <Card className="p-7 rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
