@@ -117,9 +117,7 @@ export function GoalsPage() {
     e.preventDefault();
     if (draggedGoalId) {
       const draggedGoal = plan?.goals?.find((g) => g.id === draggedGoalId);
-      if (draggedGoal && draggedGoal.targetYear !== year) {
-        setDragOverYear(year);
-      }
+      setDragOverYear(draggedGoal && draggedGoal.targetYear !== year ? year : null);
     }
   };
 
@@ -388,13 +386,21 @@ export function GoalsPage() {
                 <div 
                   key={year} 
                   onDragOver={(e) => handleYearDragOver(e, year)}
-                  onDragLeave={() => setDragOverYear(null)}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOverYear(null);
+                  }}
                   onDrop={(e) => handleYearDrop(e, year)}
                   className={cn(
                     "flex flex-col gap-4 rounded-3xl p-2 transition-all duration-200 border border-transparent",
                     isYearDragOver ? "border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-surface-hover)]/30 scale-[1.005] shadow-sm" : ""
                   )}
                 >
+                  {isYearDragOver && (
+                    <div className="rounded-2xl border border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-card)] px-5 py-3 text-center text-sm font-semibold text-[var(--fp-color-foreground)]">
+                      {t("goals.dropToYear", { year: String(year) })}
+                    </div>
+                  )}
+
                   {/* Year Header Block */}
                   <div className={cn(
                     "flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl p-5 border",
@@ -447,6 +453,7 @@ export function GoalsPage() {
                         onDragEnd={() => {
                           setDraggedGoalId(null);
                           setDragOverGoalId(null);
+                          setDragOverYear(null);
                         }}
                         onDragOver={(e) => handleDragOver(e, goal.id)}
                         onDragLeave={handleDragLeave}

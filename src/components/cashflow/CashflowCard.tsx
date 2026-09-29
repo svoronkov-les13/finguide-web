@@ -33,7 +33,7 @@ export function CashflowCard({
   isDragOver?: boolean;
 }) {
   const { t } = useI18n();
-  const { formatRub, formatUsd } = useFormat();
+  const { formatRub, formatUsd, formatNumber } = useFormat();
   const formatMoney = (amount: number, currency: string) => {
     return currency === "USD" ? formatUsd(amount) : formatRub(amount);
   };
@@ -45,9 +45,9 @@ export function CashflowCard({
   // One decimal: 5.5% inflation must not show up as 6%
   const growthPct = Math.round(item.growth * 1000) / 10;
   const growthLabel = item.growthType === "ranges" && item.growthRanges?.length
-    ? item.growthRanges.map((range) => `${range.growthPercent > 0 ? "+" : ""}${range.growthPercent}%`).join(", ")
+    ? item.growthRanges.map((range) => `${range.growthPercent > 0 ? "+" : ""}${formatNumber(range.growthPercent, 1)}%`).join(", ")
     : growthPct !== 0
-      ? `${growthPct > 0 ? "+" : ""}${growthPct}%`
+      ? `${growthPct > 0 ? "+" : ""}${formatNumber(growthPct, 1)}%`
       : null;
   const growthPositive = item.growthType === "ranges" && item.growthRanges?.length
     ? item.growthRanges.some((range) => range.growthPercent > 0)

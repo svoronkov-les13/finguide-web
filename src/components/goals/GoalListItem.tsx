@@ -40,7 +40,7 @@ export function GoalListItem({
   isDragOver,
 }: GoalListItemProps) {
   const { t } = useI18n();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const isPeriodic = goal.type === "periodic";
@@ -109,7 +109,7 @@ export function GoalListItem({
            {goal.growth > 0 ? (
              <>
                <TrendingUp className="size-3" />
-               +{Math.round(goal.growth * 100)}%
+               +{formatNumber(goal.growth * 100, 1)}%
              </>
            ) : (
              <span className="w-full text-center">—</span>

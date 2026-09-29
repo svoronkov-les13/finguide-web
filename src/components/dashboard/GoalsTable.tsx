@@ -81,7 +81,7 @@ export function GoalsTable() {
 
 function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { t } = useI18n();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
   const Icon = GOAL_ICONS[goal.icon] ?? Target;
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
@@ -119,7 +119,7 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
       </div>
       <div className="text-right">
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost)}</div>
-        <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: String(Math.round(goal.growth * 100)) })}</div>
+        <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: formatNumber(goal.growth * 100, 1) })}</div>
       </div>
       <div className="flex justify-end">
         <Badge variant={isReachable ? "success" : "danger"} className={`bg-transparent border-none ${statusColorClass} shadow-none px-0 gap-1.5 font-semibold text-xs`}>

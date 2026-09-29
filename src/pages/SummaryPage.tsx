@@ -199,7 +199,7 @@ function CashflowTable({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
 
   const freqLabel = (f: Cashflow["frequency"]) => {
     if (f === "monthly") return t("summary.monthly");
@@ -252,7 +252,7 @@ function CashflowTable({
                   {item.startYear} — {item.endYear ?? t("summary.indefinite")}
                 </div>
                 <div className={`text-[13px] font-medium ${effectiveGrowth(item, inflation) > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-label)]"}`}>
-                  {formatGrowthPercent(effectiveGrowth(item, inflation))}
+                  {formatGrowthPercent(effectiveGrowth(item, inflation), formatNumber)}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
@@ -296,7 +296,7 @@ function GoalsTable({
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
 
   return (
     <Card className="overflow-hidden rounded-[20px] border-[var(--fp-color-border)] shadow-sm">
@@ -344,7 +344,7 @@ function GoalsTable({
                   <div className="text-right font-semibold">{formatRub(progress.cost)}</div>
                   <div className="text-center text-[var(--fp-color-label)] text-[13px]">{item.targetYear}</div>
                   <div className="text-right text-[13px] font-medium text-[var(--fp-color-teal)]">
-                    {formatGrowthPercent(effectiveGrowth(item, inflation))} {t("summary.perYearShort")}
+                    {formatGrowthPercent(effectiveGrowth(item, inflation), formatNumber)} {t("summary.perYearShort")}
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate({ to: editHref as never }); }}
@@ -396,9 +396,10 @@ export function effectiveGrowth(item: Pick<Cashflow, "growth" | "growthType" | "
   return item.growthType === "inflation" && item.growth === 0 ? inflation : item.growth;
 }
 
-export function formatGrowthPercent(growth: number) {
-  const rounded = Math.round(growth * 100);
-  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+export function formatGrowthPercent(growth: number, formatNumber: (value: number, digits: number) => string = (value) => String(value)) {
+  // One decimal: a 5.5% indexation must not read as 6%
+  const rounded = Math.round(growth * 1000) / 10;
+  return `${rounded > 0 ? "+" : ""}${formatNumber(rounded, 1)}%`;
 }
 
 export function summaryGoalProgress(goals: Goal[]) {
