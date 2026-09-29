@@ -1,3 +1,4 @@
+import { nativeValidationProps } from "@/i18n/validation";
 import { FormEvent, useMemo, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Check, ChevronDown, Copy, Layers, LayoutDashboard, Loader2, LogOut, Plus } from "lucide-react";
@@ -32,7 +33,7 @@ export function Topbar() {
   const routeLabel = route ? t(route.labelKey) : t("routes.dashboard");
   const currentPlan = plans.find((item) => item.current);
   const currentPlanId = currentPlan?.id ?? plan?.planId;
-  const planName = currentPlan?.name ?? plan?.owner.planName ?? (planPending ? t("topbar.loadingPlan") : t("common.mainPlan"));
+  const planName = currentPlan?.name || plan?.owner.planName || (planPending ? t("topbar.loadingPlan") : t("common.mainPlan"));
   const ownerName = auth.session?.profile?.name || auth.session?.profile?.preferredUsername || plan?.owner.name || (planPending ? t("topbar.loading") : t("topbar.guest"));
   const ownerInitials = initials(ownerName);
   const creating = createPlan.isPending || copyPlan.isPending;
@@ -40,7 +41,7 @@ export function Topbar() {
 
   function openCreateDialog(mode: CreateMode) {
     setCreateMode(mode);
-    setPlanNameInput(mode === "copy" ? `${planName} copy` : "");
+    setPlanNameInput(mode === "copy" ? t("common.copyName", { name: planName }) : "");
     setCreateOpen(true);
   }
 
@@ -180,7 +181,7 @@ export function Topbar() {
           <DialogHeader>
             <DialogTitle className="text-base">{t("topbar.createPlan")}</DialogTitle>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={handleCreatePlan}>
+          <form {...nativeValidationProps(t)} className="space-y-4" onSubmit={handleCreatePlan}>
             <div className="grid grid-cols-2 rounded-[var(--fp-radius-md)] bg-[var(--fp-color-muted)] p-1 text-sm">
               <button
                 type="button"
@@ -240,5 +241,5 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
-  return letters || "FP";
+  return letters || "?";
 }

@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { loadEnv } from "vite";
 import { defineConfig } from "vitest/config";
+import { appManifest, localizeHtml } from "./src/config/metadata";
 
 export default defineConfig(({ mode }) => {
   // loadEnv reads .env / .env.local / .env.[mode] — unlike process.env which only sees
@@ -21,7 +22,20 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: env.VITE_FINGUIDE_BASE_PATH ?? "/",
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), {
+      name: "app-brand-metadata",
+      transformIndexHtml: localizeHtml,
+      generateBundle() {
+        this.emitFile({ type: "asset", fileName: "site.webmanifest", source: JSON.stringify(appManifest(), null, 2) });
+      },
+      configureServer(server) {
+        server.middlewares.use((request, response, next) => {
+          if (!request.url?.split("?")[0].endsWith("/site.webmanifest")) return next();
+          response.setHeader("Content-Type", "application/manifest+json");
+          response.end(JSON.stringify(appManifest()));
+        });
+      },
+    }],
     test: {
       environment: "node",
       globals: true,

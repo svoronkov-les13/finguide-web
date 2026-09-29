@@ -1,3 +1,5 @@
+import { nativeValidationProps } from "@/i18n/validation";
+import { errorMessage } from "@/i18n/errors";
 import { useState, type FormEvent } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
@@ -49,7 +51,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
 
   if (auth.authenticated && auth.enabled) {
@@ -71,7 +73,7 @@ export function LoginPage() {
         (import.meta.env.VITE_FINGUIDE_BASE_PATH?.replace(/\/$/, "") || "") + "/dashboard",
       );
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : t("auth.login.error"));
+      setError(caught);
     } finally {
       setLoading(false);
     }
@@ -104,7 +106,7 @@ export function LoginPage() {
       </div>
 
       {/* Form */}
-      <form
+      <form {...nativeValidationProps(t)}
         onSubmit={(e) => void handleSubmit(e)}
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
@@ -147,6 +149,7 @@ export function LoginPage() {
             />
             <button
               onClick={() => setShowPassword(!showPassword)}
+                aria-label={t(showPassword ? "auth.hidePassword" : "auth.showPassword")}
               style={{
                 position: "absolute",
                 right: 14,
@@ -187,7 +190,7 @@ export function LoginPage() {
         )}
 
         {/* Error message */}
-        {error && (
+        {!!error && (
           <p
             style={{
               margin: 0,
@@ -198,7 +201,7 @@ export function LoginPage() {
               color: "var(--fp-color-danger)",
             }}
           >
-            {error}
+            {errorMessage(error, t, "auth.login.error")}
           </p>
         )}
 

@@ -14,7 +14,7 @@ export function App() {
       new QueryClient({
         mutationCache: new MutationCache({
           onError: (error) => {
-            useUiStore.getState().showError(error instanceof Error ? error.message : String(error));
+            useUiStore.getState().showError(error);
           },
         }),
         defaultOptions: {

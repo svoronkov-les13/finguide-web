@@ -17,16 +17,18 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { useFormat } from "@/lib/useFormat";
 import { MoneyInput } from "@/components/ui/money-input";
+import { validationError, nativeValidationProps } from "@/i18n/validation";
 
 export function GeneralDataPage() {
   const { t } = useI18n();
+  const { formatNumber } = useFormat();
   const navigate = useNavigate();
   const auth = useAuth();
   const { data: plan } = usePlanQuery();
   const updateSettings = useUpdateSettingsMutation();
   const settings = plan?.settings;
   const form = useForm<z.input<typeof settingsSchema>, unknown, SettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema, { error: validationError(t) }),
     values: {
       startYear: settings?.startYear ?? 2024,
       birthYear: settings?.birthYear ?? 1993,
@@ -64,7 +66,7 @@ export function GeneralDataPage() {
 
   return (
     <Page>
-      <form onSubmit={onSubmit} className="contents">
+      <form {...nativeValidationProps(t)} onSubmit={onSubmit} className="contents">
       <PageHeader
         title={t("general.title")}
         description={t("general.subtitle")}
@@ -127,7 +129,7 @@ export function GeneralDataPage() {
               <Field label={t("general.inflation")} hint={t("general.inflationHint")} error={form.formState.errors.inflationPercent?.message}>
                 <Input type="number" step="0.1" {...form.register("inflationPercent")} />
               </Field>
-              <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${realReturn.toFixed(1)}%`} detail={t("general.realReturnDetail")} />
+              <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${formatNumber(realReturn, 1)}%`} detail={t("general.realReturnDetail")} />
             </div>
           </FormSection>
 
@@ -207,7 +209,7 @@ function SummaryCard(props: {
   retirementAge: number;
 }) {
   const { t } = useI18n();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2 font-semibold">
@@ -221,7 +223,7 @@ function SummaryCard(props: {
         <SummaryRow label={t("general.capital")} value={formatRub(props.capital)} />
         <SummaryRow label={t("general.returnPct")} value={`${props.returnPct}%`} tone="positive" />
         <SummaryRow label={t("general.inflationPct")} value={`${props.inflationPct}%`} tone="negative" />
-        <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${props.realReturn.toFixed(1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
+        <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${formatNumber(props.realReturn, 1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
         <SummaryRow label={t("general.pensionIn")} value={`${props.retirementAge} ${t("general.years")}`} />
       </dl>
     </Card>

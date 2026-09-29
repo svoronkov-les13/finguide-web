@@ -1,3 +1,4 @@
+import { nativeValidationProps } from "@/i18n/validation";
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Check } from "lucide-react";
@@ -118,7 +119,7 @@ export function GoalModal({
       }
     >
       <div className="flex-1 px-8 md:px-10 pb-6">
-                <form id="goal-form" onSubmit={handleSubmit} className="grid gap-6">
+                <form {...nativeValidationProps(t)} id="goal-form" onSubmit={handleSubmit} className="grid gap-6">
                   {/* Name */}
                   <div className="grid gap-2">
                     <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("goals.nameLabel")}</Label>

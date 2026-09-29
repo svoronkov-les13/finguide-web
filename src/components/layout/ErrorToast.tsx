@@ -3,6 +3,7 @@ import { TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useUiStore } from "@/store/uiStore";
+import { errorMessage } from "@/i18n/errors";
 
 /** Surfaces failed mutations; fed by the global MutationCache onError in app.tsx. */
 export function ErrorToast() {
@@ -32,7 +33,7 @@ export function ErrorToast() {
         </div>
         <div className="min-w-0">
           <div className="text-sm font-bold text-[var(--fp-color-foreground)]">{t("errors.saveFailed")}</div>
-          <div className="mt-1 break-words text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">{message}</div>
+          <div className="mt-1 break-words text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">{errorMessage(message, t)}</div>
           <div className="mt-1 text-[11px] text-[var(--fp-color-muted-foreground)]">{t("errors.supportHint")}</div>
         </div>
       </div>

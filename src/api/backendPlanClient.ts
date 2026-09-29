@@ -1,3 +1,5 @@
+import { LocalizedError, httpErrorKey } from "@/i18n/errors";
+import { translateCurrent } from "@/i18n/translate";
 import {
   deletePlansPlanIdExpensesId,
   deletePlansPlanIdGoalsId,
@@ -121,12 +123,12 @@ export function unwrapData<T>(response: ApiResponse, operation: string): T {
     const envelope = response.data as { error?: { message?: string; requestId?: string } } | undefined;
     const detail = envelope?.error?.message ? `: ${envelope.error.message}` : "";
     const requestId = envelope?.error?.requestId ? ` [trace_id: ${envelope.error.requestId}]` : "";
-    throw new Error(`${operation} failed with HTTP ${response.status}${detail}${requestId}`);
+    throw new LocalizedError(httpErrorKey(response.status), `${operation} failed with HTTP ${response.status}${detail}${requestId}`, {}, envelope?.error?.requestId);
   }
 
   const envelope = response.data as { data?: T; error?: { message?: string } } | undefined;
   if (!envelope || !("data" in envelope)) {
-    throw new Error(`${operation} returned an invalid API envelope`);
+    throw new LocalizedError("errors.invalidResponse", `${operation} returned an invalid API envelope`);
   }
 
   return envelope.data as T;
@@ -161,7 +163,7 @@ async function backendNoContent(path: string, options: RequestInit = {}, operati
     if (res.status === 401) {
       clearAuthSession();
     }
-    throw new Error(`${operation} failed with HTTP ${res.status}`);
+    throw new LocalizedError(httpErrorKey(res.status), `${operation} failed with HTTP ${res.status}`);
   }
 }
 
@@ -203,6 +205,8 @@ async function readBackendPlan() {
   return mapBackendPlan({ planState, dashboard, cashflow, pensionCashflow, pensionProjection, monthlyCashflow, health, scenarios, tracker, scenarioForecasts });
 }
 
+// Legacy persistence identifier, not a UI label. Changing it would orphan saved
+// scenario UUIDs. The interface uses dashboard.scenario_whatif in either locale.
 const WHATIF_SCENARIO_NAME = "Что если?";
 
 /** The persisted custom what-if scenario, if the plan has one (uuid id, fixed name). */
@@ -239,7 +243,7 @@ function mapBackendPlan(input: {
   const { planState, dashboard, cashflow, pensionCashflow, pensionProjection, monthlyCashflow, health, scenarios, tracker, scenarioForecasts } = input;
   const assumptions = planState.modelAssumptions;
   const settings = mapSettings(planState, assumptions);
-  const planName = (planState as PlanState & { name?: string }).name ?? "Основной план";
+  const planName = (planState as PlanState & { name?: string }).name ?? "";
   
   const baseForecast = cashflow.map(mapForecastPoint);
   const pensionForecast = pensionCashflow.map(mapForecastPoint);
@@ -254,7 +258,7 @@ function mapBackendPlan(input: {
       name: planState.profile.name,
       email: planState.profile.email,
       planName,
-      tier: "Backend API",
+      tier: translateCurrent("dataLabels.backend"),
     },
     settings,
     scenarios: mapScenarios(scenarios),
@@ -311,9 +315,9 @@ function mapSettings(planState: PlanState, assumptions: ModelAssumptions | undef
   };
 }
 
-class StalePlanError extends Error {
+class StalePlanError extends LocalizedError {
   constructor() {
-    super("План ещё загружается или был переключён — повторите действие после обновления данных");
+    super("errors.stalePlan", translateCurrent("errors.stalePlan"));
     this.name = "StalePlanError";
   }
 }
@@ -439,7 +443,7 @@ export const backendPlanClient = {
   async updateCashflow(id: string, patch: Partial<Cashflow>) {
     const planId = currentPlanId();
     const current = findCashflow(id);
-    if (!current) throw new Error(`Cashflow ${id} was not found`);
+    if (!current) throw new LocalizedError("errors.notFound", `Cashflow ${id} was not found`);
     const next = { ...current, ...patch };
     const fallbackEndYear = dashboardEndYearFromSettings(lastFinancialPlan, next.startYear);
 
@@ -472,9 +476,9 @@ export const backendPlanClient = {
 
   async duplicateCashflow(id: string) {
     const source = findCashflow(id);
-    if (!source) throw new Error(`Cashflow ${id} was not found`);
+    if (!source) throw new LocalizedError("errors.notFound", `Cashflow ${id} was not found`);
     return this.addCashflow({
-      name: `${source.name} (копия)`,
+      name: translateCurrent("common.copyName", { name: source.name }),
       type: source.type,
       frequency: source.frequency,
       amount: source.amount,
@@ -490,7 +494,7 @@ export const backendPlanClient = {
   async deleteCashflow(id: string) {
     const planId = currentPlanId();
     const current = findCashflow(id);
-    if (!current) throw new Error(`Cashflow ${id} was not found`);
+    if (!current) throw new LocalizedError("errors.notFound", `Cashflow ${id} was not found`);
 
     if (current.type === "income") {
       await deletePlansPlanIdIncomesId(planId, id, await requestOptions());
@@ -506,7 +510,7 @@ export const backendPlanClient = {
   async updateGoal(id: string, patch: Partial<Goal>) {
     const planId = currentPlanId();
     const current = findGoal(id);
-    if (!current) throw new Error(`Goal ${id} was not found`);
+    if (!current) throw new LocalizedError("errors.notFound", `Goal ${id} was not found`);
     const priority = (lastFinancialPlan?.goals.findIndex((goal) => goal.id === id) ?? 0) + 1;
     unwrapData<ApiGoal>(
       await patchPlansPlanIdGoalsId(planId, id, goalRequestFromGoal({ ...current, ...patch }, priority), await requestOptions()),

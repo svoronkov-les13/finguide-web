@@ -25,7 +25,7 @@ export function Sidebar() {
       )}
     >
       <div className={cn("mt-7 flex items-center", expanded ? "px-5" : "justify-center", "max-[760px]:justify-center max-[760px]:px-0")}>
-        <FinPlanLogo expanded={expanded} />
+        <BrandLogo expanded={expanded} />
       </div>
 
       <nav className={cn("mt-10 grid gap-1.5", expanded ? "px-3" : "", "max-[760px]:px-0")}>
@@ -68,29 +68,19 @@ export function Sidebar() {
   );
 }
 
-function FinPlanLogo({ expanded }: { expanded: boolean }) {
+function BrandLogo({ expanded }: { expanded: boolean }) {
+  const { t } = useI18n();
   return (
-    <Link to="/dashboard" className={cn("flex min-w-0 items-center", !expanded && "justify-center")} aria-label="FinPlan">
-      {expanded && (
-        <img
-          className="h-10 w-[140px] object-contain max-[760px]:hidden"
-          src={`${import.meta.env.BASE_URL}brand/finplan-wordmark-on-dark.svg`}
-          width="162"
-          height="64"
-          alt="FinPlan"
-          decoding="async"
-        />
-      )}
-      {!expanded && (
+    <Link to="/dashboard" className={cn("flex min-w-0 items-center gap-2", !expanded && "justify-center")} aria-label={t("common.appName")}>
         <img
           className="size-10 shrink-0 object-contain max-[760px]:size-8"
           src={`${import.meta.env.BASE_URL}brand/finplan-app-icon.svg`}
           width="40"
           height="40"
-          alt="FinPlan"
+          alt=""
           decoding="async"
         />
-      )}
+      {expanded && <span className="truncate text-2xl font-bold tracking-tight max-[760px]:hidden">{t("common.appName")}</span>}
     </Link>
   );
 }

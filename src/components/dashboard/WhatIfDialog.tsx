@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { validationError, nativeValidationProps } from "@/i18n/validation";
 import { BrainCircuit, CheckCircle2 } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import type React from "react";
@@ -50,7 +51,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
   } as const;
 
   const form = useForm<z.input<typeof whatIfSchema>, unknown, WhatIfFormValues>({
-    resolver: zodResolver(whatIfSchema),
+    resolver: zodResolver(whatIfSchema, { error: validationError(t) }),
     values: {
       incomeChangePercent: 0,
       expenseChangePercent: 0,
@@ -105,7 +106,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
         </div>
 
         <ScrollArea className="max-h-[calc(100vh-186px)]">
-        <form className="px-7 py-6 max-[760px]:px-5" onSubmit={onSubmit}>
+        <form {...nativeValidationProps(t)} className="px-7 py-6 max-[760px]:px-5" onSubmit={onSubmit}>
           <SectionTitle>{t("dashboard.whatifBase")}</SectionTitle>
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             {Object.values(presets).map((preset) => (

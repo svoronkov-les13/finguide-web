@@ -5,12 +5,12 @@ interface UiState {
   sidebarOpen: boolean;
   hintVisible: boolean;
   toastVisible: boolean;
-  errorMessage: string | null;
+  errorMessage: unknown;
   setCommandOpen: (open: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
   setHintVisible: (visible: boolean) => void;
   setToastVisible: (visible: boolean) => void;
-  showError: (message: string) => void;
+  showError: (message: unknown) => void;
   clearError: () => void;
 }
 

@@ -771,7 +771,7 @@ describe("backendPlanClient monthly cashflow mapping", () => {
       age: 33,
       month: "2026-01",
       monthNumber: 1,
-      label: "янв 2026",
+      label: "Янв 2026",
       income: 345_000,
       expenses: -149_000,
       goals: -0,
