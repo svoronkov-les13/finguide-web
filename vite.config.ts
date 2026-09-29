@@ -20,11 +20,18 @@ export default defineConfig(({ mode }) => {
     return backendUrl;
   })();
 
+  const base = env.VITE_FINGUIDE_BASE_PATH ?? "/";
+
   return {
-    base: env.VITE_FINGUIDE_BASE_PATH ?? "/",
+    base,
     plugins: [react(), tailwindcss(), {
       name: "app-brand-metadata",
-      transformIndexHtml: localizeHtml,
+      transformIndexHtml: {
+        // After Vite's own URL rewriting: dev prefixes every root URL with the base, while the
+        // build only prefixes files from public/ — and the manifest is generated, not public.
+        order: "post",
+        handler: (html) => localizeHtml(html).replace(/href="[^"]*site\.webmanifest"/, `href="${base}site.webmanifest"`),
+      },
       generateBundle() {
         this.emitFile({ type: "asset", fileName: "site.webmanifest", source: JSON.stringify(appManifest(), null, 2) });
       },
