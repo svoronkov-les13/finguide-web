@@ -861,7 +861,7 @@ export const ru = {
     tip: "Отмечайте каждый месяц, удалось ли выполнить норму накоплений. Это помогает формировать финансовую дисциплину и отслеживать прогресс. Регулярный трекинг повышает вероятность достижения финансовых целей.",
     monthFormTitle: "{{month}} {{year}}",
     monthFormAmount: "Сумма накоплений за месяц",
-    monthFormNorm: "Норма: {{amount}} ₽/мес",
+    monthFormNorm: "Норма: {{amount}}/мес",
     monthFormNote: "Заметка (необязательно)",
     monthFormNotePlaceholder: "Например: включая бонус",
     monthFormQuick100: "100% нормы",
@@ -1879,7 +1879,7 @@ export const en = {
     // Month form
     monthFormTitle: "{{month}} {{year}}",
     monthFormAmount: "Savings amount for the month",
-    monthFormNorm: "Target: {{amount}} ₽/mo",
+    monthFormNorm: "Target: {{amount}}/mo",
     monthFormNote: "Note (optional)",
     monthFormNotePlaceholder: "E.g.: including bonus",
     monthFormQuick100: "100% of target",

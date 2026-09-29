@@ -245,12 +245,14 @@ export function CashflowModal({
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.endDate")}</Label>
                       {isOnetime ? (
                         <>
-                          <Input type="number" value={Number.isFinite(startYearValue) ? startYearValue : ""} disabled readOnly />
+                          <Input key="onetime-end-year" type="number" value={Number.isFinite(startYearValue) ? startYearValue : ""} disabled readOnly />
                           <span className="px-5 text-xs text-[var(--fp-color-muted-foreground)]">{t("cashflow.onetimeEndHint")}</span>
                         </>
                       ) : (
                         <>
                           <Input
+                            // Distinct keys: the one-time branch renders a controlled input in the same slot
+                            key="end-year"
                             type="number"
                             placeholder={t("cashflow.indefinite")}
                             aria-invalid={!!form.formState.errors.endYear}
