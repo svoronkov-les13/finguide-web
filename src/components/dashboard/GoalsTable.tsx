@@ -115,7 +115,13 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">
           {t(`goals.monthShort.${month}` as Parameters<typeof t>[0])} {goal.targetYear}
         </div>
-        <div className="text-[10px]">{t("goals.inYears", { count: String(yearsLeft) })}</div>
+        <div className="text-[10px]">
+          {yearsLeft > 0
+            ? t("goals.inYears", { count: yearsLeft })
+            : yearsLeft === 0
+              ? t("goals.thisYear")
+              : t("goals.yearsAgo", { count: -yearsLeft })}
+        </div>
       </div>
       <div className="text-right">
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost)}</div>

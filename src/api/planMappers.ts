@@ -239,7 +239,7 @@ export function mapDashboardSnapshot(
     pensionCapitalRub: dashboard.projectedPensionCapital,
     retirementLabel: translateCurrent("dataLabels.retirement", { age: pension.retirementAge, years: dashboard.yearsToRetirement }),
     independenceYear,
-    independenceLabel: yearsToIndependence === 0 ? translateCurrent("dataLabels.now") : translateCurrent("dataLabels.inYears", { years: yearsToIndependence }),
+    independenceLabel: yearsToIndependence === 0 ? translateCurrent("dataLabels.now") : translateCurrent("dataLabels.inYears", { count: yearsToIndependence }),
     healthScore: health.score,
   };
 }

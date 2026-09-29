@@ -469,9 +469,9 @@ export function PensionPage() {
                 </p>
               )}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium text-[var(--fp-color-label)]">
-                <span>{t("pension.targetYearInfo", { year: persistedRetirementYear, age: settings.retirementAge })}</span>
+                <span>{t("pension.targetYearInfo", { year: persistedRetirementYear, age: settings.retirementAge, count: settings.retirementAge })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
-                <span>{t("pension.yearsToSave", { years: persistedYearsToRetirement })}</span>
+                <span>{t("pension.yearsToSave", { count: persistedYearsToRetirement })}</span>
                 <span className="text-[var(--fp-color-border-strong)]">•</span>
                 <span>{t("pension.annualReturn", { percent: formatPercent(settings.pensionInvestmentReturn) })}</span>
               </div>
@@ -543,10 +543,10 @@ export function PensionPage() {
               ) : (
                 <>
                   <div className="text-[56px] leading-none font-bold tracking-tight mb-4 text-[var(--fp-color-coral)]">
-                    {t("pension.lastsYears", { years: Math.max(0, depletionAge - effectiveRetirementAge) })}
+                    {t("pension.lastsYears", { count: Math.max(0, depletionAge - effectiveRetirementAge) })}
                   </div>
                   <p className="text-[16px] font-medium text-[var(--fp-color-foreground)]">
-                    {t("pension.depletesAtAge", { age: depletionAge })}
+                    {t("pension.depletesAtAge", { age: depletionAge, count: depletionAge })}
                   </p>
                 </>
               )}
@@ -557,7 +557,7 @@ export function PensionPage() {
           <Card className="p-7 rounded-[24px] bg-[var(--fp-color-card)] border-[var(--fp-color-border)] shadow-sm">
             <h2 className="text-[17px] font-semibold mb-2">{t("pension.chartTitle")}</h2>
             <p className="text-[14px] text-[var(--fp-color-label)] mb-8">
-              {t("pension.chartSubtitle", { age: effectiveRetirementAge })}
+              {t("pension.chartSubtitle", { age: effectiveRetirementAge, count: effectiveRetirementAge })}
             </p>
             
             <div className="h-[320px] w-full">
@@ -586,7 +586,7 @@ export function PensionPage() {
                   />
                   <RechartsTooltip 
                     formatter={(value) => [formatRub(Number(value)), t("pension.capital")]}
-                    labelFormatter={(label) => t("pension.ageTooltip", { age: String(label) })}
+                    labelFormatter={(label) => t("pension.ageTooltip", { age: String(label), count: Number(label) })}
                     contentStyle={{ borderRadius: '16px', border: '1px solid var(--fp-color-border)', backgroundColor: 'var(--fp-color-card)', boxShadow: '0 8px 32px rgba(36,31,24,0.08)', padding: '16px' }}
                     itemStyle={{ fontSize: '14px', fontWeight: 600, color: 'var(--fp-color-foreground)' }}
                     labelStyle={{ fontSize: '13px', color: 'var(--fp-color-label)', marginBottom: '4px' }}

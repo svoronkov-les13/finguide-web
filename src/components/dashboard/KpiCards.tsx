@@ -76,12 +76,12 @@ export function KpiCards() {
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-[22px] font-bold text-[var(--fp-color-coral)] leading-none">
-              {spendDownYears > 50
+              {spendDownYears >= 100
                 ? t("dashboard.yearsLabelMax")
-                : t("dashboard.yearsLabel", { count: String(spendDownYears) })}
+                : t("dashboard.yearsLabel", { count: spendDownYears })}
             </span>
             <span className="text-[11px] font-medium text-[var(--fp-color-muted-foreground)] leading-tight mt-1">
-              {t("dashboard.yearsAfterRetirement", { age: String(plan.settings.retirementAge) })}
+              {t("dashboard.yearsAfterRetirement", { age: plan.settings.retirementAge, count: plan.settings.retirementAge })}
             </span>
           </div>
         </Card>

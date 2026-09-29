@@ -47,6 +47,15 @@ describe("localization contract", () => {
     expect(translate("en", "common.copyName", { name: "{{brand}}" })).toBe("{{brand}} (copy)");
   });
 
+  it("picks the plural form by count", () => {
+    expect([1, 2, 5, 11, 21, 22, 53].map((count) => translate("ru", "dashboard.yearsLabel", { count })))
+      .toEqual(["1 год", "2 года", "5 лет", "11 лет", "21 год", "22 года", "53 года"]);
+    expect([1, 2, 5].map((count) => translate("en", "dashboard.yearsLabel", { count })))
+      .toEqual(["1 year", "2 years", "5 years"]);
+    expect(translate("ru", "goals.inYears", { count: "3" })).toBe("через 3 года");
+    expect(translate("ru", "pension.depletesAtAge", { age: 61, count: 61 })).toBe("Капитал закончится примерно к 61 году");
+  });
+
   it("localizes errors at render time, preserving diagnostics without exposing server text", () => {
     const error = new LocalizedError("errors.forbidden", "Internal database detail", {}, "request-123");
     expect(error.message).toBe("Internal database detail");

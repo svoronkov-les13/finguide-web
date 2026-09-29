@@ -323,7 +323,7 @@ export function ForecastChart() {
               {t("chart.title")}
             </h2>
             <p className="mt-1 text-xs text-[var(--fp-color-muted-foreground)]">
-              {t("chart.projection", { years: projectionYearsLabel(plan.forecast) })}
+              {t("chart.projection", { count: projectionYearsLabel(plan.forecast) })}
             </p>
           </div>
           <div className="flex gap-1 max-[860px]:mt-3 items-center">

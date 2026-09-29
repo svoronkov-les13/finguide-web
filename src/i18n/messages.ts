@@ -41,7 +41,11 @@ export const ru = {
     monthYear: "{{month}} {{year}}",
     retirement: "к {{age}} г. · {{years}} л.",
     now: "сейчас",
-    inYears: "через {{years}} лет",
+    inYears: {
+      one: "через {{count}} год",
+      few: "через {{count}} года",
+      many: "через {{count}} лет",
+    },
     noIndexation: "Без индексации",
     backend: "Серверные данные",
   },
@@ -149,8 +153,16 @@ export const ru = {
     feasibilityNormal: "Нормально",
     feasibilityBad: "Плохо",
     capitalSufficiency: "КАПИТАЛА ХВАТАЕТ НА:",
-    yearsAfterRetirement: "после пенсии в {{age}} лет",
-    yearsLabel: "{{count}} лет",
+    yearsAfterRetirement: {
+      one: "после пенсии в {{age}} год",
+      few: "после пенсии в {{age}} года",
+      many: "после пенсии в {{age}} лет",
+    },
+    yearsLabel: {
+      one: "{{count}} год",
+      few: "{{count}} года",
+      many: "{{count}} лет",
+    },
     yearsLabelMax: "100+ лет",
     whatifIncome: "Изменение всех доходов",
     whatifExpenses: "Изменение всех расходов",
@@ -171,7 +183,11 @@ export const ru = {
     title: "Прогноз финансов по годам",
     titleCapital: "Накопленный капитал",
     titleFlows: "Движение средств",
-    projection: "Проекция на {{years}} лет · млн ₽",
+    projection: {
+      one: "Проекция на {{count}} год · млн ₽",
+      few: "Проекция на {{count}} года · млн ₽",
+      many: "Проекция на {{count}} лет · млн ₽",
+    },
     yearly: "По годам",
     byAge: "По возрасту",
     zoomOut: "Уменьшить",
@@ -506,7 +522,17 @@ export const ru = {
     statusAchieved: "Достигнута",
     statusReachable: "Достижима",
     statusRisk: "Недостижима",
-    inYears: "через {{count}} год",
+    inYears: {
+      one: "через {{count}} год",
+      few: "через {{count}} года",
+      many: "через {{count}} лет",
+    },
+    thisYear: "в этом году",
+    yearsAgo: {
+      one: "{{count}} год назад",
+      few: "{{count}} года назад",
+      many: "{{count}} лет назад",
+    },
     perYear: "+{{pct}}%/год",
     validation: {
     required: "Заполните это поле",
@@ -744,8 +770,16 @@ export const ru = {
     targetCapitalIntro: "Чтобы получать {{amount}}/мес на пенсии, вам нужен капитал:",
     requiredCapitalNonPositiveReturn: "Капитал для сохранения нельзя рассчитать: ожидаемая доходность должна быть выше инфляции.",
     requiredCapitalUnavailable: "Расчёт необходимого пенсионного капитала сейчас недоступен.",
-    targetYearInfo: "К {{year}} г. ({{age}} лет)",
-    yearsToSave: "{{years}} лет на накопление",
+    targetYearInfo: {
+      one: "К {{year}} г. ({{age}} год)",
+      few: "К {{year}} г. ({{age}} года)",
+      many: "К {{year}} г. ({{age}} лет)",
+    },
+    yearsToSave: {
+      one: "{{count}} год на накопление",
+      few: "{{count}} года на накопление",
+      many: "{{count}} лет на накопление",
+    },
     annualReturn: "{{percent}} годовых",
     onTrack: "На верном пути",
     needsAdjustment: "Требуется корректировка",
@@ -760,13 +794,29 @@ export const ru = {
     spendLessDesc: "Планируемые = {{percent}}% от текущих расходов.",
     howLongTitle: "На сколько хватит капитала?",
     hundredPlusYears: "100+ лет",
-    lastsYears: "≈ {{years}} лет",
-    depletesAtAge: "Капитал закончится примерно к {{age}} годам",
+    lastsYears: {
+      one: "≈ {{count}} год",
+      few: "≈ {{count}} года",
+      many: "≈ {{count}} лет",
+    },
+    depletesAtAge: {
+      one: "Капитал закончится примерно к {{age}} году",
+      few: "Капитал закончится примерно к {{age}} годам",
+      many: "Капитал закончится примерно к {{age}} годам",
+    },
     capitalPreserved: "капитал сохраняется до 100 лет и дольше",
     chartTitle: "График пенсионного капитала",
-    chartSubtitle: "Накопление → выход на пенсию ({{age}} лет) → расходование",
+    chartSubtitle: {
+      one: "Накопление → выход на пенсию ({{age}} год) → расходование",
+      few: "Накопление → выход на пенсию ({{age}} года) → расходование",
+      many: "Накопление → выход на пенсию ({{age}} лет) → расходование",
+    },
     capital: "Капитал",
-    ageTooltip: "Возраст: {{age}} лет",
+    ageTooltip: {
+      one: "Возраст: {{age}} год",
+      few: "Возраст: {{age}} года",
+      many: "Возраст: {{age}} лет",
+    },
     pensionLine: "Пенсия",
   },
   tracking: {
@@ -1000,7 +1050,11 @@ export const en = {
     monthYear: "{{month}} {{year}}",
     retirement: "at age {{age}} · in {{years}} yr",
     now: "now",
-    inYears: "in {{years}} years",
+    inYears: {
+      one: "in {{count}} year",
+      few: "in {{count}} years",
+      many: "in {{count}} years",
+    },
     noIndexation: "No indexation",
     backend: "Server data",
   },
@@ -1108,8 +1162,16 @@ export const en = {
     feasibilityNormal: "Normal",
     feasibilityBad: "Poor",
     capitalSufficiency: "CAPITAL LASTS FOR:",
-    yearsAfterRetirement: "after retirement at {{age}}",
-    yearsLabel: "{{count}} years",
+    yearsAfterRetirement: {
+      one: "after retirement at {{age}}",
+      few: "after retirement at {{age}}",
+      many: "after retirement at {{age}}",
+    },
+    yearsLabel: {
+      one: "{{count}} year",
+      few: "{{count}} years",
+      many: "{{count}} years",
+    },
     yearsLabelMax: "100+ years",
     whatifIncome: "Change all incomes",
     whatifExpenses: "Change all expenses",
@@ -1130,7 +1192,11 @@ export const en = {
     title: "Financial forecast by year",
     titleCapital: "Accumulated capital",
     titleFlows: "Cash flows",
-    projection: "{{years}} year projection · RUB mln",
+    projection: {
+      one: "{{count}}-year projection · RUB mln",
+      few: "{{count}}-year projection · RUB mln",
+      many: "{{count}}-year projection · RUB mln",
+    },
     yearly: "By year",
     byAge: "By age",
     zoomOut: "Zoom out",
@@ -1465,7 +1531,17 @@ export const en = {
     statusAchieved: "Achieved",
     statusReachable: "Reachable",
     statusRisk: "Unreachable",
-    inYears: "in {{count}} year",
+    inYears: {
+      one: "in {{count}} year",
+      few: "in {{count}} years",
+      many: "in {{count}} years",
+    },
+    thisYear: "this year",
+    yearsAgo: {
+      one: "{{count}} year ago",
+      few: "{{count}} years ago",
+      many: "{{count}} years ago",
+    },
     perYear: "+{{pct}}%/yr",
     validation: {
     required: "Please fill out this field",
@@ -1703,8 +1779,16 @@ export const en = {
     targetCapitalIntro: "To receive {{amount}}/mo in retirement, you need capital of:",
     requiredCapitalNonPositiveReturn: "Capital preservation cannot be calculated: the expected return must be higher than inflation.",
     requiredCapitalUnavailable: "The required pension capital calculation is currently unavailable.",
-    targetYearInfo: "By {{year}} ({{age}} years old)",
-    yearsToSave: "{{years}} years to save",
+    targetYearInfo: {
+      one: "By {{year}} ({{age}} year old)",
+      few: "By {{year}} ({{age}} years old)",
+      many: "By {{year}} ({{age}} years old)",
+    },
+    yearsToSave: {
+      one: "{{count}} year to save",
+      few: "{{count}} years to save",
+      many: "{{count}} years to save",
+    },
     annualReturn: "{{percent}} annual",
     onTrack: "On track",
     needsAdjustment: "Needs adjustment",
@@ -1719,13 +1803,29 @@ export const en = {
     spendLessDesc: "Planned = {{percent}}% of current expenses.",
     howLongTitle: "How long will the capital last?",
     hundredPlusYears: "100+ years",
-    lastsYears: "≈ {{years}} yrs",
-    depletesAtAge: "The capital runs out around age {{age}}",
+    lastsYears: {
+      one: "≈ {{count}} yr",
+      few: "≈ {{count}} yrs",
+      many: "≈ {{count}} yrs",
+    },
+    depletesAtAge: {
+      one: "The capital runs out around age {{age}}",
+      few: "The capital runs out around age {{age}}",
+      many: "The capital runs out around age {{age}}",
+    },
     capitalPreserved: "capital is preserved for 100+ years",
     chartTitle: "Pension capital chart",
-    chartSubtitle: "Accumulation → retirement ({{age}} years old) → spending",
+    chartSubtitle: {
+      one: "Accumulation → retirement ({{age}} year old) → spending",
+      few: "Accumulation → retirement ({{age}} years old) → spending",
+      many: "Accumulation → retirement ({{age}} years old) → spending",
+    },
     capital: "Capital",
-    ageTooltip: "Age: {{age}} years",
+    ageTooltip: {
+      one: "Age: {{age}} year",
+      few: "Age: {{age}} years",
+      many: "Age: {{age}} years",
+    },
     pensionLine: "Pension",
   },
   tracking: {
@@ -1928,4 +2028,14 @@ type LeafPaths<T, Prefix extends string = ""> = {
     : never;
 }[keyof T & string];
 
-export type TranslationKey = LeafPaths<typeof ru>;
+/** Number-dependent messages: `t(key, { count })` picks one of the forms (1 год, 2 года, 5 лет). */
+type PluralForms = { one: string; few: string; many: string };
+type PluralPaths<T, Prefix extends string = ""> = {
+  [K in keyof T & string]: T[K] extends PluralForms
+    ? `${Prefix}${K}`
+    : T[K] extends Record<string, unknown>
+    ? PluralPaths<T[K], `${Prefix}${K}.`>
+    : never;
+}[keyof T & string];
+
+export type TranslationKey = LeafPaths<typeof ru> | PluralPaths<typeof ru>;

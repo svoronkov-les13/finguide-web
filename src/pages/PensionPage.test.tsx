@@ -68,7 +68,7 @@ vi.mock("@/i18n/I18nProvider", () => ({
       if (key === "pension.rub") return "₽ RUB - Российский рубль";
       if (key === "pension.targetCapitalIntro") return `Капитал для ${values?.amount}`;
       if (key === "pension.targetYearInfo") return `${values?.year} / ${values?.age}`;
-      if (key === "pension.yearsToSave") return `${values?.years} лет`;
+      if (key === "pension.yearsToSave") return `${values?.count} лет`;
       if (key === "pension.annualReturn") return `${values?.percent}`;
       if (key === "pension.requiredCapitalNonPositiveReturn") return "Доходность должна быть выше инфляции.";
       if (key === "pension.requiredCapitalUnavailable") return "Расчёт необходимого капитала недоступен.";
