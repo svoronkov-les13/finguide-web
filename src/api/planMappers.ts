@@ -1,3 +1,4 @@
+import { translateCurrent } from "@/i18n/translate";
 import type {
   CashFlowProjectionPoint,
   DashboardMetrics,
@@ -106,9 +107,11 @@ export function mapMonthlyForecastPoint(point: ApiMonthlyCashflowPoint) {
 
 export function monthLabel(month: string) {
   const [year, monthNumber] = month.split("-");
-  const names = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-  const index = Number(monthNumber) - 1;
-  return `${names[index] ?? monthNumber} ${year}`;
+  const monthIndex = Number(monthNumber);
+  const name = monthIndex >= 1 && monthIndex <= 12
+    ? translateCurrent(`goals.monthShort.${monthIndex}` as Parameters<typeof translateCurrent>[0])
+    : monthNumber;
+  return translateCurrent("dataLabels.monthYear", { month: name, year });
 }
 
 export function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssumptions | undefined): Cashflow {
@@ -127,7 +130,7 @@ export function mapIncomeCashflow(source: IncomeSource, assumptions: ModelAssump
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
     enabled: true,
-    category: source.frequency === "monthly" ? "Ежемесячные доходы" : source.frequency === "one_time" ? "Разовые доходы" : "Ежегодные доходы",
+    category: source.frequency === "monthly" ? translateCurrent("cashflow.defaultCategoryMonthly_income") : source.frequency === "one_time" ? translateCurrent("cashflow.defaultCategoryOnetime_income") : translateCurrent("cashflow.defaultCategoryYearly_income"),
   };
 }
 
@@ -147,7 +150,7 @@ export function mapExpenseCashflow(source: ExpenseItem, assumptions: ModelAssump
     growthType: source.growthSchedule?.length ? "ranges" : source.growthType === "inflation" ? "inflation" : "custom",
     growthRanges: cashflowGrowthRangesFromSchedule(source.growthSchedule, endYear),
     enabled: true,
-    category: source.frequency === "monthly" ? "Ежемесячные расходы" : source.frequency === "one_time" ? "Разовые расходы" : "Ежегодные расходы",
+    category: source.frequency === "monthly" ? translateCurrent("cashflow.defaultCategoryMonthly_expense") : source.frequency === "one_time" ? translateCurrent("cashflow.defaultCategoryOnetime_expense") : translateCurrent("cashflow.defaultCategoryYearly_expense"),
   };
 }
 
@@ -163,7 +166,7 @@ export function mapGoalCashflow(source: ApiGoal, assumptions: ModelAssumptions |
     endYear: source.endYear ?? yearFromDate(source.endDate, source.targetYear),
     growth: source.growthPct / 100,
     enabled: true,
-    category: "Цели",
+    category: translateCurrent("routes.goals"),
   };
 }
 
@@ -203,14 +206,14 @@ export function mapScenarios(scenarios: ApiScenario[]): Scenario[] {
   const baseScenarios: Scenario[] = mapped.length > 0
     ? mapped
     : [
-        { id: "base", name: "Базовый", incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0 },
-        { id: "optimistic", name: "Оптимистичный", incomeGrowthDelta: 0.15, expenseGrowthDelta: 0.05, returnDelta: 0.01, inflationDelta: -0.01, retirementAgeShift: -2, goalsCostDelta: 0 },
-        { id: "pessimistic", name: "Пессимистичный", incomeGrowthDelta: -0.1, expenseGrowthDelta: 0.12, returnDelta: -0.02, inflationDelta: 0.02, retirementAgeShift: 3, goalsCostDelta: 0.15 },
+        { id: "base", name: translateCurrent("chart.baseFull"), incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0 },
+        { id: "optimistic", name: translateCurrent("chart.optimisticFull"), incomeGrowthDelta: 0.15, expenseGrowthDelta: 0.05, returnDelta: 0.01, inflationDelta: -0.01, retirementAgeShift: -2, goalsCostDelta: 0 },
+        { id: "pessimistic", name: translateCurrent("chart.pessimisticFull"), incomeGrowthDelta: -0.1, expenseGrowthDelta: 0.12, returnDelta: -0.02, inflationDelta: 0.02, retirementAgeShift: 3, goalsCostDelta: 0.15 },
       ];
 
   return baseScenarios.some((scenario) => scenario.id === "whatif")
     ? baseScenarios
-    : [...baseScenarios, { id: "whatif", name: "Что если?", incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0, inflationDelta: 0, retirementAgeShift: 0, goalsCostDelta: 0 }];
+    : [...baseScenarios, { id: "whatif", name: translateCurrent("dashboard.scenario_whatif"), incomeGrowthDelta: 0, expenseGrowthDelta: 0, returnDelta: 0, inflationDelta: 0, retirementAgeShift: 0, goalsCostDelta: 0 }];
 }
 
 export function adjustmentPct(value: number | undefined) {
@@ -234,9 +237,9 @@ export function mapDashboardSnapshot(
     annualTargetRub: dashboard.monthlyGoalContribution * 12,
     monthlyDeltaRub: dashboard.availableForPension - dashboard.monthlyGoalContribution,
     pensionCapitalRub: dashboard.projectedPensionCapital,
-    retirementLabel: `к ${pension.retirementAge} г. · ${dashboard.yearsToRetirement} л.`,
+    retirementLabel: translateCurrent("dataLabels.retirement", { age: pension.retirementAge, years: dashboard.yearsToRetirement }),
     independenceYear,
-    independenceLabel: yearsToIndependence === 0 ? "сейчас" : `через ${yearsToIndependence} лет`,
+    independenceLabel: yearsToIndependence === 0 ? translateCurrent("dataLabels.now") : translateCurrent("dataLabels.inYears", { years: yearsToIndependence }),
     healthScore: health.score,
   };
 }
@@ -350,7 +353,7 @@ export function baseIncomeFromCashflow(input: Cashflow, fallbackEndYear = input.
 export function baseExpenseFromCashflow(input: Cashflow, fallbackEndYear?: number): ExpenseItem {
   return {
     ...baseIncomeFromCashflow(input, fallbackEndYear),
-    growthLabel: input.growth === 0 ? "Без индексации" : `${Math.round(input.growth * 1000) / 10}%`,
+    growthLabel: input.growth === 0 ? translateCurrent("dataLabels.noIndexation") : `${Math.round(input.growth * 1000) / 10}%`,
     budgetClass: "needs",
   };
 }

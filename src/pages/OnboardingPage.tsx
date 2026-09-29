@@ -1,3 +1,4 @@
+import { useFormat } from "@/lib/useFormat";
 import { useState } from "react";
 import { Navigate, useNavigate } from "@tanstack/react-router";
 import {
@@ -22,6 +23,7 @@ const ONBOARDING_KEY = "fp.onboarding.seen";
 /** Step 1: Mini dashboard preview (income/expense/savings cards + chart skeleton) */
 function IllustrationDashboard() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const cardStyle: React.CSSProperties = {
     borderRadius: "var(--fp-radius-md)",
     border: "var(--fp-border-default)",
@@ -96,17 +98,17 @@ function IllustrationDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         <div style={cardStyle}>
           <span style={metaStyle}>{t("cashflow.income")}</span>
-          <span style={valueStyle}>₽ 405 000</span>
+          <span style={valueStyle}>{formatRub(405_000)}</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
         <div style={cardStyle}>
           <span style={metaStyle}>{t("cashflow.expense")}</span>
-          <span style={valueStyle}>₽ 178 000</span>
+          <span style={valueStyle}>{formatRub(178_000)}</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
         <div style={cardStyle}>
           <span style={metaStyle}>{t("chart.savings")}</span>
-          <span style={valueStyle}>₽ 227 000</span>
+          <span style={valueStyle}>{formatRub(227_000)}</span>
           <span style={{ fontSize: 10, color: "var(--fp-color-muted-foreground)" }}>{t("format.perMonth")}</span>
         </div>
       </div>
@@ -177,10 +179,11 @@ function IllustrationDashboard() {
 /** Step 2: Goals list (Автомобиль, Образование, Квартира) */
 function IllustrationGoals() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const goals = [
-    { name: t("onboardingDemo.goalCar"), amount: "₽ 1 200 000", year: 2029, pct: 85, monthly: "~₽ 28 000" + t("format.perMonth"), ok: true },
-    { name: t("onboardingDemo.goalEducation"), amount: "₽ 2 000 000", year: 2033, pct: 62, monthly: "~₽ 22 000" + t("format.perMonth"), ok: true },
-    { name: t("onboardingDemo.goalApartment"), amount: "₽ 3 000 000", year: 2036, pct: 40, monthly: "~₽ 25 000" + t("format.perMonth"), ok: false },
+    { name: t("onboardingDemo.goalCar"), amount: formatRub(1_200_000), year: 2029, pct: 85, monthly: `~${formatRub(28_000)}` + t("format.perMonth"), ok: true },
+    { name: t("onboardingDemo.goalEducation"), amount: formatRub(2_000_000), year: 2033, pct: 62, monthly: `~${formatRub(22_000)}` + t("format.perMonth"), ok: true },
+    { name: t("onboardingDemo.goalApartment"), amount: formatRub(3_000_000), year: 2036, pct: 40, monthly: `~${formatRub(25_000)}` + t("format.perMonth"), ok: false },
   ];
 
   return (
@@ -213,7 +216,7 @@ function IllustrationGoals() {
                 {g.name}
               </div>
               <div style={{ fontSize: 12, color: "var(--fp-color-muted-foreground)" }}>
-                {g.amount} · к {g.year}
+                {g.amount} · {t("onboardingDemo.byYear", { year: g.year })}
               </div>
             </div>
             <span
@@ -280,10 +283,11 @@ function IllustrationGoals() {
 /** Step 3: Scenario comparison (chart + three cards) */
 function IllustrationScenarios() {
   const { t } = useI18n();
+  const { formatRub } = useFormat();
   const scenarios = [
-    { label: t("onboardingDemo.scenarioBase"), value: "₽ 8.2 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: true },
-    { label: t("onboardingDemo.scenarioOptimistic"), value: "₽ 12.4 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
-    { label: t("onboardingDemo.scenarioConservative"), value: "₽ 5.6 " + t("format.million"), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
+    { label: t("onboardingDemo.scenarioBase"), value: formatRub(8_200_000, { compact: true }), year: t("onboardingDemo.byYear", { year: "2046" }), active: true },
+    { label: t("onboardingDemo.scenarioOptimistic"), value: formatRub(12_400_000, { compact: true }), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
+    { label: t("onboardingDemo.scenarioConservative"), value: formatRub(5_600_000, { compact: true }), year: t("onboardingDemo.byYear", { year: "2046" }), active: false },
   ];
 
   return (
@@ -572,7 +576,7 @@ export function OnboardingPage() {
               color: "var(--fp-color-foreground)",
             }}
           >
-            FinPlan
+            {t("common.appName")}
           </span>
         </div>
 
@@ -616,7 +620,7 @@ export function OnboardingPage() {
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {slides.map((_, i) => (
             <button
-              aria-label={`Step ${i + 1}`}
+              aria-label={t("onboarding.stepLabel", { step: i + 1 })}
               key={i}
               onClick={() => setStep(i)}
               style={{

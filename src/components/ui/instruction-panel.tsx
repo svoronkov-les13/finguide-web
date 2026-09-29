@@ -1,6 +1,7 @@
 import * as React from "react";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface InstructionPanelProps {
   title?: string;
@@ -57,11 +58,12 @@ export function InstructionStep({ number, title, children }: InstructionStepProp
   );
 }
 
-export function InstructionTips({ children, tipsTitle = "💡 Tips" }: InstructionTipProps) {
+export function InstructionTips({ children, tipsTitle }: InstructionTipProps) {
+  const { t } = useI18n();
   return (
     <div className="mt-4 border-t border-[var(--fp-color-divider)] pt-4">
       <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-[var(--fp-color-accent-gold)]">
-        {tipsTitle}
+        {tipsTitle ?? t("instructionPanel.tipsEmoji")}
       </p>
       <ul className="space-y-1.5 text-xs leading-5 text-[var(--fp-color-muted-foreground)]">
         {children}

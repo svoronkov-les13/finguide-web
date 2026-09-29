@@ -1,3 +1,4 @@
+import { errorMessage } from "@/i18n/errors";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { BarChart3, Loader2 } from "lucide-react";
@@ -8,7 +9,7 @@ export function AuthCallbackPage() {
   const auth = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<unknown>();
 
   useEffect(() => {
     let alive = true;
@@ -18,7 +19,7 @@ export function AuthCallbackPage() {
         if (alive) void navigate({ to: returnTo || "/dashboard", replace: true });
       })
       .catch((caught: unknown) => {
-        if (alive) setError(caught instanceof Error ? caught.message : t("auth.callback.error"));
+        if (alive) setError(caught);
       });
     return () => {
       alive = false;
@@ -37,7 +38,7 @@ export function AuthCallbackPage() {
         </h1>
 
         <p className="text-sm text-[var(--fp-color-muted-foreground)]">
-          {error ?? t("auth.callback.description")}
+          {error ? errorMessage(error, t, "auth.callback.error") : t("auth.callback.description")}
         </p>
 
         {!error && <Loader2 className="mx-auto size-6 animate-spin text-[var(--fp-color-primary)]" />}

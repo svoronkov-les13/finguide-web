@@ -1,3 +1,4 @@
+import { createTranslator, readLocale } from "@/i18n/translate";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -27,7 +28,7 @@ function cachedNumberFormat(locale: string, maximumFractionDigits: number) {
 }
 
 /** Formats with an apostrophe as the group separator (1'498'432), keeping the locale decimal separator. */
-export function formatNumber(value: number, locale = "ru-RU", maximumFractionDigits = 0) {
+export function formatNumber(value: number, locale: string = readLocale(), maximumFractionDigits = 0) {
   return cachedNumberFormat(locale, maximumFractionDigits)
     .formatToParts(value)
     .map((part) => (part.type === "group" ? "'" : part.value))
@@ -36,7 +37,9 @@ export function formatNumber(value: number, locale = "ru-RU", maximumFractionDig
 }
 
 export function formatRub(value: number, options: FormatOptions = {}) {
-  const { locale = "ru-RU", million = "млн ₽", thousand = "тыс. ₽", symbol = "₽" } = options;
+  const locale = options.locale ?? readLocale();
+  const t = createTranslator(locale.startsWith("en") ? "en" : "ru");
+  const { million = t("format.millionRub"), thousand = t("format.thousandRub"), symbol = t("format.symbolRub") } = options;
   const sign = options.sign && value > 0 ? "+" : "";
   const abs = Math.abs(value);
   if (options.compact && abs >= 1_000_000) {
@@ -49,7 +52,9 @@ export function formatRub(value: number, options: FormatOptions = {}) {
 }
 
 export function formatUsd(value: number, options: FormatOptions = {}) {
-  const { locale = "ru-RU", million = "млн $", thousand = "тыс. $", symbol = "$" } = options;
+  const locale = options.locale ?? readLocale();
+  const t = createTranslator(locale.startsWith("en") ? "en" : "ru");
+  const { million = t("format.millionUsd"), thousand = t("format.thousandUsd"), symbol = t("format.symbolUsd") } = options;
   const sign = options.sign && value > 0 ? "+" : "";
   const abs = Math.abs(value);
   if (options.compact && abs >= 1_000_000) {
@@ -63,7 +68,7 @@ export function formatUsd(value: number, options: FormatOptions = {}) {
 
 const percentFormatCache = new Map<string, Intl.NumberFormat>();
 
-export function formatPercent(value: number, locale = "ru-RU") {
+export function formatPercent(value: number, locale: string = readLocale()) {
   let format = percentFormatCache.get(locale);
   if (!format) {
     format = new Intl.NumberFormat(locale, { maximumFractionDigits: 1, style: "percent" });

@@ -38,7 +38,7 @@ export function CashflowCard({
     return currency === "USD" ? formatUsd(amount) : formatRub(amount);
   };
 
-  const isMonthly = item.frequency === "monthly" || item.category.toLowerCase().includes("monthly");
+  const isMonthly = item.frequency === "monthly";
   const yearlyAmount = isMonthly ? item.amount * 12 : item.amount;
   const monthlyAmount = isMonthly ? item.amount : Math.round(item.amount / 12);
   const growthPct = Math.round(item.growth * 100);

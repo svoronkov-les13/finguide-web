@@ -84,7 +84,7 @@ export function GoalListItem({
           )}
         </div>
         <div className="text-xs text-[var(--fp-color-muted-foreground)]">
-          {isPeriodic ? t("goals.typePeriodic") : t("goals.typeOnetime")} • {t(`goals.monthShort.${month}` as Parameters<typeof t>[0])} {goal.targetYear} г.
+          {isPeriodic ? t("goals.typePeriodic") : t("goals.typeOnetime")} • {t("goals.targetDate", { month: t(`goals.monthShort.${month}` as Parameters<typeof t>[0]), year: goal.targetYear })}
         </div>
       </div>
 

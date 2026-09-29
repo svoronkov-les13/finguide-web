@@ -78,7 +78,7 @@ export function SettingsPage() {
             <div className="mb-4 font-semibold text-foreground">{t("settings.summary")}</div>
             <SummaryRow label={t("settings.groups")} value={String(groups.length)} />
             <SummaryRow label={t("settings.parameters")} value={String(groups.reduce((sum, group) => sum + group.items.length, 0))} />
-            <SummaryRow label={t("settings.backendProfile")} value="read-only" />
+            <SummaryRow label={t("settings.backendProfile")} value={t("settings.readOnly")} />
           </Card>
           <HelpBlock title={t("settings.profileTitle")}>{t("settings.profileDesc")}</HelpBlock>
         </aside>

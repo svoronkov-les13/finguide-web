@@ -6,6 +6,7 @@ import { AuthErrorPage } from "@/pages/AuthErrorPage";
 import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { NotFoundPage, RouteErrorPage } from "@/pages/RouteErrorPage";
 
 // Heavy pages (recharts, forms) load on demand so the login/onboarding path
 // ships without the whole dashboard bundle.
@@ -21,6 +22,8 @@ const TrackingPage = lazyRouteComponent(() => import("@/pages/TrackingPage"), "T
 
 const rootRoute = createRootRoute({
   component: Outlet,
+  notFoundComponent: NotFoundPage,
+  errorComponent: RouteErrorPage,
 });
 
 const appRoute = createRoute({

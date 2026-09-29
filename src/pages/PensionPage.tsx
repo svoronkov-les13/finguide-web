@@ -14,7 +14,6 @@ import { PensionSkeleton } from "@/components/ui/skeleton";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useFormat } from "@/lib/useFormat";
-import { formatNumber } from "@/lib/utils";
 import { pensionExpenseComparison } from "@/domain/pensionComparison";
 import type { ForecastPoint, PlanSettings } from "@/types/finance";
 
@@ -55,7 +54,7 @@ export function PensionPage() {
   const { data: plan } = usePlanQuery();
   const { mutate: updateSettings, isPending: isUpdating } = useUpdateSettingsMutation();
   const { t } = useI18n();
-  const { formatRub, formatPercent } = useFormat();
+  const { formatRub, formatPercent, formatNumber } = useFormat();
   
   const [spendingScenario, setSpendingScenario] = useState<"save" | "spend">("spend");
   const [paramsOpen, setParamsOpen] = useState(true);
@@ -222,7 +221,7 @@ export function PensionPage() {
                         className="h-[44px] w-full rounded-[14px] bg-[#f3f4f6] border-none pl-4 pr-14 outline-none font-medium text-[15px]" 
                       />
                       <span className="absolute right-4 top-[11px] text-[15px] text-[var(--fp-color-muted-foreground)]">
-                        {retirementMode === "age" ? t("pension.years") : t("pension.year", { defaultValue: "год" })}
+                        {retirementMode === "age" ? t("pension.years") : t("pension.year")}
                       </span>
                     </div>
                     <Segmented
@@ -578,9 +577,9 @@ export function PensionPage() {
                     axisLine={false} 
                     tickFormatter={(value) => {
                       if (value === 0) return "0";
-                      if (value >= 1e9) return `${(value / 1e9).toFixed(1)} ${t("format.billion")}`;
-                      if (value >= 1e6) return `${(value / 1e6).toFixed(1)} ${t("format.million")}`;
-                      if (value >= 1e3) return `${(value / 1e3).toFixed(0)} ${t("format.thousand")}`;
+                      if (value >= 1e9) return `${formatNumber(value / 1e9, 1)} ${t("format.billion")}`;
+                      if (value >= 1e6) return `${formatNumber(value / 1e6, 1)} ${t("format.million")}`;
+                      if (value >= 1e3) return `${formatNumber(value / 1e3, 0)} ${t("format.thousand")}`;
                       return String(value);
                     }} 
                     tick={{ fontSize: 13, fill: 'var(--fp-color-label)' }} 

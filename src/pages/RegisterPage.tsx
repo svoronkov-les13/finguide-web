@@ -1,3 +1,5 @@
+import { nativeValidationProps } from "@/i18n/validation";
+import { errorMessage } from "@/i18n/errors";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import type React from "react";
 import type { FormEvent } from "react";
@@ -58,7 +60,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
 
   if (auth.authenticated && auth.enabled) {
@@ -76,7 +78,7 @@ export function RegisterPage() {
         (import.meta.env.VITE_FINGUIDE_BASE_PATH?.replace(/\/$/, "") || "") + "/dashboard",
       );
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : t("auth.register.error"));
+      setError(caught);
     } finally {
       setLoading(false);
     }
@@ -109,7 +111,7 @@ export function RegisterPage() {
       </div>
 
       {/* Form fields */}
-      <form
+      <form {...nativeValidationProps(t)}
         onSubmit={(e) => void handleSubmit(e)}
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
@@ -190,6 +192,7 @@ export function RegisterPage() {
             />
             <button
               onClick={() => setShowPassword(!showPassword)}
+                aria-label={t(showPassword ? "auth.hidePassword" : "auth.showPassword")}
               style={{
                 position: "absolute",
                 right: 14,
@@ -213,7 +216,7 @@ export function RegisterPage() {
           </div>
         </div>
 
-        {error && (
+        {!!error && (
           <p
             style={{
               margin: 0,
@@ -224,7 +227,7 @@ export function RegisterPage() {
               color: "var(--fp-color-danger)",
             }}
           >
-            {error}
+            {errorMessage(error, t, "auth.register.error")}
           </p>
         )}
 

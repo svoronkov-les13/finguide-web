@@ -432,7 +432,7 @@ export function TrackingPage() {
                 {t("tracking.totalSavings")}
               </div>
               <div className="text-[36px] font-bold text-[var(--fp-color-teal)] leading-none">
-                {currentMonthData?.amount ? formatRub(currentMonthData.amount) : "0 ₽"}
+                {formatRub(currentMonthData?.amount ?? 0)}
               </div>
             </div>
             

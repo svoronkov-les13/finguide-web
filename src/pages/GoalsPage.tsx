@@ -16,6 +16,8 @@ import { goalPortfolioSummary, goalYearSummary } from "@/domain/goalsYearSummary
 import { compareGoalTargetOrder, trackingActiveGoal } from "@/domain/trackingGoal";
 import { useFormat } from "@/lib/useFormat";
 import { downloadPlanWorkbook } from "@/api/exportPlan";
+import { useUiStore } from "@/store/uiStore";
+import { LocalizedError } from "@/i18n/errors";
 
 export function GoalsPage() {
   const { t, locale } = useI18n();
@@ -262,7 +264,11 @@ export function GoalsPage() {
           <Button
             variant="secondary"
             className="px-5 py-3 h-auto ml-auto rounded-full font-medium"
-            onClick={() => plan && downloadPlanWorkbook(plan)}
+            onClick={() => {
+              if (plan) void downloadPlanWorkbook(plan, undefined, locale).catch((error: unknown) => {
+                useUiStore.getState().showError(new LocalizedError("errors.exportFailed", String(error)));
+              });
+            }}
           >
             <Download className="size-4 mr-2" />
             {t("goals.export")}

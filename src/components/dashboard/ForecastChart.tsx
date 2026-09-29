@@ -124,7 +124,7 @@ function chartTicks(top: number) {
 export function ForecastChart() {
   const { data: plan } = usePlanQuery();
   const { t } = useI18n();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
   const hintVisible = useUiStore((state) => state.hintVisible);
   const setHintVisible = useUiStore((state) => state.setHintVisible);
   const [xAxisMode, setXAxisMode] = useState<"year" | "age">("year");
@@ -159,7 +159,7 @@ export function ForecastChart() {
   }), [activeScenarioId, plan?.scenarioForecasts]);
   const solidLineLabel = activeScenarioId === "base"
     ? t("chart.baseFull")
-    : plan?.scenarios.find((scenario) => scenario.id === activeScenarioId)?.name ?? t("chart.baseFull");
+    : t(`dashboard.scenario_${activeScenarioId}`);
   const data = useMemo(() => buildForecastChartData(forecast, scenarioOverlays), [forecast, scenarioOverlays]);
   const chartTop = chartTopRubMln(data);
   const ticks = chartTicks(chartTop);
@@ -247,8 +247,8 @@ export function ForecastChart() {
   const renderUnifiedChart = (isModal: boolean) => {
     // Determine the dynamic retirement capital value
     const retirementPoint = data.find((point) => point.year === retirementYear);
-    const retirementCapitalVal = retirementPoint ? (retirementPoint.capital / 1_000_000).toFixed(1) : "80.3";
-    const pensionText = `${t("chart.pensionMarker").split(":")[0]}: ${retirementCapitalVal} ${t("format.million")}`;
+    const retirementCapitalVal = formatNumber((retirementPoint?.capital ?? 80_300_000) / 1_000_000, 1);
+    const pensionText = t("chart.retirementCapital", { amount: `${retirementCapitalVal} ${t("format.million")}` });
 
     const renderRetirementLabel = (props: any) => {
       const { viewBox } = props;

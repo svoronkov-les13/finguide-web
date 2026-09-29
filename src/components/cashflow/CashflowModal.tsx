@@ -1,3 +1,4 @@
+import { nativeValidationProps } from "@/i18n/validation";
 import { useEffect, useState } from "react";
 import { X, Check, Trash2, Loader2 } from "lucide-react";
 import { Controller, useForm, useFieldArray, useWatch } from "react-hook-form";
@@ -150,7 +151,7 @@ export function CashflowModal({
       }
     >
       <div className="flex-1 px-8 md:px-10 pb-6">
-                <form
+                <form {...nativeValidationProps(t)}
                   id="cashflow-form"
                   onSubmit={handleSubmit}
                   aria-busy={busy}

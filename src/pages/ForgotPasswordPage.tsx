@@ -1,3 +1,4 @@
+import { nativeValidationProps } from "@/i18n/validation";
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
@@ -102,7 +103,7 @@ export function ForgotPasswordPage() {
           <span style={{ fontSize: "var(--fp-text-sm)" }}>{t("auth.forgot.successTitle")}</span>
         </div>
       ) : (
-        <form onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <form {...nativeValidationProps(t)} onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label htmlFor="forgot-password-email" style={labelStyle}>
               {t("auth.forgot.email")}

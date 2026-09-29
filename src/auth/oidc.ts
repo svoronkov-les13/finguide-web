@@ -1,3 +1,4 @@
+import { LocalizedError, httpErrorKey } from "@/i18n/errors";
 const AUTH_SESSION_KEY = "finguide.auth.session";
 const OIDC_STATE_KEY = "finguide.oidc.state";
 const TOKEN_EXPIRY_SKEW_MS = 30_000;
@@ -152,18 +153,18 @@ export async function completeOidcLogin(search = window.location.search) {
   const params = new URLSearchParams(search);
   const error = params.get("error");
   if (error) {
-    throw new Error(params.get("error_description") || error);
+    throw new LocalizedError("auth.callback.error", params.get("error_description") || error);
   }
 
   const code = params.get("code");
   const state = params.get("state");
   if (!code || !state) {
-    throw new Error("Keycloak callback does not contain code/state");
+    throw new LocalizedError("auth.invalidResponse", "Keycloak callback does not contain code/state");
   }
 
   const pending = readPendingAuthorization();
   if (!pending || pending.state !== state) {
-    throw new Error("OIDC state does not match the current browser session");
+    throw new LocalizedError("auth.sessionMismatch", "OIDC state does not match the current browser session");
   }
 
   const body = new URLSearchParams({
@@ -181,7 +182,7 @@ export async function completeOidcLogin(search = window.location.search) {
   });
 
   if (!response.ok) {
-    throw new Error(`Keycloak token exchange failed with HTTP ${response.status}`);
+    throw new LocalizedError("auth.callback.error", `Keycloak token exchange failed with HTTP ${response.status}`);
   }
 
   const token = (await response.json()) as TokenResponse;
@@ -232,7 +233,7 @@ export async function loginWithCredentials(email: string, password: string) {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     const errorDescription = (errorBody as Record<string, string>).error_description;
-    throw new Error(errorDescription || `Login failed with HTTP ${response.status}`);
+    throw new LocalizedError(response.status === 400 || response.status === 401 ? "auth.login.error" : httpErrorKey(response.status), errorDescription || `Login failed with HTTP ${response.status}`);
   }
 
   const token = (await response.json()) as TokenResponse;
@@ -249,7 +250,7 @@ export async function registerWithCredentials(request: RegistrationRequest) {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     const errorMessage = (errorBody as { error?: { message?: string } }).error?.message;
-    throw new Error(errorMessage || `Registration failed with HTTP ${response.status}`);
+    throw new LocalizedError(response.status === 409 ? "auth.registrationConflict" : "auth.register.error", errorMessage || `Registration failed with HTTP ${response.status}`);
   }
 
   return loginWithCredentials(request.email, request.password);
@@ -276,7 +277,7 @@ export function getKeycloakRegistrationUrl(returnTo = "/dashboard") {
 
 function storeTokenResponse(token: TokenResponse) {
   if (!token.access_token) {
-    throw new Error("Keycloak token response does not contain access_token");
+    throw new LocalizedError("auth.invalidResponse", "Keycloak token response does not contain access_token");
   }
   const session: AuthSession = {
     accessToken: token.access_token,
@@ -359,7 +360,7 @@ function randomBytes(size: number) {
   const bytes = new Uint8Array(size);
   const cryptoApi = globalThis.crypto;
   if (!cryptoApi?.getRandomValues) {
-    throw new Error("Secure random generator is not available in this browser");
+    throw new LocalizedError("auth.secureBrowserRequired", "Secure random generator is not available in this browser");
   }
   cryptoApi.getRandomValues(bytes);
   return bytes;

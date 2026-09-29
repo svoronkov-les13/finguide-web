@@ -1,5 +1,5 @@
 import { useI18n } from "@/i18n/I18nProvider";
-import { formatRub, formatUsd, formatPercent } from "@/lib/utils";
+import { formatRub, formatUsd, formatPercent, formatNumber } from "@/lib/utils";
 
 type SimpleFormatOptions = { compact?: boolean; sign?: boolean };
 
@@ -31,5 +31,6 @@ export function useFormat() {
 
   const fmtPercent = (value: number) => formatPercent(value, loc);
 
-  return { formatRub: fmtRub, formatUsd: fmtUsd, formatPercent: fmtPercent };
+  return { formatRub: fmtRub, formatUsd: fmtUsd, formatPercent: fmtPercent,
+    formatNumber: (value: number, digits = 0) => formatNumber(value, loc, digits) };
 }
