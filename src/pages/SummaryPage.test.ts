@@ -2,11 +2,17 @@
 
 import { describe, expect, it } from "vitest";
 import { effectiveGrowth, formatGrowthPercent, summaryGoalProgress } from "@/pages/SummaryPage";
+import { formatNumber } from "@/lib/utils";
 
 describe("SummaryPage growth display", () => {
   it("shows plan inflation for inflation-indexed items with zero stored growth", () => {
     expect(effectiveGrowth({ growth: 0, growthType: "inflation" }, 0.08)).toBe(0.08);
     expect(formatGrowthPercent(effectiveGrowth({ growth: 0, growthType: "inflation" }, 0.08))).toBe("+8%");
+  });
+
+  it("keeps one decimal and uses the locale formatter", () => {
+    expect(formatGrowthPercent(0.055)).toBe("+5.5%");
+    expect(formatGrowthPercent(0.055, (value, digits) => formatNumber(value, "ru-RU", digits))).toBe("+5,5%");
   });
 
   it("keeps custom zero growth as zero", () => {

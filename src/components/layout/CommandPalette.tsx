@@ -4,14 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useI18n } from "@/i18n/I18nProvider";
-import { navigation, systemRoutes, tools } from "@/routes";
+import { navigation, tools, visibleSystemRoutes } from "@/routes";
 import { useUiStore } from "@/store/uiStore";
 
 export function CommandPalette() {
   const open = useUiStore((state) => state.commandOpen);
   const setOpen = useUiStore((state) => state.setCommandOpen);
   const { t } = useI18n();
-  const routes = [...navigation, ...tools, ...systemRoutes];
+  const routes = [...navigation, ...tools, ...visibleSystemRoutes];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

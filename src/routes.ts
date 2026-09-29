@@ -18,6 +18,8 @@ export interface RouteNavItem {
   labelKey: TranslationKey;
   badge?: string;
   icon: ComponentType<{ className?: string }>;
+  /** Left out of the sidebar and command palette; the page still opens by direct link. */
+  hidden?: boolean;
 }
 
 export const navigation = [
@@ -33,7 +35,10 @@ export const navigation = [
 
 export const tools = [{ href: "/tracking", labelKey: "routes.tracker", icon: CalendarCheck }] satisfies RouteNavItem[];
 
-export const systemRoutes = [
-  { href: "/settings", labelKey: "routes.settings", icon: Settings },
-  { href: "/faq", labelKey: "routes.faq", icon: CircleHelp },
-] satisfies RouteNavItem[];
+// Settings and FAQ are placeholders so far; hidden until they get real content.
+export const systemRoutes: RouteNavItem[] = [
+  { href: "/settings", labelKey: "routes.settings", icon: Settings, hidden: true },
+  { href: "/faq", labelKey: "routes.faq", icon: CircleHelp, hidden: true },
+];
+
+export const visibleSystemRoutes = systemRoutes.filter((item) => !item.hidden);

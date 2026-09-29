@@ -81,19 +81,19 @@ export function GoalsTable() {
 
 function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const { t } = useI18n();
-  const { formatRub } = useFormat();
+  const { formatRub, formatNumber } = useFormat();
   const Icon = GOAL_ICONS[goal.icon] ?? Target;
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const month = goal.targetMonth ?? 12;
+  const isReachable = progress.funded || goal.reachable;
   const statusLabel = isActuallyAchieved
     ? t("goals.statusAchieved")
-    : goal.reachable
+    : isReachable
       ? t("goals.statusReachable")
       : t("goals.statusRisk");
   const yearsLeft = goal.targetYear - currentYear;
 
-  const isReachable = isActuallyAchieved || goal.reachable;
   const statusColorClass = isReachable ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]";
   const StatusIcon = isReachable ? CheckCircle2 : AlertTriangle;
 
@@ -115,11 +115,17 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">
           {t(`goals.monthShort.${month}` as Parameters<typeof t>[0])} {goal.targetYear}
         </div>
-        <div className="text-[10px]">{t("goals.inYears", { count: String(yearsLeft) })}</div>
+        <div className="text-[10px]">
+          {yearsLeft > 0
+            ? t("goals.inYears", { count: yearsLeft })
+            : yearsLeft === 0
+              ? t("goals.thisYear")
+              : t("goals.yearsAgo", { count: -yearsLeft })}
+        </div>
       </div>
       <div className="text-right">
         <div className="font-semibold text-[13px] text-[var(--fp-color-foreground)]">{formatRub(goal.cost)}</div>
-        <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: String(Math.round(goal.growth * 100)) })}</div>
+        <div className="text-[10px] text-[var(--fp-color-muted-foreground)]">{t("goals.perYear", { pct: formatNumber(goal.growth * 100, 1) })}</div>
       </div>
       <div className="flex justify-end">
         <Badge variant={isReachable ? "success" : "danger"} className={`bg-transparent border-none ${statusColorClass} shadow-none px-0 gap-1.5 font-semibold text-xs`}>

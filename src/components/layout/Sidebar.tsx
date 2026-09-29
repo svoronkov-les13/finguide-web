@@ -3,7 +3,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { getSidebarCounters, sidebarBadgeForHref, type SidebarCounters } from "@/components/layout/sidebarCounters";
 import { useI18n } from "@/i18n/I18nProvider";
-import { navigation, systemRoutes, tools, type RouteNavItem } from "@/routes";
+import { navigation, tools, visibleSystemRoutes, type RouteNavItem } from "@/routes";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/store/uiStore";
 
@@ -42,13 +42,17 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className={cn("my-6 h-px bg-white/7", expanded ? "mx-5" : "w-8", "max-[760px]:mx-0 max-[760px]:w-8")} />
+      {visibleSystemRoutes.length > 0 && (
+        <>
+          <div className={cn("my-6 h-px bg-white/7", expanded ? "mx-5" : "w-8", "max-[760px]:mx-0 max-[760px]:w-8")} />
 
-      <nav className={cn("grid gap-1.5", expanded ? "px-3" : "", "max-[760px]:px-0")}>
-        {systemRoutes.map((item) => (
-          <SidebarLink key={item.href} item={item} active={location === item.href} counters={counters} expanded={expanded} />
-        ))}
-      </nav>
+          <nav className={cn("grid gap-1.5", expanded ? "px-3" : "", "max-[760px]:px-0")}>
+            {visibleSystemRoutes.map((item) => (
+              <SidebarLink key={item.href} item={item} active={location === item.href} counters={counters} expanded={expanded} />
+            ))}
+          </nav>
+        </>
+      )}
 
       <div className="flex-1" />
       <button
