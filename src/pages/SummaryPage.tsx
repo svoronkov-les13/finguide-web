@@ -215,7 +215,7 @@ function CashflowTable({
       >
         <div className="flex items-center gap-3">
           <h3 className="text-[16px] font-semibold">{title}</h3>
-          <span className="text-[13px] text-[var(--fp-color-label)]">{count} {t("summary.entries")}</span>
+          <span className="text-[13px] text-[var(--fp-color-label)]">{t("summary.entries", { count })}</span>
         </div>
         <div className="flex items-center gap-5">
           <div className="text-right hidden sm:block">
@@ -249,7 +249,7 @@ function CashflowTable({
                 <div className="text-[var(--fp-color-label)] text-[13px]">{freqLabel(item.frequency)}</div>
                 <div className="text-right font-semibold">{formatRub(item.amount)}</div>
                 <div className="text-[var(--fp-color-label)] text-[13px]">
-                  {item.startYear} — {item.endYear ?? t("summary.indefinite")}
+                  {item.frequency === "onetime" ? item.startYear : `${item.startYear} — ${item.endYear ?? t("summary.indefinite")}`}
                 </div>
                 <div className={`text-[13px] font-medium ${effectiveGrowth(item, inflation) > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-label)]"}`}>
                   {formatGrowthPercent(effectiveGrowth(item, inflation), formatNumber)}
@@ -306,7 +306,7 @@ function GoalsTable({
       >
         <div className="flex items-center gap-3">
           <h3 className="text-[16px] font-semibold">{title}</h3>
-          <span className="text-[13px] text-[var(--fp-color-label)]">{count} {t("summary.entries")}</span>
+          <span className="text-[13px] text-[var(--fp-color-label)]">{t("summary.entries", { count })}</span>
         </div>
         <div className="flex items-center gap-5">
           <div className="text-right hidden sm:block">

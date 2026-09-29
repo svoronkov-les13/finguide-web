@@ -82,9 +82,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
     onOpenChange(false);
   });
 
-  const formatYears = (val: number) => {
-    return `${val > 0 ? `+${val}` : val} ${t("dashboard.whatifYears")}`;
-  };
+  const formatYears = (val: number) => t("format.yearsCount", { count: formatSigned(val) });
 
   const formatPp = (val: number) => {
     return `${val > 0 ? `+${val}` : val} ${t("dashboard.whatifPp")}`;
@@ -139,7 +137,7 @@ export function WhatIfDialog({ open, onOpenChange }: WhatIfDialogProps) {
             <ScenarioSlider label={t("dashboard.whatifExpenses")} min={-50} max={100} step={1} value={values.expenseChangePercent} suffix="%" {...form.register("expenseChangePercent")} />
             <ScenarioSlider label={t("dashboard.whatifReturn")} min={-5} max={10} step={0.5} value={values.returnDeltaPercent} suffix={` ${t("dashboard.whatifPp")}`} {...form.register("returnDeltaPercent")} />
             <ScenarioSlider label={t("dashboard.whatifInflation")} min={-5} max={10} step={0.5} value={values.inflationDeltaPercent} suffix={` ${t("dashboard.whatifPp")}`} {...form.register("inflationDeltaPercent")} />
-            <ScenarioSlider label={t("dashboard.whatifRetirementAge")} min={-10} max={10} step={1} value={values.retirementAgeShift} suffix={` ${t("dashboard.whatifYears")}`} {...form.register("retirementAgeShift")} />
+            <ScenarioSlider label={t("dashboard.whatifRetirementAge")} min={-10} max={10} step={1} value={values.retirementAgeShift} suffix="" format={formatYears} {...form.register("retirementAgeShift")} />
             <ScenarioSlider label={t("dashboard.whatifGoalsCost")} min={-30} max={100} step={1} value={values.goalsCostChangePercent} suffix="%" {...form.register("goalsCostChangePercent")} />
           </div>
 
@@ -181,15 +179,18 @@ interface ScenarioSliderProps extends React.InputHTMLAttributes<HTMLInputElement
   label: string;
   value: number;
   suffix: string;
+  /** Replaces "value + suffix" when the unit has to agree with the number (1 год, 2 года, 5 лет). */
+  format?: (value: number) => string;
 }
 
-function ScenarioSlider({ label, value, suffix, min, max, className, ...props }: ScenarioSliderProps) {
+function ScenarioSlider({ label, value, suffix, format, min, max, className, ...props }: ScenarioSliderProps) {
+  const show = (v: number) => (format ? format(v) : `${formatSigned(v)}${suffix}`);
   return (
     <label className={cn("rounded-[var(--fp-radius-2xl)] border border-[var(--fp-color-border)] bg-[var(--fp-color-card)]/80 p-5 shadow-[var(--fp-shadow-soft)]", className)}>
       <span className="label-caps flex items-center justify-between gap-4">
         {label}
         <strong className={cn("card-value-xl normal-case tracking-normal", value < 0 ? "text-[var(--fp-color-coral)]" : value > 0 ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-foreground)]")}>
-          {formatSigned(value)}{suffix}
+          {show(value)}
         </strong>
       </span>
       <input
@@ -201,8 +202,8 @@ function ScenarioSlider({ label, value, suffix, min, max, className, ...props }:
         {...props}
       />
       <span className="mt-2 flex justify-between text-xs text-[var(--fp-color-muted-foreground)]">
-        <span>{min}{suffix}</span>
-        <span>{max}{suffix}</span>
+        <span>{format ? format(Number(min)) : `${min}${suffix}`}</span>
+        <span>{format ? format(Number(max)) : `${max}${suffix}`}</span>
       </span>
     </label>
   );

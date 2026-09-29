@@ -426,7 +426,7 @@ export function CashflowModal({
                 {initialData?.id && (
                   confirmingDelete ? (
                     <div className="ml-auto flex items-center gap-2">
-                      <span className="text-sm font-medium text-[var(--fp-color-danger)]">{t("common.confirmDelete")}</span>
+                      <span className="text-sm font-medium text-[var(--fp-color-danger)]">{t(`common.confirmDelete_${type}`)}</span>
                       <button
                         type="button"
                         disabled={busy}
