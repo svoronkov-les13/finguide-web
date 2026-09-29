@@ -35,11 +35,11 @@ export function GoalsTable() {
         <div className="flex items-center gap-4 text-xs text-[var(--fp-color-muted-foreground)] max-[760px]:mt-2">
           <span className="num">● {t("goals.totalLabel")}: <span className="font-semibold text-[var(--fp-color-foreground)]">{formatRub(total)}</span></span>
           <span className="flex items-center gap-2">
-            <span className="text-[var(--fp-color-teal)]">● {t("goals.reachableCount", { count: String(counts.reachable) })}</span>
+            <span className="text-[var(--fp-color-teal)]">● {t("goals.reachableCount", { count: counts.reachable })}</span>
             <span className="text-[var(--fp-color-coral)]">● {t("goals.atRiskCount", { count: String(counts.atRisk) })}</span>
           </span>
           <span className="num font-medium text-[var(--fp-color-foreground)] bg-[var(--fp-color-surface)] px-2.5 py-0.5 rounded-full">
-            {t("goals.reachableOf", { reachable: String(counts.reachable), total: String(counts.total) })}
+            {t("goals.reachableOf", { reachable: counts.reachable, total: counts.total, count: counts.reachable })}
           </span>
           <button
             onClick={() => navigate({ to: "/goals" })}
