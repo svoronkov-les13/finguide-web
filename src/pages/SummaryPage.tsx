@@ -174,7 +174,7 @@ export function SummaryPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 pt-5 border-t border-[var(--fp-color-border)]">
           {[
             { label: t("summary.availableForPension"), value: `${formatRub(pensionAvailable)} / ${t("summary.yr")}` },
-            { label: t("summary.retirementAt"), value: `${plan.settings.retirementAge} ${t("summary.years")}` },
+            { label: t("summary.retirementAt"), value: t("format.yearsCount", { count: plan.settings.retirementAge }) },
             { label: t("summary.desiredExpenses"), value: `${formatRub(plan.settings.targetMonthlySpend)} / ${t("summary.mo")}` },
             { label: t("summary.returnInflation"), value: `${formatPercent(plan.settings.investmentReturn)} / ${formatPercent(plan.settings.inflation)}` },
           ].map(({ label, value }) => (

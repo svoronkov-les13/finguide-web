@@ -953,6 +953,11 @@ export const ru = {
     yearsSuffix1: "год",
     yearsSuffix234: "года",
     yearsSuffix: "лет",
+    yearsCount: {
+      one: "{{count}} год",
+      few: "{{count}} года",
+      many: "{{count}} лет",
+    },
     percentPerYear: "% в год",
   },
   faq: {
@@ -1963,6 +1968,11 @@ export const en = {
     yearsSuffix1: "year",
     yearsSuffix234: "years",
     yearsSuffix: "years",
+    yearsCount: {
+      one: "{{count}} year",
+      few: "{{count}} years",
+      many: "{{count}} years",
+    },
     percentPerYear: "% per year",
   },
   faq: {

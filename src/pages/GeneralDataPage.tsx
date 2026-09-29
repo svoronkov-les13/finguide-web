@@ -36,8 +36,9 @@ export function GeneralDataPage() {
       retirementAge: settings?.retirementAge ?? 60,
       pensionCalculationYears: settings?.pensionCalculationYears ?? Math.max(1, (settings?.retirementAge ?? 60) - (settings?.currentAge ?? 30)),
       dashboardCalculationYears: settings?.dashboardCalculationYears ?? 12,
-      inflationPercent: Math.round((settings?.inflation ?? 0.07) * 100),
-      investmentReturnPercent: Math.round((settings?.investmentReturn ?? 0.09) * 100),
+      // One decimal: rounding to whole percent would silently save 5.5% back as 6%
+      inflationPercent: Math.round((settings?.inflation ?? 0.07) * 1000) / 10,
+      investmentReturnPercent: Math.round((settings?.investmentReturn ?? 0.09) * 1000) / 10,
       startingCapital: settings?.startingCapital ?? 0,
       targetMonthlySpend: settings?.targetMonthlySpend ?? 0,
     },
@@ -225,13 +226,13 @@ function SummaryCard(props: {
       </div>
       <dl className="grid gap-3 text-sm">
         <SummaryRow label={t("general.profile")} value={props.name} />
-        <SummaryRow label={t("general.age")} value={`${props.age} ${t("general.years")}`} />
+        <SummaryRow label={t("general.age")} value={t("format.yearsCount", { count: props.age })} />
         <SummaryRow label={t("general.currency")} value={props.currency} />
         <SummaryRow label={t("general.capital")} value={formatRub(props.capital)} />
-        <SummaryRow label={t("general.returnPct")} value={`${props.returnPct}%`} tone="positive" />
-        <SummaryRow label={t("general.inflationPct")} value={`${props.inflationPct}%`} tone="negative" />
+        <SummaryRow label={t("general.returnPct")} value={`${formatNumber(Number(props.returnPct) || 0, 1)}%`} tone="positive" />
+        <SummaryRow label={t("general.inflationPct")} value={`${formatNumber(Number(props.inflationPct) || 0, 1)}%`} tone="negative" />
         <SummaryRow label={t("general.realPct")} value={`${props.realReturn > 0 ? "+" : ""}${formatNumber(props.realReturn, 1)}%`} tone={props.realReturn >= 0 ? "positive" : "negative"} />
-        <SummaryRow label={t("general.pensionIn")} value={`${props.retirementAge} ${t("general.years")}`} />
+        <SummaryRow label={t("general.pensionIn")} value={t("format.yearsCount", { count: props.retirementAge })} />
       </dl>
     </Card>
   );

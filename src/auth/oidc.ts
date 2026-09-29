@@ -50,7 +50,8 @@ export function getStoredAuthSession(): AuthSession | undefined {
   try {
     const parsed = JSON.parse(raw) as AuthSession;
     if (!parsed.accessToken || !parsed.expiresAt) return undefined;
-    return parsed;
+    // Re-read the profile from the token: sessions stored before the UTF-8 fix carry a garbled name
+    return { ...parsed, profile: parseJwtProfile(parsed.idToken || parsed.accessToken) ?? parsed.profile };
   } catch {
     clearAuthSession();
     return undefined;
@@ -292,12 +293,14 @@ function storeTokenResponse(token: TokenResponse) {
   return session;
 }
 
-function parseJwtProfile(jwt: string | undefined): AuthSession["profile"] {
+export function parseJwtProfile(jwt: string | undefined): AuthSession["profile"] {
   if (!jwt) return undefined;
   const [, payload] = jwt.split(".");
   if (!payload) return undefined;
   try {
-    const json = JSON.parse(window.atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    // The payload is UTF-8: atob alone yields Latin-1 and turns Cyrillic names into «ÐÐ½Ð½Ð°»
+    const bytes = Uint8Array.from(window.atob(payload.replace(/-/g, "+").replace(/_/g, "/")), (char) => char.charCodeAt(0));
+    const json = JSON.parse(new TextDecoder().decode(bytes));
     return {
       sub: json.sub,
       email: json.email,
