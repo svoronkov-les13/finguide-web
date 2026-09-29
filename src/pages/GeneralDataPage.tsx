@@ -46,7 +46,9 @@ export function GeneralDataPage() {
   const values = useWatch({ control: form.control }) as SettingsFormValues;
   const age = Math.max(0, values.startYear - values.birthYear);
   const retirementAge = values.retirementAge;
-  const realReturn = values.investmentReturnPercent - values.inflationPercent;
+  // Inputs are plain text fields: a half-typed value must not turn the metric into NaN
+  const realReturnRaw = Number(values.investmentReturnPercent) - Number(values.inflationPercent);
+  const realReturn = Number.isFinite(realReturnRaw) ? realReturnRaw : 0;
 
   const onSubmit = form.handleSubmit((next) => {
     updateSettings.mutate({
@@ -129,7 +131,12 @@ export function GeneralDataPage() {
               <Field label={t("general.inflation")} hint={t("general.inflationHint")} error={form.formState.errors.inflationPercent?.message}>
                 <Input type="number" step="0.1" {...form.register("inflationPercent")} />
               </Field>
-              <MetricBox label={t("general.realReturn")} value={`${realReturn > 0 ? "+" : ""}${formatNumber(realReturn, 1)}%`} detail={t("general.realReturnDetail")} />
+              <MetricBox
+                label={t("general.realReturn")}
+                value={`${realReturn > 0 ? "+" : ""}${formatNumber(realReturn, 1)}%`}
+                detail={t("general.realReturnDetail")}
+                tone={realReturn > 0 ? "positive" : realReturn < 0 ? "negative" : "neutral"}
+              />
             </div>
           </FormSection>
 
@@ -276,12 +283,19 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
   );
 }
 
-function MetricBox({ label, value, detail }: { label: string; value: string; detail: string }) {
+function MetricBox({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: "positive" | "negative" | "neutral" }) {
+  const toneClass = tone === "positive"
+    ? "text-[var(--fp-color-teal)]"
+    : tone === "negative"
+      ? "text-[var(--fp-color-coral)]"
+      : "text-[var(--fp-color-foreground)]";
   return (
-    <div className="flex flex-col justify-center rounded-[var(--fp-radius-full)] border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/50 px-6 py-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">{label}</div>
-      <div className="mt-1 text-2xl font-bold text-[var(--fp-color-teal)]">{value}</div>
-      <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">{detail}</div>
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--fp-color-border)] bg-[var(--fp-color-surface)]/50 px-5 py-4 md:col-span-2">
+      <div className="min-w-0">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--fp-color-muted-foreground)]">{label}</div>
+        <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">{detail}</div>
+      </div>
+      <div className={`shrink-0 text-2xl font-bold num ${toneClass}`}>{value}</div>
     </div>
   );
 }
