@@ -270,3 +270,24 @@ describe("OIDC session helpers", () => {
     expect(observed).toEqual(["fresh-token", undefined]);
   });
 });
+
+describe("parseJwtProfile", () => {
+  it("decodes a UTF-8 payload so Cyrillic names survive", async () => {
+    const { parseJwtProfile } = await import("./oidc");
+    const payload = Buffer.from(JSON.stringify({ sub: "u1", name: "Анна Тестова", preferred_username: "anna@example.test" }))
+      .toString("base64url");
+    expect(parseJwtProfile(`header.${payload}.signature`)).toMatchObject({ name: "Анна Тестова" });
+  });
+
+  it("repairs a profile name stored garbled by the old Latin-1 decoding", async () => {
+    const { getStoredAuthSession } = await import("./oidc");
+    const payload = Buffer.from(JSON.stringify({ sub: "u1", name: "Анна Тестова" })).toString("base64url");
+    window.localStorage.setItem("finguide.auth.session", JSON.stringify({
+      accessToken: `header.${payload}.signature`,
+      tokenType: "Bearer",
+      expiresAt: Date.now() + 60_000,
+      profile: { sub: "u1", name: "ÐÐ½Ð½Ð° Ð¢ÐµÑÑÐ¾Ð²Ð°" },
+    }));
+    expect(getStoredAuthSession()?.profile?.name).toBe("Анна Тестова");
+  });
+});
