@@ -77,14 +77,19 @@ export function CashflowModal({
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- delete confirmation resets when a new record opens
       setConfirmingDelete(false);
-      const startYear = plan?.settings.startYear ?? new Date().getFullYear();
+      const planStartYear = plan?.settings.startYear ?? new Date().getFullYear();
+      const startYear = initialData?.frequency === "onetime"
+        ? onetimeDefaultYear(planStartYear)
+        : planStartYear;
       form.reset({
         ...initialData,
         name: initialData?.name || "",
         amount: initialData?.amount || 0,
         currency: initialData?.currency || "RUB",
         startYear: initialData?.startYear ?? startYear,
-        endYear: initialData?.endYear ?? null,
+        endYear: initialData?.frequency === "onetime"
+          ? initialData?.startYear ?? startYear
+          : initialData?.endYear ?? null,
         growth: initialData?.growth || 0,
         growthType: initialData?.growthRanges?.length || (initialData?.growthType === "custom" && (initialData?.growth || 0) !== 0)
           ? "ranges"
@@ -108,6 +113,10 @@ export function CashflowModal({
 
   const handleSubmit = form.handleSubmit((data) => {
     const submitData = { ...data };
+    // A one-time entry happens once: the forecast must not repeat it in later years
+    if (data.frequency === "onetime") {
+      submitData.endYear = data.startYear;
+    }
     if (data.growthType === "inflation") {
       submitData.growthRanges = [];
       submitData.growth = 0; // Using default inflation logic
@@ -116,12 +125,25 @@ export function CashflowModal({
   });
 
   const setFrequency = (freq: "monthly" | "yearly" | "onetime") => {
+    const previous = form.getValues("frequency");
     form.setValue("frequency", freq);
+    if (freq === "onetime") {
+      // A new one-time entry dated before this year would never show up in the forecast
+      if (!initialData?.id) {
+        const startYear = form.getValues("startYear");
+        form.setValue("startYear", onetimeDefaultYear(Number.isFinite(startYear) ? startYear : new Date().getFullYear()));
+      }
+      form.setValue("endYear", form.getValues("startYear"));
+    } else if (previous === "onetime" && form.getValues("endYear") === form.getValues("startYear")) {
+      form.setValue("endYear", null);
+    }
   };
 
   const frequencyValue = useWatch({ control: form.control, name: "frequency" });
   const currencyValue = useWatch({ control: form.control, name: "currency" });
   const endYearValue = useWatch({ control: form.control, name: "endYear" });
+  const startYearValue = useWatch({ control: form.control, name: "startYear" });
+  const isOnetime = frequencyValue === "onetime";
 
   // Retirement is a milestone of the model, not a field on the record: the form
   // only states where the entered period sits relative to it.
@@ -167,7 +189,7 @@ export function CashflowModal({
                   </div>
 
                   {/* Amount + Currency + Type */}
-                  <div className="grid grid-cols-[1fr_120px_270px] items-end gap-4">
+                  <div className="grid grid-cols-[1fr_120px] items-end gap-4 lg:grid-cols-[1fr_120px_auto]">
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.amount")}</Label>
                       <Controller
@@ -193,7 +215,7 @@ export function CashflowModal({
                           </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid gap-2">
+                    <div className="col-span-2 grid gap-2 lg:col-span-1">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">
                         {t(`cashflow.typeLabel_${type}`)}
                       </Label>
@@ -213,7 +235,7 @@ export function CashflowModal({
                   {/* Dates */}
                   <div className="grid grid-cols-2 items-start gap-4">
                     <div className="grid gap-2">
-                      <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.startDate")}</Label>
+                      <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{isOnetime ? t("cashflow.onetimeYear") : t("cashflow.startDate")}</Label>
                       <Input
                         type="number"
                         {...form.register("startYear", { valueAsNumber: true })}
@@ -221,25 +243,37 @@ export function CashflowModal({
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.endDate")}</Label>
-                      <Input
-                        type="number"
-                        placeholder={t("cashflow.indefinite")}
-                        aria-invalid={!!form.formState.errors.endYear}
-                        {...form.register("endYear", {
-                          setValueAs: (v) => (v === "" || v === null ? null : Number(v)),
-                          validate: (value) =>
-                            value == null || value >= form.getValues("startYear") || t("cashflow.validation.endBeforeStart"),
-                        })}
-                      />
-                      {form.formState.errors.endYear && (
-                        <span className="px-5 text-xs text-[var(--fp-color-danger)]">{form.formState.errors.endYear.message}</span>
-                      )}
-                      {retirementYear != null && (
-                        <span className="px-5 text-xs text-[var(--fp-color-muted-foreground)]">
-                          {runsPastRetirement
-                            ? t("cashflow.retirementHintBeyond", { year: String(retirementYear) })
-                            : t("cashflow.retirementHint", { year: String(retirementYear) })}
-                        </span>
+                      {isOnetime ? (
+                        <>
+                          <Input type="number" value={Number.isFinite(startYearValue) ? startYearValue : ""} disabled readOnly />
+                          <span className="px-5 text-xs text-[var(--fp-color-muted-foreground)]">{t("cashflow.onetimeEndHint")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Input
+                            type="number"
+                            placeholder={t("cashflow.indefinite")}
+                            aria-invalid={!!form.formState.errors.endYear}
+                            {...form.register("endYear", {
+                              setValueAs: (v) => (v === "" || v === null ? null : Number(v)),
+                              validate: (value) =>
+                                value == null
+                                || form.getValues("frequency") === "onetime"
+                                || value >= form.getValues("startYear")
+                                || t("cashflow.validation.endBeforeStart"),
+                            })}
+                          />
+                          {form.formState.errors.endYear && (
+                            <span className="px-5 text-xs text-[var(--fp-color-danger)]">{form.formState.errors.endYear.message}</span>
+                          )}
+                          {retirementYear != null && (
+                            <span className="px-5 text-xs text-[var(--fp-color-muted-foreground)]">
+                              {runsPastRetirement
+                                ? t("cashflow.retirementHintBeyond", { year: String(retirementYear) })
+                                : t("cashflow.retirementHint", { year: String(retirementYear) })}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -247,8 +281,9 @@ export function CashflowModal({
 
                   {/* Growth */}
                   <div className="grid gap-4">
-                    <div className="flex items-center gap-2">
+                    <div className="grid gap-1">
                       <span className="text-sm font-semibold text-[var(--fp-color-foreground)]">{t("cashflow.growthTitle")}</span>
+                      <p className="text-xs leading-relaxed text-[var(--fp-color-muted-foreground)]">{t(`cashflow.growthIntro_${type}`)}</p>
                     </div>
 
                     {/* Inflation toggle */}
@@ -424,6 +459,11 @@ export function CashflowModal({
               </div>
     </ModalShell>
   );
+}
+
+/** A new one-time entry happens this year unless the plan itself starts later. */
+export function onetimeDefaultYear(planStartYear: number, now = new Date()) {
+  return Math.max(now.getFullYear(), planStartYear);
 }
 
 export function nextGrowthRangeStartYear(ranges: GrowthRangeFormData[] | undefined, fallbackStartYear: number) {

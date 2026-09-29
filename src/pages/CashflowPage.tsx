@@ -35,6 +35,35 @@ const getStoredOrder = (planId: string, type: string, frequency: string): string
 
 const EMPTY_CASHFLOWS: Cashflow[] = [];
 
+const COMPACT_KEY = "finguide.cashflow-compact";
+
+const readCompact = () => {
+  try {
+    return localStorage.getItem(COMPACT_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const writeCompact = (compact: boolean) => {
+  try {
+    localStorage.setItem(COMPACT_KEY, compact ? "1" : "0");
+  } catch {
+    // ignore
+  }
+};
+
+/**
+ * What a record becomes after being dragged into another column. The amount
+ * keeps its number but changes meaning (per month vs per year), so the result
+ * goes through the edit modal instead of being saved directly.
+ */
+export function withFrequency(item: Cashflow, frequency: Cashflow["frequency"]): Cashflow {
+  if (frequency === "onetime") return { ...item, frequency, endYear: item.startYear };
+  if (item.frequency === "onetime" && item.endYear === item.startYear) return { ...item, frequency, endYear: null };
+  return { ...item, frequency };
+}
+
 const setStoredOrder = (planId: string, type: string, frequency: string, order: string[]) => {
   try {
     localStorage.setItem(`finguide.cashflow-order.${planId}.${type}.${frequency}`, JSON.stringify(order));
@@ -53,7 +82,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<Cashflow> | null>(null);
-  const [isCompact, setIsCompact] = useState(false);
+  const [isCompact, setIsCompact] = useState(readCompact);
   const [instructionOpen, setInstructionOpen] = useState(false);
   const [calcDetailsOpen, setCalcDetailsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "monthly" | "yearly" | "onetime">("all");
@@ -61,6 +90,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
   const [orders, setOrders] = useState<Record<string, string[]>>({});
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<Cashflow["frequency"] | null>(null);
 
   useEffect(() => {
     if (plan?.planId) {
@@ -94,11 +124,46 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
     setDragOverItemId(null);
   };
 
-  const handleDrop = (e: React.DragEvent, targetId: string, frequency: string) => {
+  const resetDrag = () => {
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+    setDragOverColumn(null);
+  };
+
+  const moveToColumn = (item: Cashflow, frequency: Cashflow["frequency"]) => {
+    setEditingItem(withFrequency(item, frequency));
+    setDrawerOpen(true);
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, frequency: Cashflow["frequency"]) => {
+    const dragged = items.find((i) => i.id === draggedItemId);
+    if (!dragged) return;
     e.preventDefault();
-    if (!draggedItemId || draggedItemId === targetId) {
-      setDraggedItemId(null);
-      setDragOverItemId(null);
+    setDragOverColumn(dragged.frequency === frequency ? null : frequency);
+  };
+
+  const handleColumnDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOverColumn(null);
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, frequency: Cashflow["frequency"]) => {
+    e.preventDefault();
+    const dragged = items.find((i) => i.id === draggedItemId);
+    if (dragged && dragged.frequency !== frequency) moveToColumn(dragged, frequency);
+    resetDrag();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string, frequency: Cashflow["frequency"]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dragged = items.find((i) => i.id === draggedItemId);
+    if (!dragged || draggedItemId === targetId) {
+      resetDrag();
+      return;
+    }
+    if (dragged.frequency !== frequency) {
+      moveToColumn(dragged, frequency);
+      resetDrag();
       return;
     }
 
@@ -132,8 +197,7 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
       }
     }
 
-    setDraggedItemId(null);
-    setDragOverItemId(null);
+    resetDrag();
   };
 
   const cashflows = plan?.cashflows ?? EMPTY_CASHFLOWS;
@@ -265,14 +329,6 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
             >
               <Info className="size-4" />
             </button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="max-[760px]:hidden"
-              onClick={() => setInstructionOpen(true)}
-            >
-              {t("cashflow.viewExample")}
-            </Button>
             <Button variant="default" size="sm" onClick={() => handleAddItem("monthly")}>
               <Plus className="size-4 shrink-0" />
               {t("cashflow.add")}
@@ -281,7 +337,10 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
               <Button
                 variant={isCompact ? "active" : "secondary"}
                 size="sm"
-                onClick={() => setIsCompact(!isCompact)}
+                onClick={() => {
+                  setIsCompact(!isCompact);
+                  writeCompact(!isCompact);
+                }}
               >
                 <Sparkles className="size-4" />
                 <span className="hidden sm:inline">{t("cashflow.compact")}</span>
@@ -377,6 +436,11 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onDragEnd={resetDrag}
+                isDropTarget={dragOverColumn === column.id}
+                onColumnDragOver={handleColumnDragOver}
+                onColumnDragLeave={handleColumnDragLeave}
+                onColumnDrop={handleColumnDrop}
                 startYear={plan.settings.startYear}
               />
             );
@@ -447,7 +511,12 @@ interface CashflowColumnProps {
   onDragStart?: (e: React.DragEvent, id: string) => void;
   onDragOver?: (e: React.DragEvent, id: string) => void;
   onDragLeave?: () => void;
-  onDrop?: (e: React.DragEvent, id: string, frequency: string) => void;
+  onDrop?: (e: React.DragEvent, id: string, frequency: Cashflow["frequency"]) => void;
+  onDragEnd?: () => void;
+  isDropTarget?: boolean;
+  onColumnDragOver?: (e: React.DragEvent, frequency: Cashflow["frequency"]) => void;
+  onColumnDragLeave?: (e: React.DragEvent) => void;
+  onColumnDrop?: (e: React.DragEvent, frequency: Cashflow["frequency"]) => void;
   startYear: number;
 }
 
@@ -468,6 +537,11 @@ function CashflowColumn({
   onDragOver,
   onDragLeave,
   onDrop,
+  onDragEnd,
+  isDropTarget = false,
+  onColumnDragOver,
+  onColumnDragLeave,
+  onColumnDrop,
   startYear,
 }: CashflowColumnProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -546,7 +620,15 @@ function CashflowColumn({
   }, [colItems, isCompact, wide]);
 
   return (
-    <div className="flex flex-col h-full min-h-[220px] max-[760px]:h-auto max-[760px]:min-h-0">
+    <div
+      className={cn(
+        "flex flex-col h-full min-h-[220px] rounded-2xl outline-2 outline-offset-4 outline-transparent transition-[outline-color] max-[760px]:h-auto max-[760px]:min-h-0",
+        isDropTarget && "outline-dashed outline-[var(--fp-color-primary)]",
+      )}
+      onDragOver={(e) => onColumnDragOver?.(e, column.id)}
+      onDragLeave={onColumnDragLeave}
+      onDrop={(e) => onColumnDrop?.(e, column.id)}
+    >
       {/* Column header */}
       <div className="mb-4 flex items-start gap-3">
         <div
@@ -644,6 +726,11 @@ function CashflowColumn({
           className="flex-1 overflow-y-auto hide-scrollbar max-[760px]:overflow-visible"
         >
           <div className={cn("gap-3 pb-4", wide && colItems.length > 0 ? "grid sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col")}>
+            {isDropTarget && (
+              <div className="rounded-2xl border border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-surface)] px-4 py-3 text-center text-xs font-medium text-[var(--fp-color-foreground)]">
+                {t("cashflow.moveTo", { column: t(column.titleKey) })}
+              </div>
+            )}
             {colItems.length === 0 ? (
               <button
                 type="button"
@@ -667,9 +754,7 @@ function CashflowColumn({
                   onClick={() => onEditItem(item)}
                   draggable
                   onDragStart={(e) => onDragStart?.(e, item.id)}
-                  onDragEnd={() => {
-                    // Handled inside drop if needed
-                  }}
+                  onDragEnd={onDragEnd}
                   onDragOver={(e) => onDragOver?.(e, item.id)}
                   onDragLeave={onDragLeave}
                   onDrop={(e) => onDrop?.(e, item.id, column.id)}

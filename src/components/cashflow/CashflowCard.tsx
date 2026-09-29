@@ -39,9 +39,11 @@ export function CashflowCard({
   };
 
   const isMonthly = item.frequency === "monthly";
+  const isOnetime = item.frequency === "onetime";
   const yearlyAmount = isMonthly ? item.amount * 12 : item.amount;
   const monthlyAmount = isMonthly ? item.amount : Math.round(item.amount / 12);
-  const growthPct = Math.round(item.growth * 100);
+  // One decimal: 5.5% inflation must not show up as 6%
+  const growthPct = Math.round(item.growth * 1000) / 10;
   const growthLabel = item.growthType === "ranges" && item.growthRanges?.length
     ? item.growthRanges.map((range) => `${range.growthPercent > 0 ? "+" : ""}${range.growthPercent}%`).join(", ")
     : growthPct !== 0
@@ -80,7 +82,7 @@ export function CashflowCard({
         <div className={cn("truncate font-semibold text-[var(--fp-color-foreground)]", compact ? "text-xs" : "text-sm")} title={item.name}>{item.name}</div>
         {!compact && (
           <div className="mt-0.5 text-xs text-[var(--fp-color-muted-foreground)]">
-            {item.startYear ? `01.01.${item.startYear}` : ""} — {endLabel}
+            {isOnetime ? item.startYear : `${item.startYear} — ${endLabel}`}
           </div>
         )}
       </div>
@@ -89,11 +91,11 @@ export function CashflowCard({
       <div className="shrink-0 text-right">
         <div className={cn("font-semibold text-[var(--fp-color-foreground)] num", compact ? "text-xs" : "text-sm")}>
           {formatMoney(yearlyAmount, item.currency)}
-          <span className="text-[var(--fp-color-muted-foreground)] font-normal">{t("cashflow.perYear")}</span>
+          {!isOnetime && <span className="text-[var(--fp-color-muted-foreground)] font-normal">{t("cashflow.perYear")}</span>}
         </div>
         {!compact && (
           <div className="mt-0.5 flex items-center justify-end gap-2 text-xs text-[var(--fp-color-muted-foreground)] num">
-            {t("cashflow.avgPerMonth", { amount: formatMoney(monthlyAmount, item.currency) })}
+            {!isOnetime && t("cashflow.avgPerMonth", { amount: formatMoney(monthlyAmount, item.currency) })}
             {growthLabel && (
               <span className={cn(
                 "flex items-center gap-0.5 font-medium",
