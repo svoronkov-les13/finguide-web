@@ -2,6 +2,7 @@ import { Sparkles, CheckCircle2, TrendingUp } from "lucide-react";
 import { usePlanQuery } from "@/api/planQueries";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { Hint } from "@/components/ui/hint";
 
 import { computeGoalFeasibility } from "@/engine/goalFeasibility";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -57,7 +58,7 @@ export function KpiCards() {
         {/* Нужно откладывать */}
         <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="label-caps flex items-center gap-1 mb-2 text-[var(--fp-color-muted-foreground)]">
-            {t("dashboard.needToSave")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
+            {t("dashboard.needToSave")} <Hint text={t("dashboard.needToSaveHint")} label={t("dashboard.hintLabel", { metric: t("dashboard.needToSave") })} />
           </div>
           <div className="text-[26px] font-bold tracking-tight flex items-baseline gap-1 text-[var(--fp-color-foreground)] leading-none">
             {formatRub(monthlyRequired, { compact: false }).replace('₽', '').trim()}
@@ -71,7 +72,7 @@ export function KpiCards() {
         {/* Хватает на */}
         <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="label-caps flex items-center gap-1 mb-2 text-[var(--fp-color-muted-foreground)]">
-            {t("dashboard.capitalSufficiency")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
+            {t("dashboard.capitalSufficiency")} <Hint text={t("dashboard.capitalSufficiencyHint")} label={t("dashboard.hintLabel", { metric: t("dashboard.capitalSufficiency") })} />
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-[22px] font-bold text-[var(--fp-color-coral)] leading-none">
@@ -92,7 +93,7 @@ export function KpiCards() {
         <Card className="p-5 border-[var(--fp-color-border-strong)] flex-1 flex flex-col justify-center">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="label-caps flex items-center gap-1 text-[var(--fp-color-muted-foreground)]">
-              {t("dashboard.goalFeasibility")} <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[var(--fp-color-border)] text-[9px] font-bold">?</span>
+              {t("dashboard.goalFeasibility")} <Hint text={t("dashboard.goalFeasibilityHint")} label={t("dashboard.hintLabel", { metric: t("dashboard.goalFeasibility") })} />
             </div>
             <TrendingUp className="size-4 text-[var(--fp-color-muted-foreground)]/70" />
           </div>

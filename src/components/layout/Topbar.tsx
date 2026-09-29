@@ -179,26 +179,9 @@ export function Topbar() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="w-[min(440px,calc(100vw-32px))]">
           <DialogHeader>
-            <DialogTitle className="text-base">{t("topbar.createPlan")}</DialogTitle>
+            <DialogTitle className="text-base">{createMode === "copy" ? t("topbar.copyCurrentPlan") : t("topbar.createPlan")}</DialogTitle>
           </DialogHeader>
           <form {...nativeValidationProps(t)} className="space-y-4" onSubmit={handleCreatePlan}>
-            <div className="grid grid-cols-2 rounded-[var(--fp-radius-md)] bg-[var(--fp-color-muted)] p-1 text-sm">
-              <button
-                type="button"
-                onClick={() => setCreateMode("blank")}
-                className={`rounded-[var(--fp-radius-sm)] px-3 py-2 font-medium transition ${createMode === "blank" ? "bg-[var(--fp-color-card)] text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)]" : "text-[var(--fp-color-muted-foreground)]"}`}
-              >
-                {t("topbar.createFromScratch")}
-              </button>
-              <button
-                type="button"
-                disabled={!currentPlanId}
-                onClick={() => setCreateMode("copy")}
-                className={`rounded-[var(--fp-radius-sm)] px-3 py-2 font-medium transition disabled:opacity-50 ${createMode === "copy" ? "bg-[var(--fp-color-card)] text-[var(--fp-color-foreground)] shadow-[var(--fp-shadow-soft)]" : "text-[var(--fp-color-muted-foreground)]"}`}
-              >
-                {t("topbar.copyCurrent")}
-              </button>
-            </div>
             <label className="block space-y-2 text-sm">
               <span className="font-medium text-[var(--fp-color-foreground)]">{t("topbar.planName")}</span>
               <input

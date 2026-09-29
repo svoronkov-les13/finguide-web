@@ -330,7 +330,7 @@ function GoalsTable({
           <div className="divide-y divide-[var(--fp-color-border)]">
             {items.map(item => {
               const progress = goalProgress(item);
-              const isDoneOrReachable = progress.achieved || item.reachable;
+              const isDoneOrReachable = progress.funded || item.reachable;
               return (
                 <div
                   key={item.id}

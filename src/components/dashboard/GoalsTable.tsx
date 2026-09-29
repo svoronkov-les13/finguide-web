@@ -86,14 +86,14 @@ function GoalRow({ goal, currentYear }: { goal: Goal; currentYear: number }) {
   const progress = goalProgress(goal);
   const isActuallyAchieved = goalIsActuallyAchieved(goal);
   const month = goal.targetMonth ?? 12;
+  const isReachable = progress.funded || goal.reachable;
   const statusLabel = isActuallyAchieved
     ? t("goals.statusAchieved")
-    : goal.reachable
+    : isReachable
       ? t("goals.statusReachable")
       : t("goals.statusRisk");
   const yearsLeft = goal.targetYear - currentYear;
 
-  const isReachable = isActuallyAchieved || goal.reachable;
   const statusColorClass = isReachable ? "text-[var(--fp-color-teal)]" : "text-[var(--fp-color-coral)]";
   const StatusIcon = isReachable ? CheckCircle2 : AlertTriangle;
 

@@ -4,6 +4,9 @@ export interface GoalProgress {
   cost: number;
   saved: number;
   percent: number;
+  /** The projection covers the full cost by the target date. */
+  funded: boolean;
+  /** Funded and the target date has already come: the goal is done, not just reachable. */
   achieved: boolean;
 }
 
@@ -18,19 +21,26 @@ export function goalFundedAmount(goal: Goal): number {
   return Math.min(cost, goal.saved + Math.max(0, projectedAllocation));
 }
 
-export function goalIsActuallyAchieved(goal: Goal): boolean {
-  return goalProgress(goal).achieved;
+export function goalTargetDateReached(goal: Goal, now = new Date()): boolean {
+  const year = now.getFullYear();
+  return year > goal.targetYear || (year === goal.targetYear && now.getMonth() + 1 >= (goal.targetMonth ?? 12));
 }
 
-export function goalProgress(goal: Goal): GoalProgress {
+export function goalIsActuallyAchieved(goal: Goal, now = new Date()): boolean {
+  return goalProgress(goal, now).achieved;
+}
+
+export function goalProgress(goal: Goal, now = new Date()): GoalProgress {
   const cost = goalProgressCost(goal);
   const saved = goalFundedAmount(goal);
   const percent = cost > 0 ? Math.min(100, Math.round((saved / cost) * 100)) : 0;
+  const funded = cost > 0 && saved >= cost;
 
   return {
     cost,
     saved,
     percent,
-    achieved: cost > 0 && saved >= cost,
+    funded,
+    achieved: funded && goalTargetDateReached(goal, now),
   };
 }

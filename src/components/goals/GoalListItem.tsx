@@ -96,7 +96,7 @@ export function GoalListItem({
            </div>
          </div>
          <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--fp-color-background)] border border-[var(--fp-color-border)]">
-           <div className={`h-full transition-all ${progress.achieved ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
+           <div className={`h-full transition-all ${progress.funded ? "bg-[var(--fp-color-teal)]" : "bg-[var(--fp-color-foreground)]"}`} style={{ width: `${progress.percent}%` }} />
          </div>
          <span className="text-xs font-medium text-[var(--fp-color-muted-foreground)] w-8 text-right num">
            {progress.percent > 0 ? `${progress.percent}%` : "—"}

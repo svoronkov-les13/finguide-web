@@ -41,7 +41,7 @@ export function ScenarioBar({ onWhatIf }: { onWhatIf: () => void }) {
         onClick={onWhatIf}
       >
         <WandSparkles className="size-3.5" />
-        {t("dashboard.whatifTitle")}
+        {t("dashboard.scenario_whatif")}
       </Button>
     </div>
   );

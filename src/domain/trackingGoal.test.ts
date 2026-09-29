@@ -100,6 +100,7 @@ describe("trackingActiveGoal", () => {
       cost: 550_000,
       saved: 120_000,
       percent: 22,
+      funded: false,
       achieved: false,
     });
   });
