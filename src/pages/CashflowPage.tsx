@@ -115,9 +115,10 @@ export function CashflowPage({ type }: { type: "income" | "expense" }) {
 
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
-    if (draggedItemId !== id) {
-      setDragOverItemId(id);
-    }
+    const dragged = items.find((i) => i.id === draggedItemId);
+    const target = items.find((i) => i.id === id);
+    // The insert marker is for reordering; a drop into another column opens the edit form instead
+    setDragOverItemId(dragged && target && dragged.id !== id && dragged.frequency === target.frequency ? id : null);
   };
 
   const handleDragLeave = () => {
@@ -621,10 +622,13 @@ function CashflowColumn({
 
   return (
     <div
-      className={cn(
-        "flex flex-col h-full min-h-[220px] rounded-2xl outline-2 outline-offset-4 outline-transparent transition-[outline-color] max-[760px]:h-auto max-[760px]:min-h-0",
-        isDropTarget && "outline-dashed outline-[var(--fp-color-primary)]",
-      )}
+      className="flex flex-col h-full min-h-[220px] rounded-2xl transition-[background-color,box-shadow] duration-150 max-[760px]:h-auto max-[760px]:min-h-0"
+      // The drop target takes the column's own colour: a faint tint and a thin line,
+      // drawn with box-shadow so nothing shifts while the card is dragged
+      style={isDropTarget ? {
+        backgroundColor: `${column.accentColor}0D`,
+        boxShadow: `0 0 0 8px ${column.accentColor}0D, 0 0 0 9px ${column.accentColor}40`,
+      } : undefined}
       onDragOver={(e) => onColumnDragOver?.(e, column.id)}
       onDragLeave={onColumnDragLeave}
       onDrop={(e) => onColumnDrop?.(e, column.id)}
@@ -727,7 +731,10 @@ function CashflowColumn({
         >
           <div className={cn("gap-3 pb-4", wide && colItems.length > 0 ? "grid sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col")}>
             {isDropTarget && (
-              <div className="rounded-2xl border border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-surface)] px-4 py-3 text-center text-xs font-medium text-[var(--fp-color-foreground)]">
+              <div
+                className="rounded-2xl px-4 py-3 text-center text-xs font-semibold"
+                style={{ backgroundColor: `${column.accentColor}1A`, color: column.accentColor }}
+              >
                 {t("cashflow.moveTo", { column: t(column.titleKey) })}
               </div>
             )}

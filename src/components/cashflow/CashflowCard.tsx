@@ -66,8 +66,8 @@ export function CashflowCard({
         "group relative flex cursor-pointer items-center gap-3 rounded-2xl border bg-[var(--fp-color-card)] px-4 transition-all",
         item.enabled ? "border-[var(--fp-color-border)] hover:border-[var(--fp-color-border-hover)] hover:shadow-[var(--fp-shadow-card)]" : "border-dashed border-[var(--fp-color-border)] opacity-50",
         compact ? "py-2" : "py-3.5",
-        isDragging ? "opacity-35 scale-[0.98] border-[var(--fp-color-primary)]" : "",
-        isDragOver ? "border-t-2 border-t-[var(--fp-color-primary)] bg-[var(--fp-color-surface)] shadow-sm" : ""
+        isDragging ? "opacity-40 scale-[0.98]" : "",
+        isDragOver ? "border-t-2 border-t-[var(--fp-color-teal)]/60" : ""
       )}
       onClick={onClick}
     >
