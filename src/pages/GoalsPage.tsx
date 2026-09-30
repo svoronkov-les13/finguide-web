@@ -392,11 +392,11 @@ export function GoalsPage() {
                   onDrop={(e) => handleYearDrop(e, year)}
                   className={cn(
                     "flex flex-col gap-4 rounded-3xl p-2 transition-all duration-200 border border-transparent",
-                    isYearDragOver ? "border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-surface-hover)]/30 scale-[1.005] shadow-sm" : ""
+                    isYearDragOver ? "border-[var(--fp-color-teal)]/35 bg-[var(--fp-color-teal)]/5" : ""
                   )}
                 >
                   {isYearDragOver && (
-                    <div className="rounded-2xl border border-dashed border-[var(--fp-color-primary)] bg-[var(--fp-color-card)] px-5 py-3 text-center text-sm font-semibold text-[var(--fp-color-foreground)]">
+                    <div className="rounded-2xl bg-[var(--fp-color-teal)]/10 px-5 py-3 text-center text-sm font-semibold text-[var(--fp-color-teal)]">
                       {t("goals.dropToYear", { year: String(year) })}
                     </div>
                   )}

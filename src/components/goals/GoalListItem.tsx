@@ -59,7 +59,7 @@ export function GoalListItem({
       className={cn(
         "group flex cursor-pointer items-center gap-4 border-b border-[var(--fp-color-border)] bg-transparent py-3 transition-all",
         isDragging ? "opacity-35 bg-[var(--fp-color-surface-hover)] scale-[0.98]" : "hover:bg-[var(--fp-color-surface-hover)]",
-        isDragOver ? "border-t-2 border-t-[var(--fp-color-primary)] bg-[var(--fp-color-surface)]/50 pl-2 shadow-sm" : ""
+        isDragOver ? "border-t-2 border-t-[var(--fp-color-teal)]/60" : ""
       )}
     >
       <GripVertical className="size-4 text-[var(--fp-color-muted-foreground)] opacity-50" />
